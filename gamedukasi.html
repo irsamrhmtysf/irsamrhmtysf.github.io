@@ -644,8 +644,8 @@ function confetti(){
 function getShareText(){
   const stars=$('end-stars').textContent;
   const topicLabel=topic.charAt(0).toUpperCase()+topic.slice(1);
-  //return `Aku baru main game edukasi\n\n📚 Topik: ${topicLabel}\n⚡ Level: ${level.charAt(0).toUpperCase()+level.slice(1)}\n🏆 Skor: ${score} poin\n${stars}\n\nYuk coba juga! 👇\nhttps://belajaryuk.app`;
-  return `📚 Topik: ${topicLabel}\n🏆 Skor: ${score} poin\n${stars}\n\nAku baru main game edukasi terbaik untuk anak PAUD\nAda 6 topik game edukasi seru.\nHuruf, Angka, Warna, Bentuk, Hewan, Buah\nAda sistem combo & Bonus waktu yg bikin asik maininnya.\njawaban cepat dan beruntun dpt poin ekstra.\n\nYuk coba juga! 👇\nirsamrhmtysf.github.io/gameedukasi`;
+ // return `Aku baru main game edukasi\n\n📚 Topik: ${topicLabel}\n⚡ Level: ${level.charAt(0).toUpperCase()+level.slice(1)}\n🏆 Skor: ${score} poin\n${stars}\n\nYuk coba juga! 👇\nhttps://belajaryuk.app`;
+  return `Topik game: ${topicLabel}\nSkor: ${score} poin\n${stars}\n\nAku baru main game edukasi terbaik untuk anak PAUD\n\n***\nAda 6 topik game edukasi seru.\nHuruf, Angka, Warna, Bentuk, Hewan, Buah\n\nAda sistem combo & Bonus waktu yg bikin asik maininnya.\njawaban cepat dan beruntun dpt poin ekstra.\n\nYuk coba juga! 👇\nhttps://irsamrhmtysf.github.io/gamedukasi`;
 }
 function shareWA(){
   const txt=encodeURIComponent(getShareText());
