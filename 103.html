@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Al-'Asr (103) &mdash; Irsam</title>
+<meta name="description" content="Surah Al-'Asr (103): teks Arab, transliterasi, dan makna setiap ayat, lengkap dengan audio murottal.">
+<link rel="shortcut icon" href="assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Lora:ital,wght@0,400;0,500;1,400&amp;family=Poppins:wght@300;400;500;600&amp;display=swap">
+<style>
+:root{
+  --night-top:#050611;
+  --night-mid:#141233;
+  --night-violet:#2b1642;
+  --dusk:#4a2038;
+  --ember:#6e3a2e;
+  --gold:#e8c876;
+  --gold-soft:#c9a866;
+  --ivory:#f4f0e6;
+  --periwinkle:#9aa3cc;
+  --teal:#6fb7a8;
+  --card-bg:rgba(18,16,42,0.55);
+  --card-border:rgba(232,200,118,0.16);
+  --maxw:760px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:'Poppins',sans-serif;
+  font-weight:300;
+  color:var(--ivory);
+  background:
+    radial-gradient(ellipse 60% 40% at 78% 10%, rgba(232,200,118,0.10), transparent 60%),
+    linear-gradient(180deg, var(--night-top) 0%, var(--night-mid) 36%, var(--night-violet) 60%, var(--dusk) 84%, var(--ember) 100%);
+  background-attachment: fixed;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+a{ color:var(--gold); }
+a:focus-visible, button:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; border-radius:4px; }
+
+/* ---------- sky layers ---------- */
+.sky{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+
+.stars{ position:fixed; top:0; left:0; width:2px; height:2px; background:transparent; border-radius:50%; }
+.stars-small{ box-shadow: 456px 102px #fff, 1126px 1003px #fff, 914px 571px #fff, 419px 2233px #fff, 356px 1728px #fff, 130px 122px #fff, 383px 895px #fff, 952px 2069px #fff, 108px 2298px #fff, 814px 2232px #fff, 1718px 902px #fff, 1839px 1139px #fff, 26px 653px #fff, 1731px 1393px #fff, 1138px 636px #fff, 881px 1378px #fff, 418px 379px #fff, 1556px 396px #fff, 1470px 1408px #fff, 1083px 177px #fff, 1881px 2196px #fff, 511px 1550px #fff, 322px 2261px #fff, 1200px 1481px #fff, 2364px 787px #fff, 284px 187px #fff, 933px 1185px #fff, 326px 953px #fff, 413px 1556px #fff, 1138px 1857px #fff, 1494px 666px #fff, 1516px 1455px #fff, 858px 1093px #fff, 292px 700px #fff, 2187px 1002px #fff, 669px 1893px #fff, 1554px 1105px #fff, 2281px 899px #fff, 1328px 229px #fff, 938px 131px #fff, 1292px 1643px #fff, 1096px 271px #fff, 864px 2323px #fff, 1288px 870px #fff, 2044px 1620px #fff, 1879px 585px #fff, 1084px 571px #fff, 1010px 2299px #fff, 2207px 1076px #fff, 2394px 1754px #fff, 2390px 1635px #fff, 1482px 898px #fff, 566px 2087px #fff, 2021px 372px #fff, 192px 449px #fff, 626px 655px #fff, 1729px 260px #fff, 1576px 1563px #fff, 1917px 2167px #fff, 1029px 2266px #fff, 47px 469px #fff, 2199px 1092px #fff, 1393px 456px #fff, 1202px 1780px #fff, 647px 1858px #fff, 13px 1078px #fff, 2050px 731px #fff, 2079px 435px #fff, 1222px 2079px #fff, 814px 626px #fff, 1531px 661px #fff, 2209px 2172px #fff, 2px 1327px #fff, 2001px 79px #fff, 458px 1486px #fff, 1259px 980px #fff, 237px 986px #fff, 2323px 322px #fff, 350px 1990px #fff, 283px 2181px #fff, 515px 525px #fff, 1946px 2251px #fff, 676px 1085px #fff, 2161px 1733px #fff, 867px 2208px #fff, 823px 1276px #fff, 1634px 1529px #fff, 1794px 2119px #fff, 1849px 495px #fff, 1015px 920px #fff, 262px 1384px #fff, 86px 2268px #fff, 942px 902px #fff, 29px 290px #fff, 241px 937px #fff, 276px 128px #fff, 1353px 290px #fff, 2105px 974px #fff, 1140px 1988px #fff, 877px 2208px #fff, 541px 2338px #fff, 2360px 1936px #fff, 995px 1937px #fff, 1667px 779px #fff, 386px 397px #fff, 1765px 1451px #fff, 1734px 1683px #fff, 1912px 221px #fff, 403px 248px #fff, 1649px 1389px #fff, 447px 1018px #fff, 784px 779px #fff, 2196px 1837px #fff, 574px 1728px #fff, 751px 1140px #fff, 1894px 1023px #fff, 308px 1815px #fff, 2254px 401px #fff, 207px 2214px #fff, 60px 382px #fff, 968px 681px #fff, 1664px 1989px #fff, 1971px 875px #fff, 1642px 240px #fff, 674px 1552px #fff, 8px 1599px #fff, 1086px 1863px #fff, 1168px 1732px #fff, 2276px 1993px #fff, 634px 777px #fff, 1215px 891px #fff, 239px 2372px #fff, 2220px 249px #fff, 1284px 234px #fff, 205px 2392px #fff, 1952px 2059px #fff, 2175px 644px #fff, 232px 2080px #fff, 328px 761px #fff, 280px 278px #fff, 963px 1653px #fff, 491px 2333px #fff, 1008px 2371px #fff, 162px 335px #fff, 1717px 2390px #fff, 2315px 2141px #fff, 1295px 1068px #fff, 836px 1286px #fff, 977px 1087px #fff, 1621px 536px #fff, 1228px 1872px #fff, 1295px 297px #fff, 38px 1877px #fff, 2306px 409px #fff, 300px 2202px #fff, 873px 2072px #fff, 1086px 542px #fff, 1429px 281px #fff, 1000px 1513px #fff, 1167px 646px #fff, 1794px 2225px #fff, 1239px 2166px #fff, 32px 2271px #fff, 1226px 424px #fff, 550px 1083px #fff, 472px 438px #fff, 2266px 636px #fff, 1115px 1154px #fff, 862px 1404px #fff, 833px 1081px #fff, 2070px 2001px #fff, 1028px 208px #fff, 378px 1734px #fff, 1133px 180px #fff, 14px 1366px #fff, 535px 1072px #fff, 661px 1809px #fff, 2259px 1751px #fff, 2297px 39px #fff, 458px 308px #fff, 610px 2234px #fff, 147px 1512px #fff, 2385px 2263px #fff, 606px 1760px #fff, 522px 171px #fff, 1262px 1493px #fff, 163px 1465px #fff, 860px 1022px #fff, 421px 1448px #fff, 2293px 1664px #fff, 633px 969px #fff, 665px 725px #fff, 1688px 101px #fff, 734px 1360px #fff, 1686px 1016px #fff, 1092px 652px #fff, 442px 1566px #fff, 158px 1927px #fff, 911px 817px #fff, 1885px 1432px #fff, 1250px 932px #fff, 913px 96px #fff, 791px 1632px #fff, 1344px 1141px #fff, 284px 1143px #fff, 1438px 2086px #fff, 1637px 2196px #fff, 1356px 113px #fff, 472px 1069px #fff, 731px 2378px #fff, 1087px 156px #fff, 444px 1779px #fff, 1415px 1284px #fff, 1787px 2094px #fff, 473px 1577px #fff, 2361px 778px #fff, 1043px 181px #fff, 1786px 6px #fff, 2129px 2205px #fff, 807px 1491px #fff; animation: twinkle 7s ease-in-out infinite alternate; }
+.stars-big{ box-shadow: 1766px 286px #fff, 1352px 1285px #fff, 510px 1230px #fff, 2077px 1266px #fff, 1672px 1336px #fff, 1648px 1211px #fff, 2270px 521px #fff, 785px 1722px #fff, 1552px 712px #fff, 2331px 1232px #fff, 1663px 2244px #fff, 1px 1244px #fff, 1175px 860px #fff, 1760px 2375px #fff, 1319px 1904px #fff, 1809px 1811px #fff, 875px 2093px #fff, 1938px 695px #fff, 347px 1162px #fff, 2111px 1372px #fff, 382px 962px #fff, 1271px 920px #fff, 815px 603px #fff, 100px 189px #fff, 1002px 1946px #fff, 298px 1865px #fff, 1697px 2357px #fff, 796px 1572px #fff, 2024px 1636px #fff, 999px 604px #fff, 22px 436px #fff, 1741px 896px #fff, 720px 2121px #fff, 1902px 205px #fff, 2283px 1020px #fff, 497px 1869px #fff, 546px 1903px #fff, 2175px 2289px #fff, 1299px 1812px #fff, 2067px 1747px #fff, 2244px 1826px #fff, 651px 1944px #fff, 1843px 1061px #fff, 1012px 1135px #fff, 2135px 1984px #fff, 979px 1124px #fff, 1801px 317px #fff, 1170px 960px #fff, 1112px 1375px #fff, 1309px 2212px #fff, 330px 566px #fff, 617px 947px #fff, 1568px 625px #fff, 876px 263px #fff, 1699px 1669px #fff, 1355px 2222px #fff, 1908px 1703px #fff, 255px 847px #fff, 1720px 1595px #fff, 2392px 80px #fff, 2358px 1558px #fff, 1953px 24px #fff, 1440px 1223px #fff, 1597px 1716px #fff, 2204px 2236px #fff, 903px 1999px #fff, 898px 1117px #fff, 1785px 1989px #fff, 118px 1592px #fff, 1376px 1656px #fff, 676px 1914px #fff, 522px 2187px #fff, 110px 1613px #fff, 2311px 111px #fff, 343px 1755px #fff, 555px 1891px #fff, 744px 205px #fff, 1065px 1552px #fff, 1340px 866px #fff, 1862px 1338px #fff, 1382px 1552px #fff, 1139px 1726px #fff, 1033px 335px #fff, 1926px 79px #fff, 2209px 213px #fff, 1433px 918px #fff, 281px 164px #fff, 127px 1012px #fff, 816px 83px #fff, 624px 977px #fff; animation: twinkle 4.5s ease-in-out infinite alternate-reverse; }
+@keyframes twinkle{ from{ opacity:.55; } to{ opacity:1; } }
+
+.milkyway{
+  position:fixed; inset:-30% -60%;
+  background: linear-gradient(112deg,
+    transparent 28%,
+    rgba(180,190,255,0.05) 40%,
+    rgba(225,215,255,0.11) 47%,
+    rgba(210,175,225,0.08) 52%,
+    rgba(140,200,190,0.045) 60%,
+    transparent 72%);
+  mix-blend-mode:screen;
+  transform:rotate(-9deg);
+}
+
+.moon{
+  position:fixed; top:7%; right:9%; width:76px; height:76px;
+  filter: drop-shadow(0 0 22px rgba(232,200,118,0.55)) drop-shadow(0 0 55px rgba(232,200,118,0.22));
+}
+
+.shooting-star{
+  position:fixed; top:14%; left:72%; width:110px; height:1.5px;
+  background:linear-gradient(90deg, transparent, #fff 65%, #fff);
+  border-radius:2px; transform:rotate(215deg); opacity:0;
+  animation:shoot 12s ease-in infinite;
+}
+.shooting-star.s2{ top:38%; left:88%; animation-delay:6s; animation-duration:15s; }
+@keyframes shoot{
+  0%,90%{ opacity:0; transform:rotate(215deg) translateX(0); }
+  91%{ opacity:1; }
+  96%{ opacity:0; transform:rotate(215deg) translateX(-280px); }
+  100%{ opacity:0; transform:rotate(215deg) translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .stars, .shooting-star, .reveal{ animation:none !important; transition:none !important; }
+}
+
+/* ---------- layout ---------- */
+main{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:0 1.5rem 6rem; }
+
+.back-link{
+  position:fixed; top:1.5rem; left:1.5rem; z-index:5;
+  font-size:.85rem; text-decoration:none; color:var(--periwinkle);
+  letter-spacing:.03em; padding:.5rem .9rem; border-radius:30px;
+  background:rgba(10,10,25,0.35); backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,0.08);
+  transition:color .25s ease, border-color .25s ease;
+}
+.back-link:hover, .back-link:focus-visible{ color:var(--gold); border-color:rgba(232,200,118,0.35); }
+
+.hero{ position:relative; z-index:1; text-align:center; padding:7rem 0 4rem; }
+.eyebrow{
+  font-size:.78rem; letter-spacing:.28em; text-transform:uppercase;
+  color:var(--periwinkle); margin:0 0 1.75rem;
+}
+.surah-name-ar{
+  font-family:'Amiri',serif; font-weight:700;
+  font-size:clamp(3.2rem,11vw,5.5rem);
+  color:var(--gold); margin:0; line-height:1.15;
+  text-shadow:0 0 40px rgba(232,200,118,0.25);
+}
+.surah-name-lat{
+  font-weight:300; letter-spacing:.08em;
+  font-size:1.1rem; margin:.75rem 0 .25rem; color:var(--ivory);
+}
+.surah-name-meaning{ margin:0; color:var(--periwinkle); font-style:italic; font-size:.95rem; }
+.surah-meta{
+  margin:1.25rem 0 2.5rem; font-size:.78rem; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--periwinkle); opacity:.8;
+}
+
+.play-all{
+  display:inline-flex; align-items:center; gap:.6rem;
+  background:rgba(232,200,118,0.08); color:var(--gold);
+  border:1px solid rgba(232,200,118,0.35); border-radius:40px;
+  padding:.85rem 1.6rem; font-family:'Poppins',sans-serif; font-size:.85rem;
+  letter-spacing:.04em; cursor:pointer; transition:all .25s ease;
+}
+.play-all:hover{ background:rgba(232,200,118,0.16); transform:translateY(-1px); }
+.play-all svg{ width:15px; height:15px; flex:0 0 auto; }
+.play-all .icon-pause{ display:none; }
+.play-all.is-playing .icon-play{ display:none; }
+.play-all.is-playing .icon-pause{ display:block; }
+
+.scroll-cue{
+  width:1px; height:44px; margin:3.5rem auto 0;
+  background:linear-gradient(to bottom, var(--gold), transparent);
+  animation:cue 2.4s ease-in-out infinite;
+}
+@keyframes cue{ 0%,100%{ opacity:.25; } 50%{ opacity:.9; } }
+
+/* ---------- reveal ---------- */
+.reveal{ opacity:0; transform:translateY(26px); transition:opacity .9s ease, transform .9s ease; }
+.reveal.in-view{ opacity:1; transform:none; }
+
+/* ---------- bismillah ---------- */
+.bismillah{ text-align:center; padding:1.5rem 0 3.5rem; border-bottom:1px solid var(--card-border); margin-bottom:3.5rem; }
+.bismillah .ar{ font-family:'Amiri',serif; font-size:clamp(1.6rem,4.4vw,2.2rem); color:var(--gold); margin:0 0 .85rem; direction:rtl; }
+.bismillah .translit{ font-style:italic; color:var(--periwinkle); font-size:.85rem; margin:0 0 .5rem; }
+.bismillah .meaning{ font-family:'Lora',serif; color:var(--ivory); font-size:1rem; margin:0; opacity:.9; }
+
+/* ---------- ayah cards ---------- */
+.ayat-list{ display:flex; flex-direction:column; gap:2rem; }
+
+.ayah{
+  position:relative;
+  background:var(--card-bg); border:1px solid var(--card-border);
+  border-radius:20px; padding:2.75rem 2rem 2.25rem;
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  text-align:center; transition:border-color .4s ease, box-shadow .4s ease;
+}
+.ayah.playing{ border-color:rgba(232,200,118,0.55); box-shadow:0 0 50px rgba(232,200,118,0.14); }
+
+.ayah-number{
+  position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+  width:40px; height:40px; border-radius:50%;
+  background:var(--night-mid); border:1.5px solid var(--gold);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Amiri',serif; color:var(--gold); font-size:1.05rem;
+}
+.ayah.playing .ayah-number{ animation:pulseGlow 1.7s ease-in-out infinite; }
+@keyframes pulseGlow{
+  0%,100%{ box-shadow:0 0 0 0 rgba(232,200,118,.55); }
+  50%{ box-shadow:0 0 0 9px rgba(232,200,118,0); }
+}
+
+.ayah .ar{
+  font-family:'Amiri',serif; font-weight:700;
+  font-size:clamp(1.9rem,5.4vw,2.85rem); line-height:2.05;
+  color:var(--gold); direction:rtl; margin:.75rem 0 1.1rem;
+}
+.ayah .translit{ font-style:italic; color:var(--periwinkle); font-size:.92rem; margin:0 0 1.4rem; }
+.ayah .meaning-id{
+  font-family:'Lora',serif; font-size:1.2rem; line-height:1.75;
+  color:var(--ivory); max-width:34rem; margin:0 auto .6rem;
+}
+.ayah .meaning-en{
+  font-family:'Lora',serif; font-style:italic; font-size:.92rem;
+  color:var(--periwinkle); max-width:32rem; margin:0 auto;
+}
+
+.play-ayah{
+  margin-top:1.6rem; width:44px; height:44px; border-radius:50%;
+  background:rgba(232,200,118,0.1); border:1px solid rgba(232,200,118,0.4);
+  color:var(--gold); cursor:pointer; display:inline-flex; align-items:center;
+  justify-content:center; transition:all .25s ease;
+}
+.play-ayah:hover{ background:rgba(232,200,118,0.2); }
+.play-ayah svg{ width:14px; height:14px; }
+.play-ayah .icon-pause{ display:none; }
+.play-ayah.is-playing .icon-play{ display:none; }
+.play-ayah.is-playing .icon-pause{ display:block; }
+
+/* ---------- reflection ---------- */
+.reflection{
+  margin-top:3.5rem; text-align:center; padding:2.5rem 1rem 0;
+  border-top:1px solid var(--card-border);
+}
+.reflection h3{
+  font-family:'Poppins',sans-serif; font-weight:500; letter-spacing:.06em;
+  text-transform:uppercase; font-size:.82rem; color:var(--periwinkle); margin:0 0 1.25rem;
+}
+.reflection p{
+  font-family:'Lora',serif; font-size:1.05rem; line-height:1.85;
+  color:var(--ivory); opacity:.88; max-width:34rem; margin:0 auto;
+}
+
+/* ---------- footer ---------- */
+footer{ text-align:center; margin-top:4.5rem; color:var(--periwinkle); font-size:.82rem; }
+footer p{ margin:0 0 1rem; opacity:.75; }
+footer a{ text-decoration:none; border-bottom:1px solid rgba(232,200,118,0.3); padding-bottom:2px; }
+footer a:hover{ border-color:var(--gold); }
+
+@media (max-width:600px){
+  .hero{ padding:6rem 0 3rem; }
+  .ayah{ padding:2.4rem 1.25rem 1.9rem; }
+  .back-link{ top:1rem; left:1rem; font-size:.78rem; padding:.4rem .75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <div class="stars stars-small"></div>
+  <div class="stars stars-big"></div>
+  <div class="milkyway"></div>
+  <svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+    <defs>
+      <radialGradient id="moonGrad" cx="35%" cy="35%">
+        <stop offset="0%" stop-color="#fdf6e3"/>
+        <stop offset="60%" stop-color="#e8c876"/>
+        <stop offset="100%" stop-color="#c9a866"/>
+      </radialGradient>
+      <mask id="crescentMask">
+        <rect width="100" height="100" fill="black"/>
+        <circle cx="50" cy="50" r="38" fill="white"/>
+        <circle cx="66" cy="37" r="34" fill="black"/>
+      </mask>
+    </defs>
+    <circle cx="50" cy="50" r="38" fill="url(#moonGrad)" mask="url(#crescentMask)"/>
+  </svg>
+  <div class="shooting-star s1"></div>
+  <div class="shooting-star s2"></div>
+</div>
+
+<a class="back-link" href="index.html">&larr; Kembali ke Beranda</a>
+
+<main>
+
+  <header class="hero">
+    <p class="eyebrow">Al-Qur'an &middot; Surah 103</p>
+    <h1 class="surah-name-ar" lang="ar" dir="rtl">العصر</h1>
+    <h2 class="surah-name-lat">Al-'Asr</h2>
+    <p class="surah-name-meaning">&ldquo;Masa&rdquo; &mdash; waktu yang terus berlalu</p>
+    <p class="surah-meta">Makkiyah &middot; 3 Ayat</p>
+    <button class="play-all" id="playAllBtn" type="button">
+      <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      <span>Dengarkan Seluruh Surah</span>
+    </button>
+    <div class="scroll-cue" aria-hidden="true"></div>
+  </header>
+
+  <section class="bismillah reveal">
+    <p class="ar" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+    <p class="translit">Bismill&#257;hir-ra&#7717;m&#257;nir-ra&#7717;&#299;m</p>
+    <p class="meaning">Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.</p>
+  </section>
+
+  <section class="ayat-list">
+
+    <article class="ayah reveal" data-audio="https://everyayah.com/data/Alafasy_128kbps/103001.mp3">
+      <div class="ayah-number" aria-hidden="true">&#1633;</div>
+      <p class="ar" lang="ar" dir="rtl">وَٱلْعَصْرِ</p>
+      <p class="translit">Wal-&#8216;a&#7779;r(i)</p>
+      <p class="meaning-id">Demi masa yang terus berlalu,</p>
+      <p class="meaning-en">By time, ever passing,</p>
+      <button class="play-ayah" type="button" aria-label="Putar ayat 1"><svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+    </article>
+
+    <article class="ayah reveal" data-audio="https://everyayah.com/data/Alafasy_128kbps/103002.mp3">
+      <div class="ayah-number" aria-hidden="true">&#1634;</div>
+      <p class="ar" lang="ar" dir="rtl">إِنَّ ٱلْإِنسَٰنَ لَفِى خُسْرٍ</p>
+      <p class="translit">Innal-ins&#257;na laf&#299; khusr(in)</p>
+      <p class="meaning-id">sesungguhnya manusia benar-benar berada dalam kerugian,</p>
+      <p class="meaning-en">truly humankind is in a state of loss,</p>
+      <button class="play-ayah" type="button" aria-label="Putar ayat 2"><svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+    </article>
+
+    <article class="ayah reveal" data-audio="https://everyayah.com/data/Alafasy_128kbps/103003.mp3">
+      <div class="ayah-number" aria-hidden="true">&#1635;</div>
+      <p class="ar" lang="ar" dir="rtl">إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّٰلِحَٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ</p>
+      <p class="translit">Illal-la&#380;&#299;na &#257;man&#363; wa &#8216;amilu&#7779;-&#7779;&#257;li&#7717;&#257;ti wa taw&#257;&#7779;au bil-&#7717;aqqi wa taw&#257;&#7779;au bi&#7779;-&#7779;abr(i)</p>
+      <p class="meaning-id">kecuali mereka yang beriman, mengerjakan kebaikan, serta saling menasihati dalam kebenaran dan saling menasihati dalam kesabaran.</p>
+      <p class="meaning-en">except those who believe, do good, and encourage one another toward truth and toward patience.</p>
+      <button class="play-ayah" type="button" aria-label="Putar ayat 3"><svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
+    </article>
+
+  </section>
+
+  <section class="reflection reveal">
+    <h3>Makna</h3>
+    <p>Surah pendek ini kerap disebut sebagai ringkasan seluruh isi Al-Qur'an. Imam Syafi'i pernah menyampaikan, seandainya Allah hanya menurunkan surah ini saja, niscaya sudah cukup sebagai petunjuk bagi manusia &mdash; karena di dalamnya terangkum empat perkara: iman, amal shalih, saling menasihati dalam kebenaran, dan saling menasihati dalam kesabaran.</p>
+  </section>
+
+  <footer>
+    <p>Murottal: Mishary Rasyid Al-&#8216;Afasy &middot; audio via everyayah.com</p>
+    <a href="index.html">&larr; Kembali ke halaman utama</a>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  var audios = {};
+  var current = null;
+
+  function stopAll(){
+    document.querySelectorAll('.ayah').forEach(function(el){ el.classList.remove('playing'); });
+    document.querySelectorAll('.play-ayah, .play-all').forEach(function(b){ b.classList.remove('is-playing'); });
+    if(current){ current.pause(); }
+    current = null;
+  }
+
+  function getAudio(src){
+    if(!audios[src]){ audios[src] = new Audio(src); }
+    return audios[src];
+  }
+
+  function playAyah(ayahEl, onEnded){
+    var src = ayahEl.getAttribute('data-audio');
+    stopAll();
+    var audio = getAudio(src);
+    try{ audio.currentTime = 0; }catch(e){}
+    current = audio;
+    ayahEl.classList.add('playing');
+    var btn = ayahEl.querySelector('.play-ayah');
+    if(btn) btn.classList.add('is-playing');
+    ayahEl.scrollIntoView({behavior:'smooth', block:'center'});
+    var p = audio.play();
+    if(p && p.catch) p.catch(function(){ /* autoplay/network hiccup - ignore */ });
+    audio.onended = function(){
+      ayahEl.classList.remove('playing');
+      if(btn) btn.classList.remove('is-playing');
+      if(onEnded) onEnded();
+    };
+  }
+
+  document.querySelectorAll('.play-ayah').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var ayahEl = btn.closest('.ayah');
+      if(ayahEl.classList.contains('playing')){
+        stopAll();
+      } else {
+        playAyah(ayahEl);
+      }
+    });
+  });
+
+  var playAllBtn = document.getElementById('playAllBtn');
+  playAllBtn.addEventListener('click', function(){
+    if(playAllBtn.classList.contains('is-playing')){
+      stopAll();
+      playAllBtn.classList.remove('is-playing');
+      return;
+    }
+    var ayahs = Array.prototype.slice.call(document.querySelectorAll('.ayah'));
+    playAllBtn.classList.add('is-playing');
+    var i = 0;
+    function next(){
+      if(i >= ayahs.length){ playAllBtn.classList.remove('is-playing'); return; }
+      var el = ayahs[i]; i++;
+      playAyah(el, next);
+    }
+    next();
+  });
+
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.15});
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in-view'); });
+  }
+})();
+</script>
+
+</body>
+</html>
