@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B0B0F" />
+  <meta name="description" content="imgproc Edit — Enhance photos offline." />
+  <title>Edit · imgproc</title>
+  <style>
+    :root {
+      --bg: #0B0B0F; --surface: #141418; --surface-2: #1C1C22; --surface-3: #25252B;
+      --border: rgba(255,255,255,0.07); --text: #F4F4F5; --text-2: #A1A1AA; --text-3: #71717A;
+      --accent: #F472B6; --font: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    #app { max-width: 480px; height: 100%; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; }
+
+    .header { display: flex; align-items: center; gap: 12px; padding: 14px 16px 10px; padding-top: max(14px, env(safe-area-inset-top)); flex-shrink: 0; }
+    .btn-back { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; text-decoration: none; flex-shrink: 0; }
+    .btn-back:active { background: var(--surface-3); }
+    .header-title h1 { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.02em; }
+    .header-title span { font-size: 0.72rem; color: var(--text-3); }
+
+    .view { display: none; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; }
+    .view.active { display: flex; }
+
+    .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 28px; text-align: center; }
+    .empty-icon { width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, #EC4899, #F472B6); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 28px rgba(236,72,153,0.3); }
+    .empty-icon svg { width: 32px; height: 32px; color: white; }
+    .empty h2 { font-size: 1.25rem; font-weight: 650; margin-bottom: 8px; }
+    .empty p { font-size: 0.88rem; color: var(--text-2); margin-bottom: 28px; line-height: 1.5; }
+    .btn-pick { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 14px; border: none; background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; box-shadow: 0 6px 24px rgba(99,102,241,0.35); }
+    .btn-pick:active { transform: scale(0.98); }
+
+    .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .preview-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 8px 12px; background: #050506; }
+    #stage { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+
+    .panel { flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border); border-radius: 22px 22px 0 0; padding: 14px 16px 18px; padding-bottom: max(18px, env(safe-area-inset-bottom)); max-height: 45vh; overflow-y: auto; }
+
+    .quick-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .quick-btn { flex: 1; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); font-size: 0.8rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .quick-btn:active { background: var(--surface-3); }
+
+    .control-group { margin-bottom: 12px; }
+    .control-group label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-2); margin-bottom: 6px; }
+    .control-group label .value { font-weight: 600; color: var(--text); background: var(--surface-3); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+    input[type="range"] { width: 100%; height: 5px; -webkit-appearance: none; appearance: none; background: var(--surface-3); border-radius: 100px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #EC4899, #F472B6); border: 2px solid white; box-shadow: 0 2px 8px rgba(236,72,153,0.4); cursor: pointer; }
+
+    .actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-action { flex: 1; padding: 13px 10px; border-radius: 12px; border: none; font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-action.primary { background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; box-shadow: 0 4px 18px rgba(99,102,241,0.3); }
+    .btn-action.secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-action:active { transform: scale(0.98); }
+
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <a href="./index.html" class="btn-back" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="header-title">
+        <h1>Edit</h1>
+        <span>Enhance · Brightness · Contrast</span>
+      </div>
+    </header>
+
+    <section class="view active" id="view-empty">
+      <div class="empty">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <h2>Enhance your photo</h2>
+        <p>Adjust brightness, contrast and saturation.<br>One-tap auto enhance available.</p>
+        <button class="btn-pick" id="btn-pick" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+          </svg>
+          Choose Image
+        </button>
+      </div>
+    </section>
+
+    <section class="view" id="view-work">
+      <div class="workspace">
+        <div class="preview-wrap">
+          <canvas id="stage"></canvas>
+        </div>
+        <div class="panel">
+          <div class="quick-row">
+            <button class="quick-btn" id="btn-auto" type="button">Auto Enhance</button>
+            <button class="quick-btn" id="btn-reset" type="button">Reset</button>
+          </div>
+
+          <div class="control-group">
+            <label>Brightness <span class="value" id="val-bri">0</span></label>
+            <input type="range" id="bri" min="-50" max="50" value="0" />
+          </div>
+          <div class="control-group">
+            <label>Contrast <span class="value" id="val-con">0</span></label>
+            <input type="range" id="con" min="-50" max="50" value="0" />
+          </div>
+          <div class="control-group">
+            <label>Saturation <span class="value" id="val-sat">0</span></label>
+            <input type="range" id="sat" min="-50" max="50" value="0" />
+          </div>
+
+          <div class="actions">
+            <button class="btn-action primary" id="btn-download" type="button">Download</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <input type="file" id="file-input" accept="image/*" />
+
+  <script>
+  (function () {
+    "use strict";
+
+    let base = null; // HTMLImageElement
+    let bri = 0, con = 0, sat = 0;
+    let scale = 1;
+
+    const viewEmpty = document.getElementById("view-empty");
+    const viewWork = document.getElementById("view-work");
+    const stage = document.getElementById("stage");
+    const ctx = stage.getContext("2d");
+
+    const elBri = document.getElementById("bri");
+    const elCon = document.getElementById("con");
+    const elSat = document.getElementById("sat");
+    const valBri = document.getElementById("val-bri");
+    const valCon = document.getElementById("val-con");
+    const valSat = document.getElementById("val-sat");
+
+    function show(v) {
+      viewEmpty.classList.remove("active");
+      viewWork.classList.remove("active");
+      v.classList.add("active");
+    }
+
+    function layout() {
+      if (!base) return;
+      const wrap = stage.parentElement;
+      const maxW = wrap.clientWidth - 16;
+      const maxH = wrap.clientHeight - 16;
+      scale = Math.min(maxW / base.naturalWidth, maxH / base.naturalHeight, 1);
+      stage.width = Math.round(base.naturalWidth * scale);
+      stage.height = Math.round(base.naturalHeight * scale);
+      stage.style.width = stage.width + "px";
+      stage.style.height = stage.height + "px";
+    }
+
+    function render() {
+      if (!base) return;
+      layout();
+      // Draw at display size with CSS filter for live preview speed
+      ctx.clearRect(0, 0, stage.width, stage.height);
+      ctx.filter = `brightness(${100 + bri}%) contrast(${100 + con}%) saturate(${100 + sat}%)`;
+      ctx.drawImage(base, 0, 0, stage.width, stage.height);
+      ctx.filter = "none";
+    }
+
+    function exportImage() {
+      if (!base) return;
+      const out = document.createElement("canvas");
+      out.width = base.naturalWidth;
+      out.height = base.naturalHeight;
+      const octx = out.getContext("2d");
+      octx.filter = `brightness(${100 + bri}%) contrast(${100 + con}%) saturate(${100 + sat}%)`;
+      octx.drawImage(base, 0, 0);
+      octx.filter = "none";
+      out.toBlob((blob) => {
+        if (!blob) return;
+        const a = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = "imgproc-edit-" + Date.now() + ".png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      }, "image/png");
+    }
+
+    function setSliders(b, c, s) {
+      bri = b; con = c; sat = s;
+      elBri.value = b; elCon.value = c; elSat.value = s;
+      valBri.textContent = b; valCon.textContent = c; valSat.textContent = s;
+      render();
+    }
+
+    document.getElementById("btn-pick").addEventListener("click", () => {
+      document.getElementById("file-input").click();
+    });
+
+    document.getElementById("file-input").addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        base = img;
+        setSliders(0, 0, 0);
+        show(viewWork);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); alert("Could not load image."); };
+      img.src = url;
+    });
+
+    elBri.addEventListener("input", () => { bri = parseInt(elBri.value, 10); valBri.textContent = bri; render(); });
+    elCon.addEventListener("input", () => { con = parseInt(elCon.value, 10); valCon.textContent = con; render(); });
+    elSat.addEventListener("input", () => { sat = parseInt(elSat.value, 10); valSat.textContent = sat; render(); });
+
+    document.getElementById("btn-auto").addEventListener("click", () => {
+      // Gentle auto enhance defaults
+      setSliders(8, 12, 10);
+    });
+
+    document.getElementById("btn-reset").addEventListener("click", () => {
+      setSliders(0, 0, 0);
+    });
+
+    document.getElementById("btn-download").addEventListener("click", exportImage);
+
+    window.addEventListener("resize", () => { if (base) render(); });
+  })();
+  </script>
+</body>
+</html>

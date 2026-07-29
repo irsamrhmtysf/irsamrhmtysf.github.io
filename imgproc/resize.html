@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B0B0F" />
+  <meta name="description" content="imgproc Resize — Compress or enlarge photos offline." />
+  <title>Resize · imgproc</title>
+  <style>
+    :root {
+      --bg: #0B0B0F; --surface: #141418; --surface-2: #1C1C22; --surface-3: #25252B;
+      --border: rgba(255,255,255,0.07); --text: #F4F4F5; --text-2: #A1A1AA; --text-3: #71717A;
+      --accent: #818CF8; --success: #34D399; --font: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    #app { max-width: 480px; height: 100%; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; }
+
+    .header { display: flex; align-items: center; gap: 12px; padding: 14px 16px 10px; padding-top: max(14px, env(safe-area-inset-top)); flex-shrink: 0; }
+    .btn-back { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; text-decoration: none; flex-shrink: 0; }
+    .btn-back:active { background: var(--surface-3); }
+    .header-title h1 { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.02em; }
+    .header-title span { font-size: 0.72rem; color: var(--text-3); }
+
+    .view { display: none; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; }
+    .view.active { display: flex; }
+
+    .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 28px; text-align: center; }
+    .empty-icon { width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, #6366F1, #818CF8); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 28px rgba(99,102,241,0.3); }
+    .empty-icon svg { width: 32px; height: 32px; color: white; }
+    .empty h2 { font-size: 1.25rem; font-weight: 650; margin-bottom: 8px; }
+    .empty p { font-size: 0.88rem; color: var(--text-2); margin-bottom: 28px; line-height: 1.5; }
+    .btn-pick { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 14px; border: none; background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; font-size: 0.95rem; font-weight: 600; font-family: inherit; cursor: pointer; box-shadow: 0 6px 24px rgba(99,102,241,0.35); }
+    .btn-pick:active { transform: scale(0.98); }
+
+    .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .preview-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 8px 12px; background: #050506; }
+    .preview-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+
+    .panel { flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border); border-radius: 22px 22px 0 0; padding: 14px 16px 18px; padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+    .presets { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; }
+    .presets::-webkit-scrollbar { display: none; }
+    .preset { flex-shrink: 0; padding: 8px 14px; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--text-2); font-size: 0.8rem; font-weight: 500; font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .preset.active { background: linear-gradient(135deg, #6366F1, #8B5CF6); border-color: transparent; color: white; box-shadow: 0 4px 14px rgba(99,102,241,0.35); }
+
+    .control-group { margin-bottom: 12px; }
+    .control-group label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-2); margin-bottom: 6px; }
+    .control-group label .value { font-weight: 600; color: var(--text); background: var(--surface-3); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+    input[type="range"] { width: 100%; height: 5px; -webkit-appearance: none; appearance: none; background: var(--surface-3); border-radius: 100px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #6366F1, #8B5CF6); border: 2px solid white; box-shadow: 0 2px 8px rgba(99,102,241,0.4); cursor: pointer; }
+
+    .stats { display: flex; align-items: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; margin-bottom: 12px; }
+    .stat { flex: 1; text-align: center; }
+    .stat-label { display: block; font-size: 0.68rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat-value { font-size: 0.9rem; font-weight: 650; }
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.success { color: var(--success); }
+    .stat-divider { width: 1px; height: 28px; background: var(--border); }
+
+    .actions { display: flex; gap: 8px; }
+    .btn-action { flex: 1; padding: 13px 10px; border-radius: 12px; border: none; font-size: 0.9rem; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-action.primary { background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; box-shadow: 0 4px 18px rgba(99,102,241,0.3); }
+    .btn-action.secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-action:active { transform: scale(0.98); }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    #file-input { display: none; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <a href="./index.html" class="btn-back" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="header-title">
+        <h1>Resize</h1>
+        <span>Compress · Enlarge · Smart size</span>
+      </div>
+    </header>
+
+    <section class="view active" id="view-empty">
+      <div class="empty">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </div>
+        <h2>Resize your photo</h2>
+        <p>Compress for WhatsApp or enlarge quality.<br>All processing stays on your device.</p>
+        <button class="btn-pick" id="btn-pick" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+          </svg>
+          Choose Image
+        </button>
+      </div>
+    </section>
+
+    <section class="view" id="view-work">
+      <div class="workspace">
+        <div class="preview-wrap">
+          <img id="preview" alt="Preview" />
+        </div>
+        <div class="panel">
+          <div class="presets" id="presets">
+            <button class="preset active" data-preset="custom" type="button">Custom</button>
+            <button class="preset" data-preset="whatsapp" type="button">WhatsApp</button>
+            <button class="preset" data-preset="wa_hd" type="button">WA HD</button>
+            <button class="preset" data-preset="ig_feed" type="button">IG Feed</button>
+            <button class="preset" data-preset="ig_story" type="button">IG Story</button>
+          </div>
+
+          <div class="control-group" id="quality-group">
+            <label>Quality <span class="value" id="val-quality">80%</span></label>
+            <input type="range" id="quality" min="20" max="100" value="80" step="5" />
+          </div>
+
+          <div class="stats hidden" id="stats">
+            <div class="stat"><span class="stat-label">Original</span><span class="stat-value" id="stat-orig">—</span></div>
+            <div class="stat-divider"></div>
+            <div class="stat"><span class="stat-label">Result</span><span class="stat-value accent" id="stat-result">—</span></div>
+            <div class="stat-divider"></div>
+            <div class="stat"><span class="stat-label">Saved</span><span class="stat-value success" id="stat-saved">—</span></div>
+          </div>
+
+          <div class="actions">
+            <button class="btn-action secondary" id="btn-process" type="button">Compress</button>
+            <button class="btn-action primary hidden" id="btn-download" type="button">Download</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <input type="file" id="file-input" accept="image/*" />
+
+  <script>
+  (function () {
+    "use strict";
+
+    const PRESETS = {
+      custom:  { quality: null, maxWidth: null },
+      whatsapp: { quality: 72, maxWidth: 1600 },
+      wa_hd:   { quality: 85, maxWidth: 2560 },
+      ig_feed: { quality: 85, maxWidth: 1080 },
+      ig_story:{ quality: 85, maxWidth: 1080, maxHeight: 1920 }
+    };
+
+    let file = null;
+    let originalSize = 0;
+    let preset = "custom";
+    let quality = 80;
+    let resultBlob = null;
+
+    const viewEmpty = document.getElementById("view-empty");
+    const viewWork = document.getElementById("view-work");
+    const preview = document.getElementById("preview");
+    const qualityGroup = document.getElementById("quality-group");
+    const qualityEl = document.getElementById("quality");
+    const valQuality = document.getElementById("val-quality");
+    const stats = document.getElementById("stats");
+    const btnProcess = document.getElementById("btn-process");
+    const btnDownload = document.getElementById("btn-download");
+
+    function fmt(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+      return (bytes / 1048576).toFixed(2) + " MB";
+    }
+
+    function show(view) {
+      viewEmpty.classList.remove("active");
+      viewWork.classList.remove("active");
+      view.classList.add("active");
+    }
+
+    function resetResult() {
+      resultBlob = null;
+      stats.classList.add("hidden");
+      btnDownload.classList.add("hidden");
+      btnProcess.textContent = "Compress";
+      btnProcess.disabled = false;
+    }
+
+    function compress(srcFile, opts) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(srcFile);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          let w = img.width, h = img.height;
+          if (opts.maxWidth && w > opts.maxWidth) {
+            h = Math.round(h * opts.maxWidth / w);
+            w = opts.maxWidth;
+          }
+          if (opts.maxHeight && h > opts.maxHeight) {
+            w = Math.round(w * opts.maxHeight / h);
+            h = opts.maxHeight;
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, 0, 0, w, h);
+          const q = (opts.quality != null ? opts.quality : quality) / 100;
+          canvas.toBlob((blob) => {
+            if (!blob) return reject(new Error("Compress failed"));
+            resolve(blob);
+          }, "image/jpeg", q);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Load failed")); };
+        img.src = url;
+      });
+    }
+
+    document.getElementById("btn-pick").addEventListener("click", () => {
+      document.getElementById("file-input").click();
+    });
+
+    document.getElementById("file-input").addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      file = f;
+      originalSize = f.size;
+      preview.src = URL.createObjectURL(f);
+      preset = "custom";
+      quality = 80;
+      qualityEl.value = 80;
+      valQuality.textContent = "80%";
+      document.querySelectorAll(".preset").forEach((p) => p.classList.toggle("active", p.dataset.preset === "custom"));
+      qualityGroup.style.display = "block";
+      resetResult();
+      show(viewWork);
+    });
+
+    document.getElementById("presets").addEventListener("click", (e) => {
+      const btn = e.target.closest(".preset");
+      if (!btn) return;
+      preset = btn.dataset.preset;
+      document.querySelectorAll(".preset").forEach((p) => p.classList.toggle("active", p === btn));
+      qualityGroup.style.display = preset === "custom" ? "block" : "none";
+      resetResult();
+    });
+
+    qualityEl.addEventListener("input", () => {
+      quality = parseInt(qualityEl.value, 10);
+      valQuality.textContent = quality + "%";
+      resetResult();
+    });
+
+    btnProcess.addEventListener("click", async () => {
+      if (!file) return;
+      btnProcess.disabled = true;
+      btnProcess.textContent = "Processing…";
+      try {
+        const conf = PRESETS[preset] || PRESETS.custom;
+        const opts = {
+          quality: conf.quality != null ? conf.quality : quality,
+          maxWidth: conf.maxWidth,
+          maxHeight: conf.maxHeight
+        };
+        resultBlob = await compress(file, opts);
+        preview.src = URL.createObjectURL(resultBlob);
+        document.getElementById("stat-orig").textContent = fmt(originalSize);
+        document.getElementById("stat-result").textContent = fmt(resultBlob.size);
+        const saved = Math.max(0, ((originalSize - resultBlob.size) / originalSize) * 100);
+        document.getElementById("stat-saved").textContent = saved.toFixed(0) + "%";
+        stats.classList.remove("hidden");
+        btnDownload.classList.remove("hidden");
+        btnProcess.textContent = "Compress Again";
+      } catch (err) {
+        alert("Failed: " + err.message);
+        btnProcess.textContent = "Compress";
+      } finally {
+        btnProcess.disabled = false;
+      }
+    });
+
+    btnDownload.addEventListener("click", () => {
+      if (!resultBlob) return;
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(resultBlob);
+      a.href = url;
+      a.download = "imgproc-resize-" + Date.now() + ".jpg";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    });
+  })();
+  </script>
+</body>
+</html>
