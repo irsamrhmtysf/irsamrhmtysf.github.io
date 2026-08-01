@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>LLMs & Generative AI · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="chatbot.html">Chatbot Demo</a>
+      <a href="nlp.html">NLP</a>
+      <a href="neural.html">Neural Nets</a>
+    </div>
+    <span class="nav-badge">Topic 10 · LLMs</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 10 · LLMs, Generative AI &amp; Safety</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">How Large Language Models Work</h1>
+  <p style="margin-bottom:32px;max-width:620px">Interactive explorations of tokenisation, next-token prediction, temperature sampling, and hallucination — the core mechanisms behind GPT, Claude, and Gemini.</p>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px" id="tabs">
+    <button class="btn btn-primary" onclick="switchTab('tokenise',this)">Tokenisation</button>
+    <button class="btn btn-ghost" onclick="switchTab('predict',this)">Next-Token Prediction</button>
+    <button class="btn btn-ghost" onclick="switchTab('temperature',this)">Temperature &amp; Sampling</button>
+    <button class="btn btn-ghost" onclick="switchTab('hallucination',this)">Hallucination</button>
+    <button class="btn btn-ghost" onclick="switchTab('prompting',this)">Prompt Engineering</button>
+  </div>
+
+  <!-- TOKENISE -->
+  <div id="tab-tokenise">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div class="card">
+        <h3 style="margin-bottom:8px">What is a Token?</h3>
+        <p style="font-size:13px;margin-bottom:16px">LLMs don't read characters or words — they read <em>tokens</em>. A token is roughly 3–4 characters. The model's vocabulary is typically 50,000–100,000 tokens.</p>
+        <label class="label">Enter text to tokenise</label>
+        <textarea class="textarea" id="tokenInput" rows="4" oninput="tokenise()">The transformer architecture revolutionised natural language processing in 2017 when Google published "Attention Is All You Need".</textarea>
+        <div style="margin-top:16px" id="tokenOutput"></div>
+        <div id="tokenStats" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">Token cost calculator</h3>
+        <p style="font-size:13px;margin-bottom:16px">API pricing is per token. See how your text translates to cost at current frontier model prices.</p>
+        <div id="tokenCost"></div>
+        <div style="margin-top:20px;padding:14px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Key tokenisation facts</div>
+          <div style="font-size:13px;color:var(--text);display:flex;flex-direction:column;gap:6px">
+            <div>• 1 token ≈ 4 characters or ¾ of an English word</div>
+            <div>• 100 tokens ≈ 75 words (1 paragraph)</div>
+            <div>• GPT-4 context: 128,000 tokens (~96,000 words)</div>
+            <div>• Rare words are split into multiple tokens</div>
+            <div>• Code is denser: 1 token ≈ 2.6 chars</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEXT-TOKEN PREDICTION -->
+  <div id="tab-predict" style="display:none">
+    <div class="card" style="max-width:760px">
+      <h3 style="margin-bottom:8px">Next-Token Prediction</h3>
+      <p style="font-size:13px;margin-bottom:20px">LLMs are trained on a simple task: given all previous tokens, predict the next one. This is called <strong style="color:var(--accent)">autoregressive language modelling</strong>. Everything — reasoning, coding, conversation — emerges from this one objective.</p>
+
+      <label class="label">Context (the input)</label>
+      <textarea class="textarea" id="predictInput" rows="3" style="margin-bottom:14px">The capital of France is</textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+        <button class="btn btn-primary" onclick="simulatePredict()">Predict next tokens</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('predictInput').value='The best way to learn machine learning is'">Try: ML learning</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('predictInput').value='def fibonacci(n):'">Try: code</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('predictInput').value='Once upon a time in a land far away'">Try: story</button>
+      </div>
+      <div id="predictResult"></div>
+
+      <div class="card" style="background:var(--bg3);margin-top:20px;padding:16px">
+        <h4 style="margin-bottom:10px">Training objective: Cross-Entropy Loss</h4>
+        <p style="font-size:13px;margin-bottom:10px">At each position, the model predicts a probability over all ~50,000 tokens. Loss = how surprised the model was by the actual next token.</p>
+        <div class="terminal" style="font-size:12px">
+<span class="cm">// Simplified autoregressive training</span>
+<span class="kw">for</span> each token t <span class="kw">in</span> sequence:
+    logits = <span class="fn">transformer</span>(tokens[0..t-1])  <span class="cm">// predict</span>
+    loss   = <span class="fn">cross_entropy</span>(logits, tokens[t])  <span class="cm">// compare</span>
+    <span class="fn">backprop</span>(loss)  <span class="cm">// learn</span>
+<span class="cm">// Trained on trillions of tokens → general intelligence emerges</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPERATURE -->
+  <div id="tab-temperature" style="display:none">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div class="card">
+        <h3 style="margin-bottom:8px">Temperature &amp; Sampling</h3>
+        <p style="font-size:13px;margin-bottom:16px">Temperature controls how "creative" the model is. Low temperature → deterministic (most likely token). High temperature → random, creative, surprising.</p>
+        <div style="margin-bottom:20px">
+          <label class="label">Temperature: <span id="tempDisplay">0.7</span></label>
+          <input type="range" id="tempControl" min="0.01" max="2.0" step="0.01" value="0.7" style="width:100%;accent-color:var(--accent)" oninput="updateTemp()"/>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px">
+            <span>Deterministic (0)</span><span>Balanced (1)</span><span>Creative (2)</span>
+          </div>
+        </div>
+        <label class="label">Prompt</label>
+        <input class="input" id="tempPrompt" value="The future of AI will" style="margin-bottom:14px"/>
+        <button class="btn btn-primary" onclick="sampleText()" style="width:100%;margin-bottom:12px">Generate (sample 5 times)</button>
+        <div id="tempResults"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">Token probability distribution</h3>
+        <p style="font-size:13px;margin-bottom:16px">See how temperature reshapes the probability distribution over the next token choices.</p>
+        <canvas id="tempCanvas" width="320" height="240" style="width:100%;border-radius:8px;background:#060a10;display:block"></canvas>
+        <div style="margin-top:16px;padding:14px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Sampling methods</div>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:8px">
+            <div><span style="color:var(--accent);font-weight:600">Greedy:</span> Always pick the highest-probability token. Deterministic but repetitive.</div>
+            <div><span style="color:var(--teal);font-weight:600">Top-K:</span> Sample from the K most likely tokens only. GPT-4 uses top-k=50 by default.</div>
+            <div><span style="color:var(--amber);font-weight:600">Top-P (nucleus):</span> Sample from the smallest set of tokens whose cumulative prob ≥ P. More adaptive.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HALLUCINATION -->
+  <div id="tab-hallucination" style="display:none">
+    <div class="card" style="max-width:760px">
+      <h3 style="margin-bottom:8px">Why LLMs Hallucinate</h3>
+      <p style="font-size:13px;margin-bottom:20px">Hallucination is when an LLM confidently generates false information. It's not a bug — it's a fundamental property of how these models work. Understanding it is critical for safe deployment.</p>
+
+      <div class="grid-2" style="gap:16px;margin-bottom:24px">
+        <div style="padding:16px;background:rgba(244,63,94,.06);border-radius:10px;border:1px solid rgba(244,63,94,.2)">
+          <h4 style="color:var(--rose);margin-bottom:8px">Why it happens</h4>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+            <div>• The model predicts <em>plausible</em> continuations, not <em>true</em> ones</div>
+            <div>• No internal "fact-checker" — just pattern completion</div>
+            <div>• Training data has contradictions, outdated info, and errors</div>
+            <div>• The model can't distinguish memory from inference</div>
+            <div>• RLHF trains for confident-sounding responses</div>
+          </div>
+        </div>
+        <div style="padding:16px;background:rgba(34,197,94,.06);border-radius:10px;border:1px solid rgba(34,197,94,.2)">
+          <h4 style="color:var(--green);margin-bottom:8px">How to mitigate</h4>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+            <div>• RAG: Retrieval-Augmented Generation adds real sources</div>
+            <div>• Ask the model to cite sources and check them</div>
+            <div>• Lower temperature for factual tasks</div>
+            <div>• Never use LLMs for medical/legal decisions without verification</div>
+            <div>• Fine-tune on domain-specific verified data</div>
+          </div>
+        </div>
+      </div>
+
+      <h4 style="margin-bottom:12px">Test yourself: Real or Hallucinated?</h4>
+      <p style="font-size:13px;margin-bottom:16px">These are responses an LLM might give. Identify which are factually correct and which are plausible-sounding hallucinations.</p>
+      <div id="hallucinationQuiz"></div>
+    </div>
+  </div>
+
+  <!-- PROMPTING -->
+  <div id="tab-prompting" style="display:none">
+    <div class="card" style="max-width:760px">
+      <h3 style="margin-bottom:8px">Prompt Engineering Techniques</h3>
+      <p style="font-size:13px;margin-bottom:20px">The same model can give wildly different results depending on how you prompt it. These techniques can significantly improve output quality — no fine-tuning needed.</p>
+
+      <div id="promptCards"></div>
+
+      <div class="card" style="background:var(--bg3);margin-top:20px">
+        <h4 style="margin-bottom:12px">Try it yourself: Prompt comparison</h4>
+        <label class="label">Task</label>
+        <input class="input" id="taskInput" value="Explain gradient descent" style="margin-bottom:10px"/>
+        <label class="label">Technique</label>
+        <select class="input" id="techniqueSelect" style="margin-bottom:14px">
+          <option value="basic">Basic prompt</option>
+          <option value="cot">Chain-of-Thought</option>
+          <option value="fewshot">Few-Shot</option>
+          <option value="role">Role prompting</option>
+          <option value="structured">Structured output</option>
+        </select>
+        <button class="btn btn-primary" onclick="generatePrompt()" style="margin-bottom:14px">Generate example prompt</button>
+        <div id="promptOutput" class="result-box" style="min-height:80px;white-space:pre-wrap"><span class="result-placeholder">Select a technique and click Generate…</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Topic 10 · LLMs &amp; Generative AI</p></div></footer>
+
+<script>
+// ── Tab switching ──
+window.switchTab=(tab,btn)=>{
+  ['tokenise','predict','temperature','hallucination','prompting'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  document.querySelectorAll('#tabs .btn').forEach(b=>b.className='btn btn-ghost');
+  btn.className='btn btn-primary';
+  if(tab==='temperature') drawTempDist();
+};
+
+// ── TOKENISE ──
+// Simplified BPE-like tokeniser for educational purposes
+const VOCAB=[
+  'The','the','a','an','is','are','was','were','in','of','to','for','and','that','this','with',
+  'transformer','architecture','revolution','ised','natural','language','processing','published',
+  'capital','France','Paris','machine','learning','neural','network','model','token','tion','ing',
+  'ment','er','ed','ly','ness','ful','ive','ate','ent','ion','al','ous','able','ize','ise',
+  'Google','2017','Attention','All','You','Need','GPT','BERT','AI','ML',
+  ' ',' the',' a',' in',' of',' to',' and',' is',' are',' was',' for',' that',
+  ' The',' This',' A',' It',' He',' She',' They',' We',
+  '\n','.',',','!','?',':',';','"',"'",'(',')','-','_','/'
+];
+
+function naiveTokenise(text){
+  // Educational approximation: word + subword split
+  const tokens=[];
+  const words=text.match(/\S+|\s+/g)||[];
+  words.forEach(w=>{
+    const found=VOCAB.find(v=>v.trim()===w.trim());
+    if(found||w.trim().length<=3){ tokens.push(w); return; }
+    // Split longer words into ~4-char chunks
+    let i=0;
+    while(i<w.length){
+      const chunk=w.slice(i,Math.min(i+Math.ceil(3+Math.random()*2),w.length));
+      tokens.push(chunk); i+=chunk.length;
+    }
+  });
+  return tokens;
+}
+
+const TOKEN_COLORS=['#3b82f6','#f43f5e','#22c55e','#f59e0b','#a855f7','#14b8a6','#fb923c','#06b6d4'];
+
+window.tokenise=()=>{
+  const text=document.getElementById('tokenInput').value;
+  if(!text){ document.getElementById('tokenOutput').innerHTML=''; return; }
+  const tokens=naiveTokenise(text);
+  const html=tokens.map((t,i)=>{
+    const c=TOKEN_COLORS[i%TOKEN_COLORS.length];
+    const disp=t.replace(/ /g,'·').replace(/\n/g,'↵');
+    return `<span style="display:inline-block;background:${c}20;color:${c};border:1px solid ${c}40;border-radius:4px;padding:1px 5px;margin:2px;font-family:var(--mono);font-size:12px;cursor:default" title="Token ${i}: '${t}'">${disp}</span>`;
+  }).join('');
+  document.getElementById('tokenOutput').innerHTML=html;
+  const charsPer=tokens.length?text.length/tokens.length:0;
+  document.getElementById('tokenStats').innerHTML=`<strong>${tokens.length}</strong> tokens · <strong>${text.length}</strong> characters · <strong>${charsPer.toFixed(1)}</strong> chars/token`;
+  const models=[
+    {name:'GPT-4o',input:5,output:15},
+    {name:'Claude 3.5',input:3,output:15},
+    {name:'Gemini 1.5',input:1.25,output:5},
+    {name:'GPT-3.5',input:0.5,output:1.5},
+  ];
+  const n=tokens.length/1000;
+  document.getElementById('tokenCost').innerHTML=`<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px">API cost for ${tokens.length} tokens</div>`+
+    models.map(m=>{
+      const cost=(n*m.input).toFixed(4);
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--text)">${m.name}</span>
+        <span style="font-family:var(--mono);color:var(--accent)">$${cost}</span></div>`;
+    }).join('')+
+    `<div style="font-size:11px;color:var(--muted);margin-top:8px">Input token pricing (per 1M tokens). Actual cost varies.</div>`;
+};
+
+// ── NEXT TOKEN PREDICTION ──
+// Simplified vocabulary distributions for educational demo
+const CONTINUATIONS={
+  'the capital of france is':[[' Paris',0.94],[' the',0.02],['...',0.01],[' Lyon',0.01],['unknown',0.02]],
+  'the best way to learn machine learning is':[[' to',0.35],[' by',0.28],[' through',0.18],['...practice',0.12],['hands-on',0.07]],
+  'def fibonacci(n):':[['\n    if',0.52],['\n    return',0.28],['\n    n',0.12],['\n    #',0.05],['pass',0.03]],
+  'once upon a time in a land far away':[[' there',0.45],[', a',0.22],[' lived',0.18],[' was',0.10],['...',0.05]],
+};
+
+window.simulatePredict=()=>{
+  const input=document.getElementById('predictInput').value.trim().toLowerCase();
+  const key=Object.keys(CONTINUATIONS).find(k=>input.endsWith(k.trim()));
+  const dist=key?CONTINUATIONS[key]:[
+    [' the',0.12],[' a',0.09],[' and',0.08],[' of',0.07],['is',0.06],[' in',0.05],['...various',0.53]
+  ];
+  const colors=['#3b82f6','#22c55e','#f59e0b','#f43f5e','#a855f7'];
+  const html=`<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Top next-token predictions (log-probabilities)</div>`+
+    dist.map(([tok,prob],i)=>{
+      const pct=Math.round(prob*100);
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span style="font-family:var(--mono);color:${i===0?'var(--text)':'var(--muted)'};font-weight:${i===0?'700':'400'}">"${tok}"</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:11px;color:var(--muted)">${Math.log(prob).toFixed(2)}</span>
+            <span style="font-family:var(--mono);color:${colors[i]}">${pct}%</span>
+          </div>
+        </div>
+        <div style="background:var(--bg);border-radius:4px;height:7px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${colors[i]};border-radius:4px;transition:width .5s"></div>
+        </div></div>`;
+    }).join('')+
+    `<div style="margin-top:14px;padding:12px;background:rgba(59,130,246,.08);border-radius:8px;border-left:3px solid var(--accent);font-size:13px">
+      The model would select <strong style="color:var(--accent)">"${dist[0][0]}"</strong> with greedy decoding (${Math.round(dist[0][1]*100)}% probability).
+      With temperature sampling, lower-probability tokens can also be chosen, creating variety.
+    </div>`;
+  document.getElementById('predictResult').innerHTML=html;
+};
+
+// ── TEMPERATURE ──
+const NEXT_TOKENS_FOR_TEMP=[
+  {tok:'be',rawScore:4.2},{tok:'transform',rawScore:3.8},{tok:'change',rawScore:3.1},
+  {tok:'revolutionize',rawScore:2.4},{tok:'improve',rawScore:2.0},{tok:'remain',rawScore:1.5},
+  {tok:'shape',rawScore:1.2},{tok:'bring',rawScore:0.8},{tok:'fail',rawScore:0.2},
+];
+
+function softmax(logits,temp){
+  const scaled=logits.map(l=>l/temp);
+  const maxS=Math.max(...scaled);
+  const exp=scaled.map(s=>Math.exp(s-maxS));
+  const sum=exp.reduce((a,b)=>a+b,0);
+  return exp.map(e=>e/sum);
+}
+
+function drawTempDist(){
+  const temp=parseFloat(document.getElementById('tempControl').value);
+  const probs=softmax(NEXT_TOKENS_FOR_TEMP.map(t=>t.rawScore),temp);
+  const canvas=document.getElementById('tempCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,pad=40,bw=Math.floor((W-2*pad)/NEXT_TOKENS_FOR_TEMP.length)-4;
+  ctx.fillStyle='#060a10';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){ctx.beginPath();ctx.moveTo(pad,H-pad-(i/4)*(H-2*pad));ctx.lineTo(W-pad,H-pad-(i/4)*(H-2*pad));ctx.stroke();}
+  probs.forEach((p,i)=>{
+    const x=pad+i*(bw+4);
+    const barH=(H-2*pad)*p;
+    const y=H-pad-barH;
+    const alpha=Math.max(0.3,p*3);
+    ctx.fillStyle=`rgba(59,130,246,${alpha})`;
+    ctx.fillRect(x,y,bw,barH);
+    ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='9px Inter';ctx.textAlign='center';
+    ctx.fillText(NEXT_TOKENS_FOR_TEMP[i].tok.slice(0,6),x+bw/2,H-4);
+    if(p>0.05){ctx.fillStyle='rgba(255,255,255,.8)';ctx.fillText((p*100).toFixed(0)+'%',x+bw/2,y-4);}
+  });
+}
+
+window.updateTemp=()=>{
+  const t=parseFloat(document.getElementById('tempControl').value);
+  document.getElementById('tempDisplay').textContent=t.toFixed(2);
+  drawTempDist();
+};
+
+window.sampleText=()=>{
+  const temp=parseFloat(document.getElementById('tempControl').value);
+  const prompt=document.getElementById('tempPrompt').value;
+  const wordPools={
+    low:['be transformative','change everything','reshape industries','become ubiquitous','revolutionise work'],
+    mid:['be transformative','create new opportunities','reshape society','raise ethical questions','accelerate progress','require governance'],
+    high:['daydream in code','whisper to satellites','forget what Tuesday is','befriend the algorithms','become the weather'],
+  };
+  const pool=temp<0.5?wordPools.low:temp<1.2?wordPools.mid:wordPools.high;
+  const completions=Array.from({length:5},()=>`${prompt} ${pool[Math.floor(Math.random()*pool.length)]}...`);
+  const diversity=temp<0.5?'Low — all very similar':'High — varied and creative';
+  document.getElementById('tempResults').innerHTML=`
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Diversity at T=${temp.toFixed(2)}: <strong style="color:${temp<0.7?'var(--teal)':temp<1.3?'var(--amber)':'var(--rose)'}">${diversity}</strong></div>`+
+    completions.map(c=>`<div style="padding:8px 12px;background:var(--bg3);border-radius:6px;margin-bottom:6px;font-size:13px;border-left:2px solid var(--accent)44">${c}</div>`).join('');
+};
+
+// ── HALLUCINATION QUIZ ──
+const quizItems=[
+  {q:'AlphaGo defeated world Go champion Lee Sedol 4–1 in March 2016.',ans:true,exp:'True. DeepMind\'s AlphaGo won 4 of 5 games. It was a major AI milestone.'},
+  {q:'The paper "Attention Is All You Need" was published by Google Brain in 2017.',ans:true,exp:'True. This is the Transformer paper that introduced the architecture used in all modern LLMs.'},
+  {q:'OpenAI was founded in 2015 by Sam Altman, Elon Musk, and Ilya Sutskever, with initial funding of $2 billion.',ans:false,exp:'Hallucination! OpenAI was founded in 2015, but the initial funding pledge was $1 billion (not $2B), and not all named people were co-founders in the same role.'},
+  {q:'The ImageNet competition (ILSVRC) was won by a deep CNN called AlexNet in 2012, reducing error from 26% to 15.3%.',ans:true,exp:'True. AlexNet\'s victory in 2012 is considered the start of the deep learning era in computer vision.'},
+  {q:'Yoshua Bengio, Geoffrey Hinton, and Yann LeCun received the 2019 Turing Award for their work on deep learning.',ans:true,exp:'True. They are often called the "Godfathers of Deep Learning" and shared the 2018 Turing Award (announced 2019).'},
+  {q:'GPT-4 has exactly 1.76 trillion parameters arranged in 96 transformer layers with 128 attention heads.',ans:false,exp:'Hallucination! OpenAI has never officially disclosed GPT-4\'s architecture. The 1.76T figure is a widely-cited rumour with no official confirmation.'},
+];
+
+const quiz=document.getElementById('hallucinationQuiz');
+let quizAnswered=new Set();
+quiz.innerHTML=quizItems.map((item,i)=>`
+  <div class="card" style="margin-bottom:12px" id="quiz-${i}">
+    <div style="font-size:14px;margin-bottom:12px">${item.q}</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="answerQuiz(${i},true,${item.ans})">✓ True</button>
+      <button class="btn btn-ghost btn-sm" onclick="answerQuiz(${i},false,${item.ans})">✗ False (Hallucination)</button>
+    </div>
+    <div id="quiz-exp-${i}" style="display:none;margin-top:12px;font-size:13px;padding:10px;border-radius:8px"></div>
+  </div>`).join('');
+
+window.answerQuiz=(i,answer,correct)=>{
+  if(quizAnswered.has(i))return;
+  quizAnswered.add(i);
+  const item=quizItems[i];
+  const correct_ans=answer===item.ans;
+  const expEl=document.getElementById('quiz-exp-'+i);
+  expEl.style.display='block';
+  expEl.style.background=correct_ans?'rgba(34,197,94,.08)':'rgba(244,63,94,.08)';
+  expEl.style.border=`1px solid ${correct_ans?'rgba(34,197,94,.2)':'rgba(244,63,94,.2)'}`;
+  expEl.innerHTML=`<strong style="color:${correct_ans?'var(--green)':'var(--rose)'}">${correct_ans?'Correct! ✓':'Wrong! ✗'}</strong> — ${item.exp}`;
+  const card=document.getElementById('quiz-'+i);
+  card.style.borderColor=correct_ans?'var(--green)':'var(--rose)';
+};
+
+// ── PROMPTING ──
+const techniques={
+  basic:{title:'Basic Prompt',desc:'Just ask the question directly. Simple and often sufficient for easy tasks.',
+    gen:task=>`${task}`},
+  cot:{title:'Chain-of-Thought',desc:'Instruct the model to "think step by step" before answering. Dramatically improves multi-step reasoning.',
+    gen:task=>`${task}\n\nThink through this step by step before giving your final answer.`},
+  fewshot:{title:'Few-Shot Prompting',desc:'Provide 2-3 examples of the desired format. The model learns the pattern and applies it to new inputs.',
+    gen:task=>`Here are examples of clear explanations:\n\nExample 1:\nTask: Explain photosynthesis\nAnswer: Photosynthesis is how plants convert sunlight + CO₂ + water into glucose and oxygen. Think of it as the plant's "solar panel + factory" system.\n\nExample 2:\nTask: Explain backpropagation\nAnswer: Backprop is how neural networks learn from mistakes. After making a prediction, we measure the error, then trace that error backwards through each layer to figure out which weights caused it.\n\nNow explain:\nTask: ${task}\nAnswer:`},
+  role:{title:'Role Prompting',desc:'Give the model a persona or expert role. Can significantly improve domain-specific quality.',
+    gen:task=>`You are an expert machine learning professor known for exceptionally clear, intuitive explanations with real-world analogies. Your students are intelligent but non-technical.\n\n${task}`},
+  structured:{title:'Structured Output',desc:'Specify the exact format you want. Reduces hallucination and makes output programmable.',
+    gen:task=>`${task}\n\nRespond in exactly this JSON format:\n{\n  "summary": "one sentence",\n  "key_points": ["point 1", "point 2", "point 3"],\n  "analogy": "a real-world comparison",\n  "common_mistake": "what beginners often get wrong"\n}`},
+};
+
+const promptCards=document.getElementById('promptCards');
+promptCards.innerHTML=Object.entries(techniques).map(([key,t])=>`
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <h4 style="color:var(--text)">${t.title}</h4>
+    </div>
+    <p style="font-size:13px;margin-bottom:0">${t.desc}</p>
+  </div>`).join('');
+
+window.generatePrompt=()=>{
+  const task=document.getElementById('taskInput').value.trim();
+  const tech=document.getElementById('techniqueSelect').value;
+  if(!task)return;
+  const prompt=techniques[tech].gen(task);
+  document.getElementById('promptOutput').textContent=prompt;
+};
+
+// Init
+tokenise();
+setTimeout(drawTempDist,100);
+
+// Build hallucination quiz (already done above via innerHTML)
+</script>
+</body>
+</html>

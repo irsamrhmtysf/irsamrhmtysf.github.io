@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Ethics · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="history.html">History</a>
+      <a href="nlp.html">NLP Demo</a>
+      <a href="chatbot.html">Chatbot</a>
+    </div>
+    <span class="nav-badge">Topic 04 · Ethics</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 04 · AI Ethics &amp; Fairness</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">Exploring AI Bias &amp; Fairness</h1>
+  <p style="margin-bottom:32px;max-width:620px">Interact with scenarios that reveal how bias enters AI systems, and explore the mathematical definitions of fairness that often conflict with each other.</p>
+
+  <!-- Bias simulator -->
+  <div class="card" style="margin-bottom:24px">
+    <h3 style="margin-bottom:6px">Loan Approval Bias Simulator</h3>
+    <p style="font-size:13px;margin-bottom:20px">A bank uses an ML model trained on historical data to approve or deny loans. Adjust the model to see how different training choices create bias.</p>
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div>
+        <label class="label">Training data bias (how unequal were historical approvals?)</label>
+        <input type="range" id="trainBias" min="0" max="0.5" step="0.01" value="0.2" style="width:100%;accent-color:var(--accent);margin-bottom:4px" oninput="updateBiasSimulator()"/>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>No bias</span><span>Severe bias</span></div>
+
+        <label class="label" style="margin-top:16px">Decision threshold (above this score = approved)</label>
+        <input type="range" id="threshold" min="0.1" max="0.9" step="0.01" value="0.5" style="width:100%;accent-color:var(--teal);margin-bottom:4px" oninput="updateBiasSimulator()"/>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>Lenient (0.1)</span><span>Strict (0.9)</span></div>
+
+        <label class="label" style="margin-top:16px">Fairness constraint</label>
+        <select class="input" id="fairnessType" onchange="updateBiasSimulator()">
+          <option value="none">None — optimise accuracy only</option>
+          <option value="dp">Demographic Parity — equal approval rates</option>
+          <option value="eo">Equalised Odds — equal TPR &amp; FPR</option>
+        </select>
+      </div>
+      <div id="biasResults" class="result-box" style="min-height:200px"></div>
+    </div>
+  </div>
+
+  <!-- Fairness metrics explainer -->
+  <div class="grid-2" style="gap:20px;margin-bottom:24px">
+    <div class="card" style="border-color:var(--accent)">
+      <h4 style="margin-bottom:8px;color:var(--accent)">Demographic Parity</h4>
+      <p style="font-size:13px;margin-bottom:10px">The model must approve loans at the same rate for all groups, regardless of actual repayment probability.</p>
+      <code style="font-size:12px;background:var(--bg3);padding:6px 10px;border-radius:6px;display:block">P(approve | group A) = P(approve | group B)</code>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px"><strong>Problem:</strong> If groups genuinely differ in repayment rates, this forces the model to ignore that signal — potentially disadvantaging profitable applicants in both groups.</p>
+    </div>
+    <div class="card" style="border-color:var(--teal)">
+      <h4 style="margin-bottom:8px;color:var(--teal)">Equalised Odds</h4>
+      <p style="font-size:13px;margin-bottom:10px">Equal true positive AND false positive rates across groups. If you repay your loan, you should have the same chance of being approved regardless of group.</p>
+      <code style="font-size:12px;background:var(--bg3);padding:6px 10px;border-radius:6px;display:block">TPR_A = TPR_B AND FPR_A = FPR_B</code>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px"><strong>Problem:</strong> Mathematically impossible to satisfy simultaneously with demographic parity unless base rates are equal (Chouldechova 2017).</p>
+    </div>
+  </div>
+
+  <!-- Case studies -->
+  <h2 style="margin-bottom:20px">Real-World AI Ethics Cases</h2>
+  <div id="caseCards" style="display:flex;flex-direction:column;gap:16px"></div>
+
+  <!-- Ethics framework -->
+  <div class="card" style="margin-top:32px">
+    <h3 style="margin-bottom:16px">Stakeholder Analysis Framework</h3>
+    <p style="font-size:13px;margin-bottom:16px">Before deploying any AI system, analyse who is affected and how. Enter a system description to get a structured stakeholder analysis.</p>
+    <textarea class="textarea" id="stakeholderInput" rows="3" placeholder="Describe the AI system... e.g. 'An AI model that screens job applications and ranks candidates for HR departments'"></textarea>
+    <button class="btn btn-primary" onclick="analyseStakeholders()" style="margin-top:12px">Analyse Stakeholders</button>
+    <div id="stakeholderResult" style="margin-top:16px"></div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Topic 04 · AI Ethics &amp; Fairness</p></div></footer>
+
+<script>
+// ── Bias Simulator ──
+function updateBiasSimulator(){
+  const bias=parseFloat(document.getElementById('trainBias').value);
+  const thresh=parseFloat(document.getElementById('threshold').value);
+  const fairType=document.getElementById('fairnessType').value;
+
+  // Simulate two groups: A (majority, historically favoured) and B (minority, historically disadvantaged)
+  const N=1000;
+  // True repayment rate: A=70%, B=65% (small real difference)
+  const trueRateA=0.70, trueRateB=0.65;
+  // Model score adds bias based on training data imbalance
+  // Group A gets scores shifted up by bias amount due to biased historical data
+  function simulate(n,trueRate,biasOffset){
+    let tp=0,fp=0,tn=0,fn=0;
+    for(let i=0;i<n;i++){
+      const willRepay=Math.random()<trueRate;
+      const score=Math.random()*0.6+0.2+(willRepay?0.2:0)+biasOffset;
+      const approved=score>thresh;
+      if(willRepay&&approved) tp++;
+      else if(!willRepay&&approved) fp++;
+      else if(willRepay&&!approved) fn++;
+      else tn++;
+    }
+    return{tp,fp,tn,fn,n};
+  }
+
+  let simA=simulate(N,trueRateA,bias);
+  let simB=simulate(N,trueRateB,-bias);
+
+  if(fairType==='dp'){
+    // Demographic parity: adjust threshold for group B to match A's approval rate
+    simA=simulate(N,trueRateA,bias);
+    const targetRate=(simA.tp+simA.fp)/N;
+    simB=simulate(N,trueRateB,-bias+0.15); // simplified: raise B threshold to match
+  }
+
+  function metrics(s){
+    const total=s.n;
+    const approvalRate=(s.tp+s.fp)/total;
+    const tpr=s.tp/(s.tp+s.fn)||0;
+    const fpr=s.fp/(s.fp+s.tn)||0;
+    const precision=s.tp/(s.tp+s.fp)||0;
+    return{approvalRate,tpr,fpr,precision};
+  }
+
+  const mA=metrics(simA), mB=metrics(simB);
+  const dpGap=Math.abs(mA.approvalRate-mB.approvalRate);
+  const tprGap=Math.abs(mA.tpr-mB.tpr);
+  const fprGap=Math.abs(mA.fpr-mB.fpr);
+
+  const barColor=(val,threshold)=>val<threshold?'var(--green)':'var(--rose)';
+
+  document.getElementById('biasResults').innerHTML=`
+    <div style="margin-bottom:14px;font-size:13px;font-weight:600;color:var(--text)">Simulation results (N=${N} per group)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="padding:10px;background:rgba(59,130,246,.08);border-radius:8px;border:1px solid rgba(59,130,246,.2)">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px">GROUP A</div>
+        <div style="font-size:12px">Approval: <strong>${(mA.approvalRate*100).toFixed(1)}%</strong></div>
+        <div style="font-size:12px">TPR: ${(mA.tpr*100).toFixed(1)}%</div>
+        <div style="font-size:12px">FPR: ${(mA.fpr*100).toFixed(1)}%</div>
+      </div>
+      <div style="padding:10px;background:rgba(244,63,94,.08);border-radius:8px;border:1px solid rgba(244,63,94,.2)">
+        <div style="font-size:11px;font-weight:700;color:var(--rose);margin-bottom:6px">GROUP B</div>
+        <div style="font-size:12px">Approval: <strong>${(mB.approvalRate*100).toFixed(1)}%</strong></div>
+        <div style="font-size:12px">TPR: ${(mB.tpr*100).toFixed(1)}%</div>
+        <div style="font-size:12px">FPR: ${(mB.fpr*100).toFixed(1)}%</div>
+      </div>
+    </div>
+    <div style="margin-bottom:8px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Fairness gaps</div>
+    ${[
+      ['Demographic Parity Gap',dpGap,0.05,'Approval rate difference — ideal: < 5%'],
+      ['TPR Gap',tprGap,0.05,'Equal opportunity — ideal: < 5%'],
+      ['FPR Gap',fprGap,0.05,'Equal false positives — ideal: < 5%'],
+    ].map(([name,val,thresh,desc])=>`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span>${name}</span>
+          <span style="font-family:var(--mono);color:${barColor(val,thresh)}">${(val*100).toFixed(1)}%</span>
+        </div>
+        <div style="background:var(--bg);border-radius:4px;height:6px;overflow:hidden">
+          <div style="width:${Math.min(val*200,100)}%;height:100%;background:${barColor(val,thresh)};border-radius:4px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${desc}</div>
+      </div>`).join('')}
+    <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;background:${dpGap<0.05&&tprGap<0.05?'rgba(34,197,94,.08)':'rgba(244,63,94,.08)'};border:1px solid ${dpGap<0.05&&tprGap<0.05?'rgba(34,197,94,.2)':'rgba(244,63,94,.2)'}">
+      ${dpGap<0.05&&tprGap<0.05?'✅ Model meets fairness thresholds':'⚠️ Model shows measurable bias. Adjust training bias or apply a fairness constraint.'}
+    </div>`;
+}
+
+// ── Case Studies ──
+const cases=[
+  {icon:'📄',title:'Amazon Resume Screener (2018)',severity:'high',
+   what:'Amazon trained an ML model on 10 years of hiring data to screen CVs. The model learned to down-rank CVs containing the word "women\'s" (e.g. women\'s chess club).',
+   why:'The training data reflected historical hiring patterns that were predominantly male. The model learned "looks like our past hires" as a proxy for "good candidate".',
+   outcome:'Amazon scrapped the tool. It was never used in production decisions. This case is now the canonical example of training data bias.',
+   lesson:'Historical data encodes historical discrimination. A model trained on biased outcomes will reproduce and amplify that bias.'},
+  {icon:'⚖',title:'COMPAS Recidivism Algorithm (2016)',severity:'high',
+   what:'COMPAS predicted recidivism risk for criminal defendants. ProPublica found it was twice as likely to falsely flag Black defendants as high risk vs White defendants.',
+   why:'The model used features correlated with race (zip code, employment history) without directly using race. Proxies can introduce bias as effectively as direct discrimination.',
+   outcome:'Legal battles continue over whether algorithmic risk scores are acceptable in sentencing. Several states have restricted use.',
+   lesson:'Removing protected attributes (race, gender) from features is not enough. Proxies like zip code can act as surrogates.'},
+  {icon:'🏥',title:'Healthcare Algorithm (2019, Obermeyer et al.)',severity:'high',
+   what:'A widely-used healthcare algorithm used healthcare costs as a proxy for healthcare needs. Black patients needed to be sicker than White patients to receive the same care score.',
+   why:'The algorithm used "future healthcare costs" as a target — but Black patients historically incurred lower costs due to less access to care, not lower health needs.',
+   outcome:'The bias was found to affect millions of patients. The authors estimated it reduced the number of Black patients receiving extra care by more than half.',
+   lesson:'Your choice of target variable is an ethical decision. What you optimise for encodes assumptions about what matters.'},
+  {icon:'📷',title:'Facial Recognition Accuracy Gap (MIT Media Lab, 2018)',severity:'medium',
+   what:'Joy Buolamwini and Timnit Gebru\'s Gender Shades study found commercial facial recognition systems had error rates of up to 34.7% for dark-skinned women vs 0.8% for light-skinned men.',
+   why:'Training datasets were predominantly composed of lighter-skinned faces. The models simply had less data — and therefore less accuracy — for underrepresented groups.',
+   outcome:'Several cities (San Francisco, Boston) banned government use of facial recognition. Amazon paused police use of Rekognition in 2020.',
+   lesson:'Dataset diversity is not just a fairness issue — it directly determines where the model is accurate. Underrepresented groups get worse products.'},
+];
+
+document.getElementById('caseCards').innerHTML=cases.map(c=>{
+  const sColor=c.severity==='high'?'var(--rose)':'var(--amber)';
+  return `<div class="card">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div style="font-size:32px">${c.icon}</div>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+          <h3 style="font-size:1rem">${c.title}</h3>
+          <span class="chip" style="background:${sColor}18;color:${sColor};font-size:10px">${c.severity.toUpperCase()} IMPACT</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">What happened</div><p style="font-size:13px;margin:0">${c.what}</p></div>
+          <div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Why it happened</div><p style="font-size:13px;margin:0">${c.why}</p></div>
+        </div>
+        <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:4px">KEY LESSON</div>
+          <p style="font-size:13px;margin:0">${c.lesson}</p>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:0"><strong>Outcome:</strong> ${c.outcome}</p>
+      </div>
+    </div>
+  </div>`;
+}).join('');
+
+// ── Stakeholder analysis ──
+window.analyseStakeholders=()=>{
+  const system=document.getElementById('stakeholderInput').value.trim();
+  if(!system){ alert('Please describe the AI system.'); return; }
+  const groups=[
+    {name:'Direct users',color:'var(--accent)',icon:'👤',questions:['Who uses the system directly?','What decisions do they make with it?','What biases might they bring?']},
+    {name:'Affected subjects',color:'var(--rose)',icon:'🎯',questions:['Who is classified or scored by the system?','What are the consequences of errors for them?','Do they know the AI is being used?']},
+    {name:'Operators',color:'var(--teal)',icon:'🏢',questions:['Who deploys and maintains the system?','What are their incentives?','Who is accountable when it fails?']},
+    {name:'Regulators & Society',color:'var(--amber)',icon:'⚖',questions:['Which laws apply (GDPR, EU AI Act, etc.)?','What are the broader social consequences?','Who advocates for affected groups?']},
+  ];
+  document.getElementById('stakeholderResult').innerHTML=`
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px">System: "${system}"</div>
+    <div class="grid-2" style="gap:14px">
+    ${groups.map(g=>`<div class="card" style="border-color:${g.color}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:20px">${g.icon}</span>
+        <h4 style="color:${g.color}">${g.name}</h4>
+      </div>
+      ${g.questions.map(q=>`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:13px">
+        <span style="color:${g.color};flex-shrink:0">→</span><span style="color:var(--muted)">${q}</span>
+      </div>`).join('')}
+    </div>`).join('')}
+    </div>`;
+};
+
+updateBiasSimulator();
+</script>
+</body>
+</html>

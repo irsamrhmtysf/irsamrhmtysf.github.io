@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Unsupervised Learning · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="supervised.html">Supervised</a>
+      <a href="neural.html">Neural Nets</a>
+      <a href="chatbot.html">Chatbot</a>
+    </div>
+    <span class="nav-badge">Topic 07 · Unsupervised</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 07 · Unsupervised Learning</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">K-Means Clustering & PCA</h1>
+  <p style="margin-bottom:32px;max-width:600px">No labels needed. Click the canvas to add points, choose K, and watch the algorithm discover structure. Includes live PCA dimensionality reduction.</p>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px" id="tabs">
+    <button class="btn btn-primary" onclick="switchTab('kmeans',this)">K-Means Clustering</button>
+    <button class="btn btn-ghost" onclick="switchTab('pca',this)">PCA — Dimensionality Reduction</button>
+    <button class="btn btn-ghost" onclick="switchTab('elbow',this)">Elbow Method — Choose K</button>
+  </div>
+
+  <!-- K-MEANS TAB -->
+  <div id="tab-kmeans">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <h3 style="margin-bottom:12px">Add Data Points</h3>
+          <p style="font-size:13px;margin-bottom:12px">Click the canvas to add points. K-Means will find clusters automatically — no class labels needed.</p>
+          <canvas id="kmCanvas" width="300" height="260" style="width:100%;border-radius:8px;background:#060a10;cursor:crosshair;display:block;border:1px solid var(--border2)"></canvas>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-ghost btn-sm" onclick="generateBlobs()">Generate blobs</button>
+            <button class="btn btn-ghost btn-sm" onclick="generateRing()">Generate rings</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearKM()">Clear</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px" id="kmPointCount">Points: 0</div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:12px">Settings</h3>
+          <label class="label">K (number of clusters): <span id="kVal">3</span></label>
+          <input type="range" id="kSlider" min="2" max="8" step="1" value="3" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('kVal').textContent=this.value"/>
+          <label class="label" style="margin-top:12px">Init method</label>
+          <select class="input" id="initMethod">
+            <option value="random">Random centroids</option>
+            <option value="kmpp">K-Means++ (smarter init)</option>
+          </select>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="btn btn-primary" id="runBtn" onclick="runKMeans()" style="flex:1">Run K-Means</button>
+            <button class="btn btn-ghost" onclick="stepKMeans()">Step</button>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:10px">
+            <div style="flex:1;text-align:center;background:var(--bg3);border-radius:8px;padding:10px">
+              <div style="font-size:1.4rem;font-weight:800;color:var(--accent);font-family:var(--display)" id="iterDisplay">0</div>
+              <div style="font-size:11px;color:var(--muted)">Iteration</div>
+            </div>
+            <div style="flex:1;text-align:center;background:var(--bg3);border-radius:8px;padding:10px">
+              <div style="font-size:1.4rem;font-weight:800;color:var(--teal);font-family:var(--display)" id="inertiaDisplay">—</div>
+              <div style="font-size:11px;color:var(--muted)">Inertia</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">Clustering Result</div>
+          <canvas id="kmResultCanvas" width="340" height="280" style="width:100%;display:block;background:#060a10"></canvas>
+        </div>
+        <div class="card">
+          <h4 style="margin-bottom:8px">How K-Means Works</h4>
+          <p style="font-size:13px;margin-bottom:10px">K-Means alternates between two steps until convergence:</p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="padding:10px;background:rgba(59,130,246,.08);border-radius:8px;border-left:3px solid var(--accent)">
+              <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:3px">STEP 1 — Assign</div>
+              <div style="font-size:12px;color:var(--muted)">Assign each point to its nearest centroid using Euclidean distance.</div>
+            </div>
+            <div style="padding:10px;background:rgba(20,184,166,.08);border-radius:8px;border-left:3px solid var(--teal)">
+              <div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:3px">STEP 2 — Update</div>
+              <div style="font-size:12px;color:var(--muted)">Move each centroid to the mean of all points assigned to it.</div>
+            </div>
+          </div>
+          <div class="terminal" style="margin-top:12px;font-size:12px">
+<span class="cm">// K-Means core loop</span>
+<span class="kw">while</span> (!converged) {
+  <span class="cm">// Assign each point to nearest centroid</span>
+  assignments = points.<span class="fn">map</span>(p => <span class="fn">argmin</span>(centroids, c => <span class="fn">dist</span>(p,c)));
+  <span class="cm">// Update centroids to cluster means</span>
+  centroids = centroids.<span class="fn">map</span>((_,k) => <span class="fn">mean</span>(points.<span class="fn">filter</span>((_,i) => assignments[i]===k)));
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PCA TAB -->
+  <div id="tab-pca" style="display:none">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div class="card">
+        <h3 style="margin-bottom:12px">PCA — Principal Component Analysis</h3>
+        <p style="font-size:13px;margin-bottom:16px">PCA finds the directions of maximum variance in data. We start with 3D data and project it to 2D, preserving as much structure as possible.</p>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn btn-primary btn-sm" onclick="generatePCAData('cluster')">3-cluster data</button>
+          <button class="btn btn-ghost btn-sm" onclick="generatePCAData('line')">Linear data</button>
+          <button class="btn btn-ghost btn-sm" onclick="generatePCAData('noise')">Pure noise</button>
+        </div>
+        <div class="card" style="background:var(--bg3);padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Explained variance</div>
+          <div id="varBars"></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px" id="cumVar"></div>
+        </div>
+        <div class="card" style="margin-top:16px;background:var(--bg3);padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Original data (3D stats)</div>
+          <div id="pcaStats" style="font-family:var(--mono);font-size:12px;color:var(--text)"></div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">2D Projection (PC1 vs PC2)</div>
+        <canvas id="pcaCanvas" width="340" height="320" style="width:100%;display:block;background:#060a10"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ELBOW TAB -->
+  <div id="tab-elbow" style="display:none">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div class="card">
+        <h3 style="margin-bottom:12px">Elbow Method</h3>
+        <p style="font-size:13px;margin-bottom:16px">Run K-Means with K=1..8, plot inertia vs K. The "elbow" — where the curve bends — suggests the optimal K.</p>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn btn-ghost btn-sm" onclick="generateElbowData('blobs3')">3-blob data</button>
+          <button class="btn btn-ghost btn-sm" onclick="generateElbowData('blobs5')">5-blob data</button>
+          <button class="btn btn-ghost btn-sm" onclick="generateElbowData('random')">Random data</button>
+        </div>
+        <button class="btn btn-primary" onclick="runElbow()" style="width:100%;margin-bottom:16px" id="elbowBtn">Run Elbow Analysis</button>
+        <div id="elbowTable" class="result-box" style="min-height:80px"><span class="result-placeholder">Generate data and run analysis…</span></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">Inertia vs K</div>
+        <canvas id="elbowCanvas" width="340" height="280" style="width:100%;display:block;background:#060a10"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Unsupervised Learning Demo · Pure JS</p></div></footer>
+
+<script>
+// ── Shared helpers ──
+const COLORS=['#3b82f6','#f43f5e','#22c55e','#f59e0b','#a855f7','#14b8a6','#fb923c','#e879f9'];
+function dist2(a,b){return(a[0]-b[0])**2+(a[1]-b[1])**2;}
+function dist(a,b){return Math.sqrt(dist2(a,b));}
+function mean(arr,k){const s=[0,0];let n=0;arr.forEach(([x,y],i)=>{if(k===undefined||k===i){s[0]+=x;s[1]+=y;n++;}});return n?[s[0]/n,s[1]/n]:null;}
+function toC(v,min,max,size,pad){return pad+(v-min)/(max-min+1e-9)*(size-2*pad);}
+
+// ── K-MEANS ──
+let kmPoints=[], kmCentroids=[], kmAssign=[], kmIter=0;
+
+const kmC=document.getElementById('kmCanvas');
+const kmRC=document.getElementById('kmResultCanvas');
+const kmCtx=kmC.getContext('2d');
+const kmRCtx=kmRC.getContext('2d');
+
+function toKmCanvas(v,size){return (v+2)/4*size;}
+function fromKmCanvas(px,size){return px/size*4-2;}
+
+kmC.addEventListener('click',e=>{
+  const r=kmC.getBoundingClientRect();
+  const x=fromKmCanvas((e.clientX-r.left)*(kmC.width/r.width),kmC.width);
+  const y=fromKmCanvas((e.clientY-r.top)*(kmC.height/r.height),kmC.height);
+  kmPoints.push([x,y]); kmAssign=[]; kmCentroids=[]; kmIter=0;
+  drawKMInput(); drawKMResult();
+  document.getElementById('kmPointCount').textContent='Points: '+kmPoints.length;
+  document.getElementById('iterDisplay').textContent='0';
+  document.getElementById('inertiaDisplay').textContent='—';
+});
+
+function drawKMInput(){
+  const W=kmC.width,H=kmC.height;
+  kmCtx.fillStyle='#060a10';kmCtx.fillRect(0,0,W,H);
+  drawGridCtx(kmCtx,W,H);
+  kmPoints.forEach((p,i)=>{
+    const c=kmAssign.length?COLORS[kmAssign[i]%COLORS.length]:'#64748b';
+    kmCtx.beginPath();kmCtx.arc(toKmCanvas(p[0],W),toKmCanvas(p[1],H),5,0,Math.PI*2);
+    kmCtx.fillStyle=c;kmCtx.fill();
+  });
+  if(kmCentroids.length){
+    kmCentroids.forEach((c,i)=>{
+      kmCtx.beginPath();kmCtx.arc(toKmCanvas(c[0],W),toKmCanvas(c[1],H),9,0,Math.PI*2);
+      kmCtx.fillStyle=COLORS[i];kmCtx.fill();
+      kmCtx.strokeStyle='#fff';kmCtx.lineWidth=2;kmCtx.stroke();
+      // cross
+      const cx=toKmCanvas(c[0],W),cy=toKmCanvas(c[1],H);
+      kmCtx.strokeStyle='#fff';kmCtx.lineWidth=1.5;
+      kmCtx.beginPath();kmCtx.moveTo(cx-5,cy);kmCtx.lineTo(cx+5,cy);kmCtx.moveTo(cx,cy-5);kmCtx.lineTo(cx,cy+5);kmCtx.stroke();
+    });
+  }
+}
+
+function drawKMResult(){
+  const W=kmRC.width,H=kmRC.height;
+  kmRCtx.fillStyle='#060a10';kmRCtx.fillRect(0,0,W,H);
+  drawGridCtx(kmRCtx,W,H);
+  if(!kmAssign.length){return;}
+  // Voronoi fill
+  const res=4;
+  for(let py=0;py<H;py+=res)for(let px=0;px<W;px+=res){
+    const x=fromKmCanvas(px*(kmC.width/W),kmC.width);
+    const y=fromKmCanvas(py*(kmC.height/H),kmC.height);
+    let best=0,bd=1e9;
+    kmCentroids.forEach((c,i)=>{const d=dist2([x,y],c);if(d<bd){bd=d;best=i;}});
+    const col=COLORS[best];
+    kmRCtx.fillStyle=col+'28';
+    kmRCtx.fillRect(px,py,res,res);
+  }
+  kmPoints.forEach((p,i)=>{
+    const c=COLORS[kmAssign[i]%COLORS.length];
+    kmRCtx.beginPath();kmRCtx.arc(toKmCanvas(p[0],W*(kmRC.width/kmC.width)),toKmCanvas(p[1],H*(kmRC.height/kmC.height)),5,0,Math.PI*2);
+    kmRCtx.fillStyle=c;kmRCtx.fill();
+    kmRCtx.strokeStyle='rgba(255,255,255,.4)';kmRCtx.lineWidth=1;kmRCtx.stroke();
+  });
+  kmCentroids.forEach((c,i)=>{
+    const cx=toKmCanvas(c[0],W*(kmRC.width/kmC.width));
+    const cy=toKmCanvas(c[1],H*(kmRC.height/kmC.height));
+    kmRCtx.beginPath();kmRCtx.arc(cx,cy,10,0,Math.PI*2);
+    kmRCtx.fillStyle=COLORS[i];kmRCtx.fill();
+    kmRCtx.strokeStyle='#fff';kmRCtx.lineWidth=2.5;kmRCtx.stroke();
+    kmRCtx.fillStyle='#fff';kmRCtx.font='bold 11px Inter';kmRCtx.textAlign='center';kmRCtx.textBaseline='middle';
+    kmRCtx.fillText(i+1,cx,cy);
+  });
+}
+
+function initCentroids(k,method){
+  if(method==='kmpp'){
+    const cents=[kmPoints[Math.floor(Math.random()*kmPoints.length)]];
+    while(cents.length<k){
+      const dists=kmPoints.map(p=>Math.min(...cents.map(c=>dist2(p,c))));
+      const total=dists.reduce((a,b)=>a+b,0);
+      let r=Math.random()*total;
+      for(let i=0;i<dists.length;i++){r-=dists[i];if(r<=0){cents.push(kmPoints[i]);break;}}
+    }
+    return cents.map(c=>[...c]);
+  }
+  const shuffled=[...kmPoints].sort(()=>Math.random()-.5);
+  return shuffled.slice(0,k).map(c=>[...c]);
+}
+
+function assignPoints(){
+  kmAssign=kmPoints.map(p=>{
+    let best=0,bd=1e9;
+    kmCentroids.forEach((c,i)=>{const d=dist2(p,c);if(d<bd){bd=d;best=i;}});
+    return best;
+  });
+}
+
+function updateCentroids(){
+  const k=kmCentroids.length;
+  let moved=false;
+  for(let i=0;i<k;i++){
+    const cluster=kmPoints.filter((_,pi)=>kmAssign[pi]===i);
+    if(!cluster.length) continue;
+    const newC=[cluster.reduce((s,p)=>s+p[0],0)/cluster.length,cluster.reduce((s,p)=>s+p[1],0)/cluster.length];
+    if(dist(newC,kmCentroids[i])>0.001) moved=true;
+    kmCentroids[i]=newC;
+  }
+  return moved;
+}
+
+function calcInertia(){
+  return kmPoints.reduce((s,p,i)=>s+dist2(p,kmCentroids[kmAssign[i]]),0).toFixed(2);
+}
+
+window.runKMeans=async()=>{
+  if(kmPoints.length<3){alert('Add at least 3 points.');return;}
+  const k=parseInt(document.getElementById('kSlider').value);
+  const method=document.getElementById('initMethod').value;
+  kmCentroids=initCentroids(k,method);
+  kmIter=0;
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;
+  let moved=true;
+  while(moved&&kmIter<50){
+    assignPoints();moved=updateCentroids();kmIter++;
+    document.getElementById('iterDisplay').textContent=kmIter;
+    document.getElementById('inertiaDisplay').textContent=calcInertia();
+    drawKMInput();drawKMResult();
+    await new Promise(r=>setTimeout(r,120));
+  }
+  btn.disabled=false;
+};
+
+window.stepKMeans=()=>{
+  if(kmPoints.length<3){alert('Add at least 3 points.');return;}
+  if(!kmCentroids.length){
+    const k=parseInt(document.getElementById('kSlider').value);
+    kmCentroids=initCentroids(k,document.getElementById('initMethod').value);
+    kmIter=0;
+  }
+  assignPoints();updateCentroids();kmIter++;
+  document.getElementById('iterDisplay').textContent=kmIter;
+  document.getElementById('inertiaDisplay').textContent=calcInertia();
+  drawKMInput();drawKMResult();
+};
+
+window.generateBlobs=()=>{
+  kmPoints=[];
+  const centres=[[-1,-1],[0,1],[1,-1]];
+  centres.forEach(c=>{
+    for(let i=0;i<30;i++) kmPoints.push([c[0]+(Math.random()-.5)*.7,c[1]+(Math.random()-.5)*.7]);
+  });
+  kmAssign=[];kmCentroids=[];kmIter=0;
+  drawKMInput();drawKMResult();
+  document.getElementById('kmPointCount').textContent='Points: '+kmPoints.length;
+};
+
+window.generateRing=()=>{
+  kmPoints=[];
+  for(let i=0;i<60;i++){const a=Math.random()*Math.PI*2;const r=1.3+(Math.random()-.5)*.15;kmPoints.push([r*Math.cos(a),r*Math.sin(a)]);}
+  for(let i=0;i<40;i++){const a=Math.random()*Math.PI*2;const r=.5+(Math.random()-.5)*.12;kmPoints.push([r*Math.cos(a),r*Math.sin(a)]);}
+  kmAssign=[];kmCentroids=[];kmIter=0;
+  drawKMInput();drawKMResult();
+  document.getElementById('kmPointCount').textContent='Points: '+kmPoints.length;
+};
+
+window.clearKM=()=>{
+  kmPoints=[];kmAssign=[];kmCentroids=[];kmIter=0;
+  drawKMInput();drawKMResult();
+  document.getElementById('kmPointCount').textContent='Points: 0';
+  document.getElementById('iterDisplay').textContent='0';
+  document.getElementById('inertiaDisplay').textContent='—';
+};
+
+// ── PCA ──
+let pcaData=[];
+
+function generatePCAData(type){
+  pcaData=[];
+  if(type==='cluster'){
+    [[2,2,1],[6,5,-1],[-1,7,2]].forEach(([mx,my,mz])=>{
+      for(let i=0;i<40;i++) pcaData.push([mx+(Math.random()-.5)*1.5,my+(Math.random()-.5)*1.5,mz+(Math.random()-.5)*1.5]);
+    });
+  } else if(type==='line'){
+    for(let i=0;i<100;i++){const t=Math.random()*10-5;pcaData.push([t+Math.random()*.3,2*t+Math.random()*.3,-t+Math.random()*.3]);}
+  } else {
+    for(let i=0;i<100;i++) pcaData.push([Math.random()*10-5,Math.random()*10-5,Math.random()*10-5]);
+  }
+  runPCA();
+}
+
+function runPCA(){
+  const n=pcaData.length;
+  const dims=pcaData[0].length;
+  // Center
+  const mu=Array.from({length:dims},(_,d)=>pcaData.reduce((s,p)=>s+p[d],0)/n);
+  const X=pcaData.map(p=>p.map((v,d)=>v-mu[d]));
+  // Covariance matrix (3x3)
+  const cov=Array.from({length:dims},()=>Array(dims).fill(0));
+  for(let i=0;i<dims;i++)for(let j=0;j<dims;j++)
+    cov[i][j]=X.reduce((s,p)=>s+p[i]*p[j],0)/(n-1);
+  // Power iteration for top-2 eigenvectors
+  function powerIter(M,exclude){
+    let v=Array.from({length:dims},Math.random);
+    if(exclude){const dot=v.reduce((s,x,i)=>s+x*exclude[i],0);v=v.map((x,i)=>x-dot*exclude[i]);}
+    let norm=Math.sqrt(v.reduce((s,x)=>s+x*x,0));v=v.map(x=>x/norm);
+    for(let iter=0;iter<200;iter++){
+      let nv=Array(dims).fill(0);
+      for(let i=0;i<dims;i++)for(let j=0;j<dims;j++) nv[i]+=M[i][j]*v[j];
+      if(exclude){const dot=nv.reduce((s,x,i)=>s+x*exclude[i],0);nv=nv.map((x,i)=>x-dot*exclude[i]);}
+      norm=Math.sqrt(nv.reduce((s,x)=>s+x*x,0));
+      v=nv.map(x=>x/norm);
+    }
+    const lam=v.reduce((s,x,i)=>s+v[i]*cov[i].reduce((ss,c,j)=>ss+c*v[j],0),0);
+    return{v,lam};
+  }
+  const {v:v1,lam:l1}=powerIter(cov,null);
+  const {v:v2,lam:l2}=powerIter(cov,v1);
+  const totalVar=cov.reduce((s,_,i)=>s+cov[i][i],0);
+  const var1=Math.max(0,l1)/totalVar,var2=Math.max(0,l2)/totalVar;
+  // Project
+  const proj=X.map(p=>[p.reduce((s,x,i)=>s+x*v1[i],0),p.reduce((s,x,i)=>s+x*v2[i],0)]);
+  // Render variance bars
+  const vBars=document.getElementById('varBars');
+  vBars.innerHTML=[['PC1',var1,'#3b82f6'],['PC2',var2,'#14b8a6'],['Remainder',Math.max(0,1-var1-var2),'#334155']].map(([name,pct,color])=>`
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="color:var(--text)">${name}</span>
+        <span style="font-family:var(--mono);color:${color}">${(pct*100).toFixed(1)}%</span>
+      </div>
+      <div style="background:var(--bg);border-radius:4px;height:6px"><div style="width:${Math.min(pct*100,100)}%;height:100%;background:${color};border-radius:4px"></div></div>
+    </div>`).join('');
+  document.getElementById('cumVar').textContent=`PC1+PC2 explain ${((var1+var2)*100).toFixed(1)}% of total variance`;
+  document.getElementById('pcaStats').innerHTML=`N = ${n}<br/>Dims = ${dims} → 2<br/>PC1 λ = ${Math.abs(l1).toFixed(3)}<br/>PC2 λ = ${Math.abs(l2).toFixed(3)}`;
+  // Draw projection
+  const canvas=document.getElementById('pcaCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,pad=32;
+  ctx.fillStyle='#060a10';ctx.fillRect(0,0,W,H);
+  const xs=proj.map(p=>p[0]),ys=proj.map(p=>p[1]);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  function toPC(v,min,max,size){return pad+(v-min)/(max-min+1e-9)*(size-2*pad);}
+  // Axes
+  ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;
+  const yMid=toPC(0,minY,maxY,H);const xMid=toPC(0,minX,maxX,W);
+  ctx.beginPath();ctx.moveTo(pad,yMid);ctx.lineTo(W-pad,yMid);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(xMid,pad);ctx.lineTo(xMid,H-pad);ctx.stroke();
+  const clusterColors=pcaData.length>=120?[...Array(40).fill(COLORS[0]),...Array(40).fill(COLORS[1]),...Array(40).fill(COLORS[2])]:[...Array(pcaData.length).fill('#3b82f6')];
+  proj.forEach(([px,py],i)=>{
+    ctx.beginPath();ctx.arc(toPC(px,minX,maxX,W),toPC(py,minY,maxY,H),4,0,Math.PI*2);
+    ctx.fillStyle=clusterColors[i%clusterColors.length]+'cc';ctx.fill();
+  });
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='11px Inter';
+  ctx.fillText('PC1 →',W-50,yMid-8);
+  ctx.save();ctx.translate(xMid+8,40);ctx.rotate(-Math.PI/2);ctx.fillText('PC2 →',0,0);ctx.restore();
+}
+
+window.generatePCAData=generatePCAData;
+
+// ── ELBOW ──
+let elbowPoints=[];
+
+window.generateElbowData=(type)=>{
+  elbowPoints=[];
+  const count={'blobs3':3,'blobs5':5,'random':0}[type]||0;
+  if(count){
+    const centres=Array.from({length:count},()=>[(Math.random()-.5)*4,(Math.random()-.5)*4]);
+    centres.forEach(c=>{for(let i=0;i<25;i++)elbowPoints.push([c[0]+(Math.random()-.5)*.6,c[1]+(Math.random()-.5)*.6]);});
+  } else {
+    for(let i=0;i<80;i++)elbowPoints.push([(Math.random()-.5)*4,(Math.random()-.5)*4]);
+  }
+  const canvas=document.getElementById('elbowCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#060a10';ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawGridCtx(ctx,canvas.width,canvas.height);
+  elbowPoints.forEach(p=>{
+    ctx.beginPath();ctx.arc(toC(p[0],-2.5,2.5,canvas.width,28),toC(p[1],-2.5,2.5,canvas.height,28),4,0,Math.PI*2);
+    ctx.fillStyle='#64748b';ctx.fill();
+  });
+  document.getElementById('elbowTable').innerHTML='<span class="result-placeholder">Click Run Elbow Analysis…</span>';
+};
+
+window.runElbow=async()=>{
+  if(!elbowPoints.length){alert('Generate data first.');return;}
+  const btn=document.getElementById('elbowBtn');
+  btn.disabled=true;btn.textContent='Running…';
+  const results=[];
+  for(let k=1;k<=8;k++){
+    let bestInertia=Infinity;
+    for(let trial=0;trial<3;trial++){
+      // Mini K-Means
+      let cents=elbowPoints.sort(()=>Math.random()-.5).slice(0,k).map(p=>[...p]);
+      let assign=[];
+      for(let iter=0;iter<20;iter++){
+        assign=elbowPoints.map(p=>{let best=0,bd=1e9;cents.forEach((c,i)=>{const d=dist2(p,c);if(d<bd){bd=d;best=i;}});return best;});
+        for(let i=0;i<k;i++){const cl=elbowPoints.filter((_,pi)=>assign[pi]===i);if(cl.length)cents[i]=[cl.reduce((s,p)=>s+p[0],0)/cl.length,cl.reduce((s,p)=>s+p[1],0)/cl.length];}
+      }
+      const inertia=elbowPoints.reduce((s,p,i)=>s+dist2(p,cents[assign[i]]),0);
+      if(inertia<bestInertia)bestInertia=inertia;
+    }
+    results.push({k,inertia:bestInertia});
+    await new Promise(r=>setTimeout(r,10));
+  }
+  // Draw elbow chart
+  const canvas=document.getElementById('elbowCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,pad=36;
+  ctx.fillStyle='#060a10';ctx.fillRect(0,0,W,H);
+  const maxI=Math.max(...results.map(r=>r.inertia));
+  const pts=results.map(r=>({x:pad+(r.k-1)/7*(W-2*pad),y:H-pad-(r.inertia/maxI)*(H-2*pad)}));
+  // Grid lines
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){ctx.beginPath();ctx.moveTo(pad,H-pad-(i/4)*(H-2*pad));ctx.lineTo(W-pad,H-pad-(i/4)*(H-2*pad));ctx.stroke();}
+  // Line
+  ctx.strokeStyle='#3b82f6';ctx.lineWidth=2.5;ctx.beginPath();
+  pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+  // Dots
+  pts.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,6,0,Math.PI*2);
+    ctx.fillStyle='#3b82f6';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='10px Inter';ctx.textAlign='center';
+    ctx.fillText(results[i].k,p.x,H-8);
+  });
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='10px Inter';ctx.textAlign='left';
+  ctx.fillText('K →',W-24,H-8);
+  // Find elbow (max curvature)
+  let elbowK=2;let maxCurv=0;
+  for(let i=1;i<results.length-1;i++){
+    const curv=results[i-1].inertia+results[i+1].inertia-2*results[i].inertia;
+    if(curv>maxCurv){maxCurv=curv;elbowK=results[i].k;}
+  }
+  // Highlight elbow
+  const ep=pts[elbowK-1];
+  ctx.beginPath();ctx.arc(ep.x,ep.y,12,0,Math.PI*2);
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='#f59e0b';ctx.font='bold 11px Inter';ctx.textAlign='left';
+  ctx.fillText(`← K=${elbowK} (elbow)`,ep.x+14,ep.y+4);
+  // Table
+  document.getElementById('elbowTable').innerHTML=
+    `<div style="font-weight:600;margin-bottom:8px;font-size:13px">Optimal K = <span style="color:var(--amber)">${elbowK}</span> (detected by max curvature)</div>`+
+    results.map(r=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)"><span ${r.k===elbowK?'style="color:var(--amber);font-weight:700"':''}>K = ${r.k}</span><span style="font-family:var(--mono);color:var(--muted)">${r.inertia.toFixed(1)}</span></div>`).join('');
+  btn.disabled=false;btn.textContent='Run Elbow Analysis';
+};
+
+// ── Grid helper ──
+function drawGridCtx(ctx,W,H){
+  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+  for(let i=1;i<4;i++){
+    ctx.beginPath();ctx.moveTo(W*i/4,0);ctx.lineTo(W*i/4,H);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,H*i/4);ctx.lineTo(W,H*i/4);ctx.stroke();
+  }
+}
+
+// ── Tab switching ──
+window.switchTab=(tab,btn)=>{
+  ['kmeans','pca','elbow'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  document.querySelectorAll('#tabs .btn').forEach(b=>b.className='btn btn-ghost');
+  btn.className='btn btn-primary';
+};
+
+// Init
+drawKMInput();drawKMResult();
+</script>
+</body>
+</html>

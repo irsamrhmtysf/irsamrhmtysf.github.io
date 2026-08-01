@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Chatbot · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+.chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 220px); min-height:400px; }
+.chat-messages { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; scroll-behavior:smooth; }
+.msg { max-width:80%; }
+.msg-user { align-self:flex-end; }
+.msg-ai   { align-self:flex-start; }
+.bubble {
+  padding:12px 16px; border-radius:14px; font-size:14px; line-height:1.6;
+  word-break:break-word; white-space:pre-wrap;
+}
+.bubble-user { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+.bubble-ai   { background:var(--card); border:1px solid var(--border); color:var(--text); border-bottom-left-radius:4px; }
+.msg-name { font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:600; letter-spacing:.03em; }
+.chat-input-row { display:flex; gap:8px; padding:16px 20px; border-top:1px solid var(--border); background:var(--bg2); }
+.chat-input {
+  flex:1; background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px; color:var(--text);
+  font-size:14px; font-family:var(--sans); outline:none; resize:none;
+  max-height:120px; min-height:44px;
+}
+.chat-input:focus { border-color:var(--accent); }
+.typing-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--muted); animation:blink 1.2s infinite; margin:0 2px; }
+.typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.token-count { font-family:var(--mono); font-size:11px; color:var(--muted); }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="nlp.html">NLP</a>
+      <a href="vision.html">Vision</a>
+      <a href="speech.html">Speech</a>
+    </div>
+    <span class="nav-badge">Topic 10 · LLM</span>
+  </div>
+</nav>
+
+<div style="display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 60px)">
+
+  <!-- Sidebar -->
+  <div style="border-right:1px solid var(--border);background:var(--bg2);padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px">
+    <div>
+      <div class="section-label">Topic 10 · Local LLM</div>
+      <h3 style="font-size:1.1rem;margin-bottom:6px">AI Chatbot</h3>
+      <p style="font-size:12px">SmolLM2-360M runs 100% in your browser. Private, offline-capable, no API key.</p>
+    </div>
+
+    <div>
+      <div class="model-status" id="status">
+        <div class="status-dot idle" id="statusDot"></div>
+        <span id="statusText" style="font-size:12px">Not loaded</span>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:8px">
+        <div class="progress-bar-fill" id="bar" style="width:0"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="loadBtn" onclick="loadModel()" style="width:100%">
+      <i class="ti ti-download"></i> Load Model (~360MB)
+    </button>
+
+    <div style="padding:12px;background:var(--bg3);border-radius:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Model info</div>
+      <div class="token-count">SmolLM2-360M-Instruct</div>
+      <div class="token-count" style="margin-top:3px">360M parameters</div>
+      <div class="token-count" style="margin-top:3px">Quantized · ONNX</div>
+      <div class="token-count" style="margin-top:3px">HuggingFace · Apache 2.0</div>
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">System prompt</div>
+      <textarea class="textarea" id="systemPrompt" rows="4" style="font-size:12px">You are a helpful AI teaching assistant for an Introduction to Artificial Intelligence course. Explain concepts clearly and give short, practical examples. Keep answers concise.</textarea>
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Generation</div>
+      <label class="label">Max tokens: <span id="maxTokVal">256</span></label>
+      <input type="range" id="maxTok" min="64" max="512" step="32" value="256" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('maxTokVal').textContent=this.value"/>
+      <label class="label" style="margin-top:10px">Temperature: <span id="tempVal">0.7</span></label>
+      <input type="range" id="tempSlider" min="0.1" max="1.5" step="0.1" value="0.7" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('tempVal').textContent=this.value"/>
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Topic starters</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;font-size:12px" onclick="setPrompt('What is backpropagation and how does it work?')">What is backpropagation?</button>
+        <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;font-size:12px" onclick="setPrompt('Explain the difference between supervised and unsupervised learning with examples.')">Supervised vs unsupervised?</button>
+        <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;font-size:12px" onclick="setPrompt('Why do large language models hallucinate, and how can this be reduced?')">Why do LLMs hallucinate?</button>
+        <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;font-size:12px" onclick="setPrompt('Explain the transformer attention mechanism in simple terms.')">How does attention work?</button>
+        <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;font-size:12px" onclick="setPrompt('What is overfitting and how do I prevent it?')">What is overfitting?</button>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-sm" onclick="clearChat()" style="margin-top:auto">
+      <i class="ti ti-trash"></i> Clear chat
+    </button>
+  </div>
+
+  <!-- Chat area -->
+  <div style="display:flex;flex-direction:column;background:var(--bg)">
+    <div class="chat-messages" id="chatMessages">
+      <div style="text-align:center;padding:32px 0;color:var(--muted)">
+        <i class="ti ti-robot" style="font-size:48px;display:block;margin-bottom:12px;opacity:.4"></i>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Local AI Tutor</div>
+        <div style="font-size:13px;max-width:320px;margin:0 auto">Load the model using the button on the left, then ask any question about the AI syllabus.</div>
+        <div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center" id="starterChips">
+          <button class="btn btn-ghost btn-sm" onclick="setPrompt('Explain neural networks in simple terms')">Neural networks?</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPrompt('What is gradient descent?')">Gradient descent?</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPrompt('How does BERT work?')">How does BERT work?</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="userInput" placeholder="Ask anything about AI…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()" disabled style="height:44px;align-self:flex-end">
+        <i class="ti ti-send" id="sendIcon"></i>
+      </button>
+    </div>
+    <div style="padding:6px 20px 10px;display:flex;justify-content:space-between">
+      <span id="tpsDisplay" class="token-count"></span>
+      <span class="token-count">Enter to send · Shift+Enter for new line</span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { pipeline, env, TextStreamer } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js';
+env.allowLocalModels = false;
+
+let generator = null;
+let generating = false;
+let history = [];
+
+const statusDot  = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const bar        = document.getElementById('bar');
+
+function setStatus(s,m){statusDot.className=`status-dot ${s}`;statusText.textContent=m;}
+function setBar(p){bar.style.width=p+'%';}
+
+const progressCb = p => {
+  if(p.status==='initiate') setStatus('loading',`Downloading…`);
+  if(p.status==='progress'&&p.total){ const pct=p.loaded/p.total*100; setBar(pct); setStatus('loading',`${Math.round(pct)}%`); }
+  if(p.status==='done') setStatus('loading','Initialising…');
+};
+
+window.loadModel = async () => {
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true; btn.textContent = 'Loading…';
+  setStatus('loading','Downloading SmolLM2…'); setBar(0);
+  try {
+    generator = await pipeline('text-generation',
+      'HuggingFaceTB/SmolLM2-360M-Instruct',
+      { dtype:'q4', progress_callback: progressCb });
+    setStatus('ready','Model ready ✓'); setBar(100);
+    btn.textContent = 'Model loaded ✓';
+    document.getElementById('sendBtn').disabled = false;
+  } catch(e) {
+    setStatus('error','Load failed');
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-download"></i> Retry';
+    addMessage('system','Failed to load model: '+e.message);
+  }
+};
+
+function addMessage(role, text) {
+  const msgs = document.getElementById('chatMessages');
+  // Remove empty state on first real message
+  const empty = msgs.querySelector('div[style*="text-align:center"]');
+  if(empty) empty.remove();
+
+  const wrapper = document.createElement('div');
+  wrapper.className = `msg msg-${role==='user'?'user':'ai'}`;
+  wrapper.innerHTML = `
+    <div class="msg-name">${role==='user'?'You':'AI Tutor'}</div>
+    <div class="bubble bubble-${role==='user'?'user':'ai'}" id="bubble-${Date.now()}">${role==='user'?escHtml(text):text}</div>`;
+  msgs.appendChild(wrapper);
+  msgs.scrollTop = msgs.scrollHeight;
+  return wrapper.querySelector('.bubble');
+}
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br/>'); }
+
+function typingIndicator() {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg msg-ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-name">AI Tutor</div>
+    <div class="bubble bubble-ai"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+window.sendMessage = async () => {
+  if(!generator || generating) return;
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if(!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  generating = true;
+  document.getElementById('sendBtn').innerHTML = '<i class="ti ti-loader ti-spin"></i>';
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', text);
+  history.push({ role:'user', content: text });
+
+  typingIndicator();
+
+  const sysPrompt = document.getElementById('systemPrompt').value;
+  const messages = [{ role:'system', content: sysPrompt }, ...history];
+
+  let bubble = null;
+  let tokenCount = 0;
+  const t0 = Date.now();
+
+  try {
+    const streamer = new TextStreamer(generator.tokenizer, {
+      skip_prompt: true,
+      callback_function: token => {
+        if(!bubble) {
+          const ind = document.getElementById('typing-indicator');
+          if(ind) ind.remove();
+          bubble = addMessage('ai','');
+        }
+        bubble.textContent = (bubble.textContent||'') + token;
+        tokenCount++;
+        document.getElementById('chatMessages').scrollTop = 9999;
+        const tps = (tokenCount/((Date.now()-t0)/1000)).toFixed(1);
+        document.getElementById('tpsDisplay').textContent = `${tokenCount} tokens · ${tps} t/s`;
+      }
+    });
+
+    const out = await generator(messages, {
+      max_new_tokens: parseInt(document.getElementById('maxTok').value),
+      temperature: parseFloat(document.getElementById('tempSlider').value),
+      do_sample: true,
+      streamer,
+    });
+
+    const assistantText = out[0]?.generated_text?.at(-1)?.content || '';
+    if(!bubble) {
+      const ind = document.getElementById('typing-indicator');
+      if(ind) ind.remove();
+      bubble = addMessage('ai', escHtml(assistantText));
+    }
+    history.push({ role:'assistant', content: assistantText });
+
+  } catch(e) {
+    const ind = document.getElementById('typing-indicator');
+    if(ind) ind.remove();
+    addMessage('ai','Error: '+e.message);
+  } finally {
+    generating = false;
+    document.getElementById('sendBtn').innerHTML = '<i class="ti ti-send"></i>';
+    document.getElementById('sendBtn').disabled = false;
+  }
+};
+
+window.clearChat = () => {
+  history = [];
+  document.getElementById('chatMessages').innerHTML = `
+    <div style="text-align:center;padding:32px 0;color:var(--muted)">
+      <i class="ti ti-robot" style="font-size:48px;display:block;margin-bottom:12px;opacity:.4"></i>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">Chat cleared</div>
+      <div style="font-size:13px">Start a new conversation.</div>
+    </div>`;
+  document.getElementById('tpsDisplay').textContent = '';
+};
+
+window.setPrompt = txt => {
+  document.getElementById('userInput').value = txt;
+  document.getElementById('userInput').focus();
+};
+</script>
+</body>
+</html>

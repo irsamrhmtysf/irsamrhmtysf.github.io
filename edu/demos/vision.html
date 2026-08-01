@@ -1,0 +1,315 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Computer Vision · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="nlp.html">NLP</a>
+      <a href="speech.html">Speech</a>
+      <a href="chatbot.html">Chatbot</a>
+    </div>
+    <span class="nav-badge">Topic 09 · Vision</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:48px;padding-bottom:80px">
+  <div class="section-label">Topic 09 · Computer Vision</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">Object Detection, Classification &amp; Counting</h1>
+  <p style="margin-bottom:28px;max-width:620px">Real-time computer vision in your browser. Upload an image or use your webcam — models run 100% locally.</p>
+
+  <div class="model-status" id="status" style="margin-bottom:8px">
+    <div class="status-dot idle" id="statusDot"></div>
+    <span id="statusText">Select a task to begin</span>
+  </div>
+  <div class="progress-bar-wrap" style="margin-bottom:28px">
+    <div class="progress-bar-fill" id="bar" style="width:0"></div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px" id="tabs">
+    <button class="btn btn-primary"  onclick="switchTab('detect',this)">Detection</button>
+    <button class="btn btn-ghost" onclick="switchTab('classify',this)">Classification</button>
+    <button class="btn btn-ghost" onclick="switchTab('webcam',this)">Live Webcam</button>
+  </div>
+
+  <!-- DETECT -->
+  <div id="tab-detect">
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin-bottom:12px">Upload Image</h3>
+        <div id="dropzone" style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;margin-bottom:12px" onclick="document.getElementById('imgUpload').click()">
+          <i class="ti ti-photo-up" style="font-size:36px;color:var(--muted);display:block;margin-bottom:8px"></i>
+          <div style="font-size:14px;color:var(--muted)">Click or drag image here</div>
+        </div>
+        <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="loadImage(this)"/>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" id="detectBtn" onclick="runDetection()" disabled>Detect Objects</button>
+          <button class="btn btn-ghost" onclick="loadSample()">Sample image</button>
+        </div>
+        <div style="margin-top:14px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted)">
+          Model: <code style="color:var(--accent)">Xenova/detr-resnet-50</code> · ~170MB cached
+        </div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:12px">
+        <h3>Result</h3>
+        <div style="position:relative;background:#000;border-radius:8px;overflow:hidden;min-height:220px;display:flex;align-items:center;justify-content:center">
+          <img id="previewImg" style="max-width:100%;max-height:320px;display:none"/>
+          <canvas id="overlayCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+          <div id="imgPlaceholder" style="color:var(--muted);font-size:13px">Image preview</div>
+        </div>
+        <div id="detectResult" class="result-box"><span class="result-placeholder">Objects will appear here…</span></div>
+        <div id="countBadges" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLASSIFY -->
+  <div id="tab-classify" style="display:none">
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin-bottom:12px">Image Classification</h3>
+        <p style="font-size:13px;margin-bottom:16px">Top-5 predictions from 1000 ImageNet categories.</p>
+        <div style="border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer" onclick="document.getElementById('clsUpload').click()">
+          <i class="ti ti-photo-search" style="font-size:32px;color:var(--muted)"></i>
+          <div style="font-size:13px;color:var(--muted);margin-top:8px">Click to upload</div>
+        </div>
+        <input type="file" id="clsUpload" accept="image/*" style="display:none" onchange="loadClsImage(this)"/>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-primary" id="clsBtn" onclick="runClassify()" disabled>Classify</button>
+          <button class="btn btn-ghost" onclick="loadClsSample()">Sample image</button>
+        </div>
+        <div style="margin-top:14px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted)">
+          Model: <code style="color:var(--teal)">Xenova/mobilenetv4_conv_small.e2400_r224_in1k</code> · ~14MB
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:12px">Top Predictions</h3>
+        <img id="clsPreview" style="max-width:100%;border-radius:8px;margin-bottom:12px;display:none;max-height:200px;object-fit:cover"/>
+        <div id="clsResult" class="result-box"><span class="result-placeholder">Upload an image…</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEBCAM -->
+  <div id="tab-webcam" style="display:none">
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin-bottom:12px">Live Webcam Detection</h3>
+        <p style="font-size:13px;margin-bottom:16px">Real-time detection and counting from your camera. Runs frame-by-frame in your browser.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <button class="btn btn-primary" id="startCamBtn" onclick="startWebcam()">Start Camera</button>
+          <button class="btn btn-ghost" id="stopCamBtn" onclick="stopWebcam()" disabled>Stop</button>
+        </div>
+        <div id="fpsDisplay" style="font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:12px;min-height:20px"></div>
+        <div id="webcamCounts" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="position:relative;background:#000;min-height:300px">
+          <video id="webcamVideo" autoplay muted playsinline style="width:100%;display:block"></video>
+          <canvas id="webcamCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:32px">
+    <h3 style="margin-bottom:16px">How Computer Vision Works</h3>
+    <div class="grid-3">
+      <div><div class="chip chip-blue" style="margin-bottom:8px">Step 1 · Feature extraction</div><p style="font-size:13px">CNN layers detect edges, textures, shapes. Each layer learns more abstract patterns.</p></div>
+      <div><div class="chip chip-teal" style="margin-bottom:8px">Step 2 · Transformer attention</div><p style="font-size:13px">DETR's encoder attends to image patches, decoder proposes bounding boxes.</p></div>
+      <div><div class="chip chip-amber" style="margin-bottom:8px">Step 3 · NMS + classify</div><p style="font-size:13px">Non-max suppression removes duplicates. Each box is assigned an object class.</p></div>
+    </div>
+    <div class="terminal" style="margin-top:16px">
+<span class="cm">// Object detection in 3 lines</span>
+<span class="kw">import</span> { pipeline } <span class="kw">from</span> <span class="st">'@huggingface/transformers'</span>;
+<span class="kw">const</span> det = <span class="kw">await</span> <span class="fn">pipeline</span>(<span class="st">'object-detection'</span>, <span class="st">'Xenova/detr-resnet-50'</span>);
+<span class="kw">const</span> out = <span class="kw">await</span> <span class="fn">det</span>(imageUrl, { threshold: <span class="st">0.6</span> });
+<span class="cm">// [{label:'cat', score:0.98, box:{xmin,ymin,xmax,ymax}}, …]</span></div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Vision Demo · DETR + MobileNetV4 via Transformers.js</p></div></footer>
+
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js';
+env.allowLocalModels = false;
+
+let detector=null, classifier=null, camStream=null, camRunning=false, animId=null;
+let lastFps=0, frameCount=0, fpsTimer=0;
+let detectImg=null, clsImg=null;
+
+const statusDot=document.getElementById('statusDot');
+const statusText=document.getElementById('statusText');
+const bar=document.getElementById('bar');
+
+function setStatus(s,m){statusDot.className=`status-dot ${s}`;statusText.textContent=m;}
+function setBar(p){bar.style.width=p+'%';}
+const progressCb=p=>{
+  if(p.status==='initiate') setStatus('loading',`Downloading ${p.name||'model'}…`);
+  if(p.status==='progress'&&p.total) setBar(p.loaded/p.total*100);
+  if(p.status==='done') setStatus('ready','Model ready');
+};
+
+const PALETTE=['#3b82f6','#14b8a6','#f59e0b','#f43f5e','#a855f7','#22c55e','#fb923c','#06b6d4','#e879f9','#84cc16'];
+function labelColor(lbl){let h=0;for(let c of lbl)h=(h*31+c.charCodeAt(0))%PALETTE.length;return PALETTE[h];}
+
+function drawBoxes(canvas,boxes,imgW,imgH){
+  const ctx=canvas.getContext('2d');
+  canvas.width=imgW;canvas.height=imgH;
+  ctx.clearRect(0,0,imgW,imgH);
+  boxes.forEach(b=>{
+    const{xmin,ymin,xmax,ymax}=b.box;
+    const color=labelColor(b.label);
+    const pct=Math.round((b.score||0)*100);
+    ctx.strokeStyle=color;ctx.lineWidth=3;
+    ctx.strokeRect(xmin,ymin,xmax-xmin,ymax-ymin);
+    const txt=`${b.label} ${pct}%`;
+    ctx.font='bold 13px Inter,sans-serif';
+    const tw=ctx.measureText(txt).width;
+    ctx.fillStyle=color+'ee';ctx.fillRect(xmin,ymin-22,tw+10,22);
+    ctx.fillStyle='#fff';ctx.fillText(txt,xmin+5,ymin-5);
+  });
+}
+
+function countObjects(boxes){const c={};boxes.forEach(b=>{c[b.label]=(c[b.label]||0)+1;});return c;}
+function renderCounts(el,counts){
+  el.innerHTML=Object.entries(counts).map(([lbl,n])=>{
+    const c=labelColor(lbl);
+    return `<span style="background:${c}22;color:${c};border:1px solid ${c}44;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600">${lbl} × ${n}</span>`;
+  }).join('');
+}
+
+window.loadImage=input=>{if(input.files[0])loadFileToImg(URL.createObjectURL(input.files[0]));};
+function loadFileToImg(url){
+  detectImg=url;
+  const img=document.getElementById('previewImg');
+  img.src=url;img.style.display='block';
+  document.getElementById('imgPlaceholder').style.display='none';
+  document.getElementById('overlayCanvas').getContext('2d').clearRect(0,0,9999,9999);
+  document.getElementById('detectResult').innerHTML='<span class="result-placeholder">Click Detect Objects…</span>';
+  document.getElementById('countBadges').innerHTML='';
+  document.getElementById('detectBtn').disabled=false;
+}
+window.loadSample=()=>loadFileToImg('https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/city.jpg');
+
+window.runDetection=async()=>{
+  if(!detectImg)return;
+  const res=document.getElementById('detectResult');
+  const overlay=document.getElementById('overlayCanvas');
+  try{
+    if(!detector){setStatus('loading','Loading DETR…');setBar(0);
+      detector=await pipeline('object-detection','Xenova/detr-resnet-50',{progress_callback:progressCb});}
+    setStatus('loading','Detecting…');
+    res.innerHTML='<span style="color:var(--muted)">Detecting…</span>';
+    const out=await detector(detectImg,{threshold:0.6});
+    const img=document.getElementById('previewImg');
+    drawBoxes(overlay,out,img.naturalWidth,img.naturalHeight);
+    renderCounts(document.getElementById('countBadges'),countObjects(out));
+    res.innerHTML=`<div style="font-weight:600;color:var(--text);margin-bottom:8px">Found ${out.length} object${out.length!==1?'s':''}</div>`+
+      out.map(b=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="color:${labelColor(b.label)};font-weight:600">${b.label}</span>
+        <span style="font-family:var(--mono)">${Math.round(b.score*100)}%</span></div>`).join('');
+    setStatus('ready',`Detected ${out.length} objects`);
+  }catch(e){setStatus('error','Error');res.textContent='Error: '+e.message;}
+};
+
+window.loadClsImage=input=>{
+  if(!input.files[0])return;
+  clsImg=URL.createObjectURL(input.files[0]);
+  const img=document.getElementById('clsPreview');img.src=clsImg;img.style.display='block';
+  document.getElementById('clsBtn').disabled=false;
+};
+window.loadClsSample=()=>{
+  clsImg='https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/tiger.jpg';
+  const img=document.getElementById('clsPreview');img.src=clsImg;img.style.display='block';
+  document.getElementById('clsBtn').disabled=false;
+};
+
+window.runClassify=async()=>{
+  if(!clsImg)return;
+  const res=document.getElementById('clsResult');
+  try{
+    if(!classifier){setStatus('loading','Loading MobileNetV4…');setBar(0);
+      classifier=await pipeline('image-classification','Xenova/mobilenetv4_conv_small.e2400_r224_in1k',{progress_callback:progressCb});}
+    setStatus('loading','Classifying…');
+    res.innerHTML='<span style="color:var(--muted)">Classifying…</span>';
+    const out=await classifier(clsImg,{topk:5});
+    const colors=['#3b82f6','#6366f1','#14b8a6','#f59e0b','#f43f5e'];
+    res.innerHTML=out.map((r,i)=>{
+      const pct=Math.round(r.score*100);
+      return `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span style="color:${i===0?'var(--text)':'var(--muted)'};font-weight:${i===0?'700':'400'}">${r.label}</span>
+          <span style="font-family:var(--mono);color:${colors[i]}">${pct}%</span>
+        </div>
+        <div style="background:var(--bg);border-radius:4px;height:6px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${colors[i]};border-radius:4px;transition:width .5s"></div>
+        </div></div>`;
+    }).join('');
+    setStatus('ready','Done');
+  }catch(e){setStatus('error','Error');res.textContent='Error: '+e.message;}
+};
+
+window.startWebcam=async()=>{
+  try{
+    if(!detector){setStatus('loading','Loading DETR…');setBar(0);
+      detector=await pipeline('object-detection','Xenova/detr-resnet-50',{progress_callback:progressCb});}
+    camStream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480}});
+    document.getElementById('webcamVideo').srcObject=camStream;
+    document.getElementById('startCamBtn').disabled=true;
+    document.getElementById('stopCamBtn').disabled=false;
+    camRunning=true;frameCount=0;fpsTimer=Date.now();
+    runLoop();
+  }catch(e){setStatus('error','Camera error: '+e.message);}
+};
+
+window.stopWebcam=()=>{
+  camRunning=false;if(animId)cancelAnimationFrame(animId);
+  if(camStream)camStream.getTracks().forEach(t=>t.stop());
+  document.getElementById('startCamBtn').disabled=false;
+  document.getElementById('stopCamBtn').disabled=true;
+  document.getElementById('fpsDisplay').textContent='';
+};
+
+async function runLoop(){
+  if(!camRunning)return;
+  const vid=document.getElementById('webcamVideo');
+  const canvas=document.getElementById('webcamCanvas');
+  if(vid.readyState>=2){
+    try{
+      const out=await detector(vid,{threshold:0.6});
+      drawBoxes(canvas,out,vid.videoWidth||640,vid.videoHeight||480);
+      renderCounts(document.getElementById('webcamCounts'),countObjects(out));
+      frameCount++;const now=Date.now();
+      if(now-fpsTimer>=1000){lastFps=frameCount;frameCount=0;fpsTimer=now;}
+      document.getElementById('fpsDisplay').textContent=`FPS: ${lastFps} · Objects: ${out.length}`;
+    }catch(_){}
+  }
+  animId=requestAnimationFrame(runLoop);
+}
+
+window.switchTab=(tab,btn)=>{
+  ['detect','classify','webcam'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  document.querySelectorAll('#tabs .btn').forEach(b=>b.className='btn btn-ghost');
+  btn.className='btn btn-primary';
+  if(tab!=='webcam'&&camRunning)window.stopWebcam();
+};
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+Claud

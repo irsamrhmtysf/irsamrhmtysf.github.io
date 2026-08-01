@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Model Evaluation · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+.cm-cell{display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:10px;padding:16px;font-family:var(--mono);transition:all .3s}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.metric-val{font-size:2rem;font-weight:800;font-family:var(--display);line-height:1}
+.metric-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="supervised.html">Supervised</a>
+      <a href="neural.html">Neural Nets</a>
+      <a href="unsupervised.html">Unsupervised</a>
+    </div>
+    <span class="nav-badge">Topic 06 · Evaluation</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 06 · Model Evaluation</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">Interactive Model Evaluation</h1>
+  <p style="margin-bottom:32px;max-width:620px">Drag the sliders to build a confusion matrix and watch all metrics update live. Then explore the ROC curve and the bias-variance tradeoff.</p>
+
+  <!-- Tab nav -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px" id="evalTabs">
+    <button class="btn btn-primary btn-sm" onclick="showTab('confusion',this)">Confusion Matrix</button>
+    <button class="btn btn-ghost btn-sm" onclick="showTab('roc',this)">ROC Curve</button>
+    <button class="btn btn-ghost btn-sm" onclick="showTab('overfitting',this)">Overfitting</button>
+    <button class="btn btn-ghost btn-sm" onclick="showTab('crossval',this)">Cross-Validation</button>
+  </div>
+
+  <!-- CONFUSION MATRIX -->
+  <div id="tab-confusion">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div class="card">
+        <h3 style="margin-bottom:16px">Confusion Matrix Builder</h3>
+        <p style="font-size:13px;margin-bottom:14px">Adjust TP, FP, TN, FN to see how every metric changes. Real scenario: <strong>cancer screening</strong>.</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div><label class="label">True Positives (cancer, detected): <span id="tpV">85</span></label>
+            <input type="range" id="tp" min="0" max="100" value="85" style="width:100%;accent-color:#22c55e" oninput="updateCM()"/></div>
+          <div><label class="label">False Negatives (cancer, missed): <span id="fnV">15</span></label>
+            <input type="range" id="fn" min="0" max="100" value="15" style="width:100%;accent-color:#f43f5e" oninput="updateCM()"/></div>
+          <div><label class="label">False Positives (healthy, flagged): <span id="fpV">20</span></label>
+            <input type="range" id="fp" min="0" max="200" value="20" style="width:100%;accent-color:#f59e0b" oninput="updateCM()"/></div>
+          <div><label class="label">True Negatives (healthy, cleared): <span id="tnV">880</span></label>
+            <input type="range" id="tn" min="0" max="1000" value="880" style="width:100%;accent-color:#3b82f6" oninput="updateCM()"/></div>
+        </div>
+      </div>
+      <div>
+        <!-- Matrix visual -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="cmGrid"></div>
+        <!-- Metrics -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="metricsGrid"></div>
+      </div>
+    </div>
+
+    <!-- Threshold slider -->
+    <div class="card" style="margin-top:24px">
+      <h3 style="margin-bottom:8px">Threshold &amp; Trade-offs</h3>
+      <p style="font-size:13px;margin-bottom:14px">The decision threshold determines when the model says "positive". Lower threshold = more positives found, more false alarms.</p>
+      <label class="label">Decision threshold: <span id="threshDisplay">0.50</span></label>
+      <input type="range" id="threshSlider" min="0.01" max="0.99" step="0.01" value="0.5" style="width:100%;accent-color:var(--accent)" oninput="updateThreshold()"/>
+      <div id="threshResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"></div>
+      <canvas id="threshCanvas" height="120" style="width:100%;background:#060a10;border-radius:8px;margin-top:14px;display:block"></canvas>
+    </div>
+  </div>
+
+  <!-- ROC -->
+  <div id="tab-roc" style="display:none">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div class="card">
+        <h3 style="margin-bottom:8px">ROC Curve Generator</h3>
+        <p style="font-size:13px;margin-bottom:14px">Select a scenario to see how different classifiers perform. AUC = 1.0 is perfect; AUC = 0.5 is random.</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="showROC('perfect')">Perfect classifier (AUC = 1.0)</button>
+          <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="showROC('good')">Good classifier (AUC ≈ 0.85)</button>
+          <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="showROC('mediocre')">Mediocre classifier (AUC ≈ 0.65)</button>
+          <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="showROC('random')">Random (AUC = 0.5)</button>
+          <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="showROC('all')">Compare all four</button>
+        </div>
+        <div id="rocExplain" class="card" style="margin-top:16px;background:var(--bg3)"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <canvas id="rocCanvas" height="320" style="width:100%;background:#060a10;display:block"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERFITTING -->
+  <div id="tab-overfitting" style="display:none">
+    <div class="grid-2" style="gap:24px;align-items:start">
+      <div class="card">
+        <h3 style="margin-bottom:8px">Bias-Variance Tradeoff</h3>
+        <p style="font-size:13px;margin-bottom:14px">Adjust model complexity and see how training vs validation error diverge — the signature of overfitting.</p>
+        <label class="label">Model complexity: <span id="compDisplay">5</span></label>
+        <input type="range" id="complexity" min="1" max="15" value="5" style="width:100%;accent-color:var(--accent)" oninput="updateOverfit()"/>
+        <label class="label" style="margin-top:14px">Training set size: <span id="sizeDisplay">100</span></label>
+        <input type="range" id="dataSize" min="20" max="500" step="10" value="100" style="width:100%;accent-color:var(--teal)" oninput="updateOverfit()"/>
+        <div id="overfitStatus" style="margin-top:14px;padding:12px;border-radius:8px;font-size:13px"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <canvas id="overfitCanvas" height="300" style="width:100%;background:#060a10;display:block"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CROSS-VAL -->
+  <div id="tab-crossval" style="display:none">
+    <div class="card">
+      <h3 style="margin-bottom:8px">K-Fold Cross-Validation Visualised</h3>
+      <p style="font-size:13px;margin-bottom:16px">K-fold splits data into K parts. Each fold takes a turn as the validation set. We report mean ± std across all folds.</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div><label class="label">K (folds)</label>
+          <input type="range" id="kFolds" min="2" max="10" value="5" style="width:120px;accent-color:var(--accent)" oninput="updateCV()"/>
+          <span id="kDisplay" style="font-family:var(--mono);font-size:13px;margin-left:8px">5</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="runCV()">Run K-Fold CV</button>
+      </div>
+      <div id="cvViz" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+      <div id="cvResults"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Topic 06 · Model Evaluation</p></div></footer>
+
+<script>
+// ── Confusion Matrix ──
+function updateCM(){
+  const tp=+document.getElementById('tp').value,fn=+document.getElementById('fn').value;
+  const fp=+document.getElementById('fp').value,tn=+document.getElementById('tn').value;
+  document.getElementById('tpV').textContent=tp;document.getElementById('fnV').textContent=fn;
+  document.getElementById('fpV').textContent=fp;document.getElementById('tnV').textContent=tn;
+  const total=tp+fn+fp+tn;
+  const acc=(tp+tn)/total,prec=tp/(tp+fp)||0,rec=tp/(tp+fn)||0;
+  const f1=2*prec*rec/(prec+rec)||0,spec=tn/(tn+fp)||0,fpr=fp/(fp+tn)||0;
+
+  document.getElementById('cmGrid').innerHTML=`
+    <div class="cm-cell" style="background:rgba(34,197,94,.12);border:2px solid rgba(34,197,94,.3)">
+      <div style="font-size:2rem;font-weight:800;color:#22c55e">${tp}</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center">True Positive<br/>(Cancer, caught)</div>
+    </div>
+    <div class="cm-cell" style="background:rgba(245,158,11,.1);border:2px solid rgba(245,158,11,.3)">
+      <div style="font-size:2rem;font-weight:800;color:var(--amber)">${fn}</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center">False Negative<br/>(Cancer, missed!)</div>
+    </div>
+    <div class="cm-cell" style="background:rgba(244,63,94,.1);border:2px solid rgba(244,63,94,.3)">
+      <div style="font-size:2rem;font-weight:800;color:var(--rose)">${fp}</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center">False Positive<br/>(Healthy, flagged)</div>
+    </div>
+    <div class="cm-cell" style="background:rgba(59,130,246,.1);border:2px solid rgba(59,130,246,.3)">
+      <div style="font-size:2rem;font-weight:800;color:var(--accent)">${tn}</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center">True Negative<br/>(Healthy, cleared)</div>
+    </div>`;
+
+  const metrics=[
+    {name:'Accuracy',val:acc,color:'var(--text)',formula:`(TP+TN)/N`},
+    {name:'Precision',val:prec,color:'var(--teal)',formula:`TP/(TP+FP)`},
+    {name:'Recall',val:rec,color:'#22c55e',formula:`TP/(TP+FN)`},
+    {name:'F1 Score',val:f1,color:'var(--accent)',formula:`2·P·R/(P+R)`},
+    {name:'Specificity',val:spec,color:'var(--accent2)',formula:`TN/(TN+FP)`},
+    {name:'FPR',val:fpr,color:'var(--rose)',formula:`FP/(FP+TN)`},
+  ];
+  document.getElementById('metricsGrid').innerHTML=metrics.map(m=>`
+    <div class="metric-card">
+      <div class="metric-val" style="color:${m.color}">${(m.val*100).toFixed(1)}%</div>
+      <div class="metric-lbl">${m.name}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:4px">${m.formula}</div>
+    </div>`).join('');
+
+  updateThreshold();
+}
+
+function updateThreshold(){
+  const t=parseFloat(document.getElementById('threshSlider').value);
+  document.getElementById('threshDisplay').textContent=t.toFixed(2);
+  const N=1000, pos=100, neg=900;
+  const tp=Math.round(pos*(1-t+0.05)),fn=pos-tp;
+  const fp=Math.round(neg*(1-t)*0.4),tn=neg-fp;
+  const prec=tp/(tp+fp)||0,rec=tp/(tp+fn)||0;
+  const acc=(tp+tn)/(N);
+  document.getElementById('threshResult').innerHTML=
+    `<div class="metric-card"><div class="metric-val" style="color:var(--teal)">${(prec*100).toFixed(0)}%</div><div class="metric-lbl">Precision</div></div>
+     <div class="metric-card"><div class="metric-val" style="color:#22c55e">${(rec*100).toFixed(0)}%</div><div class="metric-lbl">Recall</div></div>
+     <div class="metric-card"><div class="metric-val" style="color:var(--text)">${(acc*100).toFixed(0)}%</div><div class="metric-lbl">Accuracy</div></div>
+     <div class="metric-card"><div class="metric-val" style="color:var(--rose)">${fp}</div><div class="metric-lbl">False Positives</div></div>
+     <div class="metric-card"><div class="metric-val" style="color:var(--amber)">${fn}</div><div class="metric-lbl">False Negatives</div></div>`;
+  drawThreshCanvas(t);
+}
+
+function drawThreshCanvas(t){
+  const c=document.getElementById('threshCanvas');
+  c.width=c.offsetWidth||400;c.height=120;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10';ctx.fillRect(0,0,c.width,c.height);
+  const W=c.width,H=c.height,pad=20;
+  // Precision curve (decreasing)
+  ctx.strokeStyle='#14b8a6';ctx.lineWidth=2;ctx.beginPath();
+  for(let i=0;i<=100;i++){const x=pad+i*(W-pad*2)/100,th=i/100;const prec=1-th*0.7;
+    i===0?ctx.moveTo(x,H-pad-prec*(H-pad*2)):ctx.lineTo(x,H-pad-prec*(H-pad*2));}ctx.stroke();
+  // Recall curve (increasing)
+  ctx.strokeStyle='#22c55e';ctx.lineWidth=2;ctx.beginPath();
+  for(let i=0;i<=100;i++){const x=pad+i*(W-pad*2)/100,th=i/100;const rec=1-th;
+    i===0?ctx.moveTo(x,H-pad-rec*(H-pad*2)):ctx.lineTo(x,H-pad-rec*(H-pad*2));}ctx.stroke();
+  // Threshold line
+  const tx=pad+t*(W-pad*2);
+  ctx.strokeStyle='rgba(255,255,255,.5)';ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(tx,pad);ctx.lineTo(tx,H-pad);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='10px Inter';
+  ctx.fillText(`t=${t.toFixed(2)}`,tx+3,pad+12);
+  ctx.fillStyle='#14b8a6';ctx.fillText('Precision',pad+4,pad+12);
+  ctx.fillStyle='#22c55e';ctx.fillText('Recall',pad+4,pad+26);
+}
+
+// ── ROC ──
+function showROC(type){
+  const c=document.getElementById('rocCanvas');
+  c.width=c.offsetWidth||340;c.height=320;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10';ctx.fillRect(0,0,c.width,c.height);
+  const W=c.width,H=c.height,pad=40;
+  function px(fpr){return pad+fpr*(W-pad*2);}
+  function py(tpr){return H-pad-tpr*(H-pad*2);}
+  // Grid and axes
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    ctx.beginPath();ctx.moveTo(pad+i*(W-pad*2)/5,pad);ctx.lineTo(pad+i*(W-pad*2)/5,H-pad);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,H-pad-i*(H-pad*2)/5);ctx.lineTo(W-pad,H-pad-i*(H-pad*2)/5);ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(pad,H-pad);ctx.lineTo(W-pad,pad);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Inter';
+  ctx.fillText('FPR (1-Specificity)',pad,(H-10));ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('TPR (Recall)',0,0);ctx.restore();
+
+  const curves={
+    perfect:{pts:[[0,0],[0,1],[1,1]],color:'#22c55e',auc:1.0,label:'Perfect'},
+    good:{pts:[[0,0],[0.05,0.6],[0.1,0.78],[0.2,0.88],[0.4,0.93],[0.6,0.97],[1,1]],color:'#3b82f6',auc:0.85,label:'Good'},
+    mediocre:{pts:[[0,0],[0.1,0.3],[0.3,0.55],[0.5,0.7],[0.7,0.8],[1,1]],color:'#f59e0b',auc:0.65,label:'Mediocre'},
+    random:{pts:[[0,0],[1,1]],color:'#f43f5e',auc:0.5,label:'Random'},
+  };
+
+  const draw=(key)=>{
+    const cv=curves[key];
+    ctx.strokeStyle=cv.color;ctx.lineWidth=2;ctx.beginPath();
+    cv.pts.forEach(([x,y],i)=>{i===0?ctx.moveTo(px(x),py(y)):ctx.lineTo(px(x),py(y));});
+    ctx.stroke();
+    const last=cv.pts[cv.pts.length-2]||cv.pts[0];
+    ctx.fillStyle=cv.color;ctx.font='11px Inter';
+    ctx.fillText(`${cv.label} (AUC=${cv.auc})`,px(last[0])+4,py(last[1]));
+  };
+
+  if(type==='all') Object.keys(curves).forEach(draw);
+  else draw(type);
+
+  const explains={
+    perfect:'A perfect classifier: achieves TPR=1 before any FPs. Area = 1.0. Only possible if classes are fully separable.',
+    good:'A good real-world classifier. High recall at low false positive rate. AUC ≈ 0.85 is solid for most applications.',
+    mediocre:'Mediocre performance. The model has some signal but high false positive rate at most thresholds.',
+    random:'Random guessing. Every point on the diagonal means: at this threshold, TPR = FPR. Useless.',
+    all:'All four classifiers overlaid. The area under the curve (AUC) summarises performance across all thresholds in one number.'
+  };
+  document.getElementById('rocExplain').innerHTML=`<p style="font-size:13px;margin:0">${explains[type]}</p>`;
+}
+
+// ── Overfitting ──
+function updateOverfit(){
+  const comp=+document.getElementById('complexity').value;
+  const size=+document.getElementById('dataSize').value;
+  document.getElementById('compDisplay').textContent=comp;
+  document.getElementById('sizeDisplay').textContent=size;
+  const trainErr=Math.max(0.01, 0.5/(comp+1)+0.02);
+  const valErr=trainErr + Math.max(0, (comp-3)*0.04 - size/2000);
+  const bias=Math.max(0,1/(comp+1)-0.1);
+  const variance=Math.max(0,(comp-2)*0.05);
+  const regime=comp<=3?'Underfitting (high bias)':valErr<trainErr+0.05?'Good fit':'Overfitting (high variance)';
+  const color=comp<=3?'var(--amber)':valErr<trainErr+0.05?'var(--green)':'var(--rose)';
+  document.getElementById('overfitStatus').style.background=comp<=3?'rgba(245,158,11,.08)':valErr<trainErr+0.05?'rgba(34,197,94,.08)':'rgba(244,63,94,.08)';
+  document.getElementById('overfitStatus').style.border=`1px solid ${color.replace('var(--','').replace(')','')&&color}44`;
+  document.getElementById('overfitStatus').innerHTML=`<div style="font-weight:700;color:${color};margin-bottom:6px">${regime}</div>
+    <div style="font-size:12px">Train error: ${(trainErr*100).toFixed(1)}% · Val error: ${(valErr*100).toFixed(1)}%</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px">Bias: ${(bias*100).toFixed(1)}% · Variance: ${(variance*100).toFixed(1)}%</div>`;
+  drawOverfitCanvas(comp,size);
+}
+
+function drawOverfitCanvas(comp,size){
+  const c=document.getElementById('overfitCanvas');
+  c.width=c.offsetWidth||340;c.height=300;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10';ctx.fillRect(0,0,c.width,c.height);
+  const W=c.width,H=c.height,pad=32,maxC=15;
+  function px(x){return pad+x*(W-pad*2)/maxC;}
+  function py(y){return H-pad-Math.min(y,1.0)*(H-pad*2);}
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){ctx.beginPath();ctx.moveTo(pad,H-pad-i*(H-pad*2)/5);ctx.lineTo(W-pad,H-pad-i*(H-pad*2)/5);ctx.stroke();}
+  // Train
+  ctx.strokeStyle='#22c55e';ctx.lineWidth=2.5;ctx.beginPath();
+  for(let c2=1;c2<=maxC;c2++){const y=Math.max(0.01,0.5/(c2+1)+0.02);c2===1?ctx.moveTo(px(c2),py(y)):ctx.lineTo(px(c2),py(y));}ctx.stroke();
+  // Val
+  ctx.strokeStyle='#f43f5e';ctx.lineWidth=2.5;ctx.beginPath();
+  for(let c2=1;c2<=maxC;c2++){const tr=Math.max(0.01,0.5/(c2+1)+0.02);const y=tr+Math.max(0,(c2-3)*0.04-size/2000);c2===1?ctx.moveTo(px(c2),py(y)):ctx.lineTo(px(c2),py(y));}ctx.stroke();
+  // Current
+  ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();
+  const curTr=Math.max(0.01,0.5/(comp+1)+0.02);ctx.arc(px(comp),py(curTr),5,0,Math.PI*2);ctx.fill();
+  const curVl=curTr+Math.max(0,(comp-3)*0.04-size/2000);ctx.fillStyle='rgba(244,63,94,.9)';ctx.beginPath();ctx.arc(px(comp),py(curVl),5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='10px Inter';
+  ctx.fillStyle='#22c55e';ctx.fillText('Train error',pad+4,pad+12);
+  ctx.fillStyle='#f43f5e';ctx.fillText('Validation error',pad+4,pad+26);
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillText('Complexity →',W-pad-60,H-6);
+}
+
+// ── Cross-Validation ──
+let cvScores=[];
+function updateCV(){
+  document.getElementById('kDisplay').textContent=document.getElementById('kFolds').value;
+}
+window.runCV=()=>{
+  const k=+document.getElementById('kFolds').value;
+  const N=100,foldSize=Math.floor(N/k);
+  cvScores=[];
+  const viz=document.getElementById('cvViz');
+  viz.innerHTML='';
+  for(let i=0;i<k;i++){
+    const score=0.78+Math.random()*0.14;
+    cvScores.push(score);
+    const row=document.createElement('div');
+    row.style.display='flex';row.style.gap='4px';row.style.alignItems='center';
+    for(let j=0;j<k;j++){
+      const seg=document.createElement('div');
+      seg.style.cssText=`height:28px;flex:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;transition:all .3s`;
+      if(j===i){ seg.style.background='rgba(59,130,246,.3)';seg.style.border='2px solid var(--accent)';seg.style.color='var(--accent)';seg.textContent='VAL'; }
+      else { seg.style.background='rgba(34,197,94,.15)';seg.style.border='1px solid rgba(34,197,94,.3)';seg.style.color='var(--green)';seg.textContent='TR'; }
+      row.appendChild(seg);
+    }
+    const scl=document.createElement('div');
+    scl.style.cssText='font-family:var(--mono);font-size:12px;color:var(--text);width:52px;text-align:right';
+    scl.textContent=(score*100).toFixed(1)+'%';
+    row.appendChild(scl);
+    viz.appendChild(row);
+  }
+  const mean=cvScores.reduce((a,b)=>a+b,0)/k;
+  const std=Math.sqrt(cvScores.reduce((a,b)=>a+(b-mean)**2,0)/k);
+  document.getElementById('cvResults').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px">
+      <div class="metric-card"><div class="metric-val" style="color:var(--accent)">${(mean*100).toFixed(2)}%</div><div class="metric-lbl">Mean Accuracy</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:var(--teal)">±${(std*100).toFixed(2)}%</div><div class="metric-lbl">Std Deviation</div></div>
+      <div class="metric-card"><div class="metric-val" style="color:var(--amber)">${k}</div><div class="metric-lbl">Folds</div></div>
+    </div>
+    <div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px">
+      Report as: <strong style="color:var(--text)">${(mean*100).toFixed(1)}% ± ${(std*100).toFixed(1)}%</strong>. 
+      The std tells you how stable the model is across different data splits.
+      ${std>0.05?'<span style="color:var(--amber)"> High variance — consider more data or a simpler model.</span>':'<span style="color:var(--green)"> Low variance — stable model.</span>'}
+    </div>`;
+};
+
+window.showTab=(tab,btn)=>{
+  ['confusion','roc','overfitting','crossval'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  document.querySelectorAll('#evalTabs .btn').forEach(b=>b.className='btn btn-ghost btn-sm');
+  btn.className='btn btn-primary btn-sm';
+  if(tab==='roc'){setTimeout(()=>showROC('good'),50);}
+  if(tab==='overfitting'){setTimeout(()=>updateOverfit(),50);}
+};
+
+updateCM();
+</script>
+</body>
+</html>

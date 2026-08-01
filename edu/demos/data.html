@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Data & Problem Framing · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{background:var(--bg3);color:var(--muted);padding:8px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.col-stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="math.html">Math</a>
+      <a href="supervised.html">Supervised</a>
+      <a href="evaluation.html">Evaluation</a>
+    </div>
+    <span class="nav-badge">Topic 03 · Data</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 03 · Data &amp; Problem Framing</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">Exploratory Data Analysis</h1>
+  <p style="margin-bottom:28px;max-width:600px">Upload your own CSV or use our sample datasets. EDA runs entirely in your browser — no data leaves your device.</p>
+
+  <!-- Upload / Sample -->
+  <div class="card" style="margin-bottom:24px">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div>
+        <input type="file" id="csvUpload" accept=".csv" onchange="loadCSV(this)" style="display:none"/>
+        <button class="btn btn-primary" onclick="document.getElementById('csvUpload').click()"><i class="ti ti-upload"></i> Upload CSV</button>
+      </div>
+      <div style="color:var(--muted);font-size:13px">or use a sample:</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadSample('titanic')">Titanic</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadSample('iris')">Iris</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadSample('housing')">House Prices</button>
+    </div>
+  </div>
+
+  <div id="edaOutput" style="display:none">
+    <!-- Summary cards -->
+    <div id="summaryCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px"></div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:20px" id="edaTabs">
+      <button class="btn btn-primary btn-sm" onclick="showEdaTab('preview',this)">Data Preview</button>
+      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('stats',this)">Column Stats</button>
+      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('missing',this)">Missing Values</button>
+      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('dist',this)">Distributions</button>
+      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('framing',this)">Problem Framing</button>
+    </div>
+
+    <!-- Preview -->
+    <div id="edatab-preview">
+      <div class="tbl-wrap" id="dataTable"></div>
+    </div>
+    <!-- Stats -->
+    <div id="edatab-stats" style="display:none">
+      <div id="colStats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div>
+    </div>
+    <!-- Missing -->
+    <div id="edatab-missing" style="display:none">
+      <div class="card"><h3 style="margin-bottom:16px">Missing Value Analysis</h3>
+        <div id="missingChart"></div>
+      </div>
+    </div>
+    <!-- Distribution -->
+    <div id="edatab-dist" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <label class="label" style="margin:0">Column:</label>
+          <select class="input" id="distCol" onchange="drawDistribution()" style="width:200px"></select>
+        </div>
+        <canvas id="distCanvas" height="200" style="width:100%;background:#060a10;border-radius:8px;display:block"></canvas>
+      </div>
+    </div>
+    <!-- Framing -->
+    <div id="edatab-framing" style="display:none">
+      <div id="framingGuide"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Topic 03 · Data &amp; Problem Framing</p></div></footer>
+
+<script>
+let parsedData=[], headers=[];
+
+// ── Sample datasets ──
+const SAMPLES={
+  titanic:`PassengerId,Survived,Pclass,Name,Sex,Age,SibSp,Parch,Fare,Embarked
+1,0,3,Braund Mr. Owen Harris,male,22,1,0,7.25,S
+2,1,1,Cumings Mrs. John,female,38,1,0,71.28,C
+3,1,3,Heikkinen Miss. Laina,female,26,0,0,7.93,S
+4,1,1,Futrelle Mrs. Jacques,female,35,1,0,53.1,S
+5,0,3,Allen Mr. William Henry,male,35,0,0,8.05,S
+6,0,3,Moran Mr. James,male,,0,0,8.46,Q
+7,0,1,McCarthy Mr. Timothy,male,54,0,0,51.86,S
+8,0,3,Palsson Master Gosta,male,2,3,1,21.08,S
+9,1,3,Johnson Mrs. Oscar,female,27,0,2,11.13,S
+10,1,2,Nasser Mrs. Nicholas,female,14,1,0,30.07,C
+11,1,3,Sandstrom Miss. Marguerite,female,4,1,1,16.7,S
+12,1,1,Bonnell Miss. Elizabeth,female,58,0,0,26.55,S
+13,0,3,Saundercock Mr. William,male,20,0,0,8.05,S
+14,0,3,Andersson Mr. Anders,male,39,1,5,31.28,S
+15,0,3,Vestrom Miss. Hulda,female,14,0,0,7.85,S`,
+  iris:`sepal_length,sepal_width,petal_length,petal_width,species
+5.1,3.5,1.4,0.2,setosa
+4.9,3.0,1.4,0.2,setosa
+4.7,3.2,1.3,0.2,setosa
+7.0,3.2,4.7,1.4,versicolor
+6.4,3.2,4.5,1.5,versicolor
+6.9,3.1,4.9,1.5,versicolor
+6.3,2.5,5.0,1.9,virginica
+6.5,3.0,5.2,2.0,virginica
+6.2,3.4,5.4,2.3,virginica
+5.9,3.0,5.1,1.8,virginica
+5.0,3.6,1.4,0.2,setosa
+5.4,3.9,1.7,0.4,setosa
+6.7,3.1,4.7,1.5,versicolor
+6.3,2.3,4.4,1.3,versicolor
+6.7,3.3,5.7,2.1,virginica`,
+  housing:`size_m2,bedrooms,age_years,distance_km,price_usd
+85,3,5,2.1,320000
+120,4,12,4.5,410000
+60,2,25,1.2,280000
+200,5,2,8.3,620000
+95,3,8,3.0,355000
+140,4,15,5.2,445000
+75,2,30,0.8,310000
+180,5,1,6.7,590000
+110,3,10,2.8,380000
+55,1,40,0.5,240000
+130,4,7,4.1,425000
+90,3,18,2.5,340000
+160,4,3,7.0,510000
+70,2,22,1.5,295000
+105,3,9,3.3,370000`
+};
+
+window.loadSample=name=>{ parseCSV(SAMPLES[name]); };
+window.loadCSV=input=>{ if(input.files[0]){ const r=new FileReader(); r.onload=e=>parseCSV(e.target.result); r.readAsText(input.files[0]); } };
+
+function parseCSV(text){
+  const lines=text.trim().split('\n').filter(l=>l.trim());
+  headers=lines[0].split(',').map(h=>h.trim());
+  parsedData=lines.slice(1).map(l=>{
+    const vals=l.split(',');
+    const row={};
+    headers.forEach((h,i)=>{ row[h]=(vals[i]||'').trim(); });
+    return row;
+  });
+  renderEDA();
+}
+
+function renderEDA(){
+  document.getElementById('edaOutput').style.display='block';
+  renderSummaryCards();
+  renderPreview();
+  renderColStats();
+  renderMissing();
+  renderFraming();
+  populateDistCols();
+  drawDistribution();
+}
+
+function renderSummaryCards(){
+  const n=parsedData.length, cols=headers.length;
+  let missing=0;
+  parsedData.forEach(r=>headers.forEach(h=>{ if(!r[h]||r[h]==='')missing++; }));
+  const numCols=headers.filter(h=>parsedData.some(r=>!isNaN(parseFloat(r[h])))).length;
+  document.getElementById('summaryCards').innerHTML=
+    `<div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div class="stat-val">${n}</div><div class="stat-lbl">Rows</div></div>
+    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div class="stat-val">${cols}</div><div class="stat-lbl">Columns</div></div>
+    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div class="stat-val">${numCols}</div><div class="stat-lbl">Numeric</div></div>
+    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div class="stat-val" style="color:${missing>0?'var(--rose)':'var(--green)'}">${missing}</div><div class="stat-lbl">Missing</div></div>
+    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div class="stat-val">${(n*cols-missing)}</div><div class="stat-lbl">Non-null</div></div>`;
+}
+
+function renderPreview(){
+  const preview=parsedData.slice(0,10);
+  document.getElementById('dataTable').innerHTML=
+    `<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${preview.map(r=>`<tr>${headers.map(h=>`<td>${r[h]||'<span style="color:var(--rose)">null</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <div style="padding:8px 12px;font-size:12px;color:var(--muted)">Showing ${preview.length} of ${parsedData.length} rows</div>`;
+}
+
+function colStats(col){
+  const vals=parsedData.map(r=>r[col]).filter(v=>v!==''&&v!==undefined);
+  const numVals=vals.map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+  const missing=parsedData.length-vals.length;
+  const isNum=numVals.length>vals.length*0.6;
+  if(isNum&&numVals.length>0){
+    const sorted=[...numVals].sort((a,b)=>a-b);
+    const n=numVals.length, mean=numVals.reduce((a,b)=>a+b,0)/n;
+    const std=Math.sqrt(numVals.reduce((a,b)=>a+(b-mean)**2,0)/n);
+    const med=sorted[Math.floor(n/2)];
+    return{type:'numeric',n,missing,mean:mean.toFixed(3),std:std.toFixed(3),min:sorted[0],max:sorted[n-1],median:med};
+  } else {
+    const freq={};vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
+    const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    return{type:'categorical',n:vals.length,missing,unique:Object.keys(freq).length,top};
+  }
+}
+
+function renderColStats(){
+  const el=document.getElementById('colStats');
+  el.innerHTML=headers.map(h=>{
+    const s=colStats(h);
+    const color=s.type==='numeric'?'var(--accent)':'var(--teal)';
+    return `<div class="col-stat">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:600;font-size:13px;color:var(--text)">${h}</div>
+        <span class="chip" style="background:${color}18;color:${color};font-size:10px">${s.type}</span>
+      </div>
+      ${s.type==='numeric'?
+        `<div>N: ${s.n} · Missing: <span style="color:${s.missing>0?'var(--rose)':'var(--green)'}">${s.missing}</span></div>
+         <div>Mean: ${s.mean}</div><div>Std: ${s.std}</div>
+         <div>Range: [${s.min}, ${s.max}]</div>`:
+        `<div>N: ${s.n} · Missing: ${s.missing}</div>
+         <div>Unique: ${s.unique}</div>
+         ${s.top.map(([v,c])=>`<div style="display:flex;justify-content:space-between"><span>${v}</span><span style="color:var(--muted)">${c}</span></div>`).join('')}`
+      }
+    </div>`;
+  }).join('');
+}
+
+function renderMissing(){
+  const el=document.getElementById('missingChart');
+  const missingData=headers.map(h=>{
+    const missing=parsedData.filter(r=>!r[h]||r[h]==='').length;
+    return{col:h,missing,pct:missing/parsedData.length};
+  }).filter(m=>m.missing>0);
+  if(missingData.length===0){
+    el.innerHTML='<div style="color:var(--green);font-weight:600;font-size:14px">No missing values found!</div>';
+    return;
+  }
+  el.innerHTML=missingData.map(m=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+        <span style="color:var(--text);font-weight:600">${m.col}</span>
+        <span style="font-family:var(--mono);color:var(--rose)">${m.missing} missing (${(m.pct*100).toFixed(1)}%)</span>
+      </div>
+      <div style="background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+        <div style="width:${m.pct*100}%;height:100%;background:var(--rose);border-radius:4px"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">
+        ${m.pct<0.05?'Low — safe to drop rows or fill with mean/median':m.pct<0.3?'Moderate — consider imputation carefully':'High — investigate why data is missing before deciding strategy'}
+      </div>
+    </div>`).join('');
+}
+
+function populateDistCols(){
+  const sel=document.getElementById('distCol');
+  sel.innerHTML=headers.map(h=>`<option>${h}</option>`).join('');
+}
+
+function drawDistribution(){
+  const col=document.getElementById('distCol').value;
+  if(!col) return;
+  const s=colStats(col);
+  const c=document.getElementById('distCanvas');
+  c.width=c.offsetWidth||400; c.height=200;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10'; ctx.fillRect(0,0,c.width,c.height);
+  const W=c.width,H=c.height,pad=24;
+  if(s.type==='numeric'){
+    const vals=parsedData.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));
+    const bins=10, min=Math.min(...vals), max=Math.max(...vals)+0.001;
+    const bw=(max-min)/bins;
+    const counts=Array(bins).fill(0);
+    vals.forEach(v=>{const bi=Math.min(Math.floor((v-min)/bw),bins-1);counts[bi]++;});
+    const mc=Math.max(...counts);
+    counts.forEach((cnt,i)=>{
+      const bx=pad+i*(W-pad*2)/bins, bwidth=(W-pad*2)/bins-2;
+      const bh=(cnt/mc)*(H-pad*2);
+      ctx.fillStyle='rgba(59,130,246,0.6)';
+      ctx.fillRect(bx,H-pad-bh,bwidth,bh);
+      ctx.fillStyle='var(--muted)';ctx.font='9px Inter';
+      ctx.fillText((min+i*bw).toFixed(1),bx,H-6);
+    });
+  } else {
+    const vals=parsedData.map(r=>r[col]).filter(v=>v!=='');
+    const freq={};vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
+    const items=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const mc=Math.max(...items.map(i=>i[1]));
+    const bw=(W-pad*2)/items.length;
+    items.forEach(([v,cnt],i)=>{
+      const bx=pad+i*bw+2, bwidth=bw-4;
+      const bh=(cnt/mc)*(H-pad*2);
+      ctx.fillStyle='rgba(20,184,166,0.6)';
+      ctx.fillRect(bx,H-pad-bh,bwidth,bh);
+      ctx.fillStyle='var(--muted)';ctx.font='9px Inter';
+      ctx.fillText(v.slice(0,8),bx,H-6);
+    });
+  }
+}
+
+function renderFraming(){
+  const numCols=headers.filter(h=>colStats(h).type==='numeric');
+  const catCols=headers.filter(h=>colStats(h).type==='categorical');
+  const lastCol=headers[headers.length-1];
+  const lastStat=colStats(lastCol);
+  document.getElementById('framingGuide').innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">Problem Framing Guide</h3>
+      <div class="grid-2" style="gap:16px">
+        <div>
+          <div class="chip chip-blue" style="margin-bottom:8px">Numeric columns (${numCols.length})</div>
+          <p style="font-size:13px">These are likely <strong>features</strong> or a regression <strong>target</strong>. Use them as-is after normalisation.</p>
+          <div style="margin-top:8px">${numCols.map(c=>`<span class="chip chip-blue" style="margin:2px;font-size:11px">${c}</span>`).join('')}</div>
+        </div>
+        <div>
+          <div class="chip chip-teal" style="margin-bottom:8px">Categorical columns (${catCols.length})</div>
+          <p style="font-size:13px">Encode before training: <strong>one-hot encoding</strong> for low cardinality, <strong>label encoding</strong> for ordinal.</p>
+          <div style="margin-top:8px">${catCols.map(c=>`<span class="chip chip-teal" style="margin:2px;font-size:11px">${c}</span>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2" style="gap:16px">
+      <div class="card" style="border-color:var(--accent)">
+        <h4 style="margin-bottom:8px;color:var(--accent)">Likely target column: <code>${lastCol}</code></h4>
+        <p style="font-size:13px">Last column is usually the target. It's <strong>${lastStat.type}</strong>.</p>
+        <p style="font-size:13px;margin-top:6px">This suggests a <strong>${lastStat.type==='numeric'?'regression':'classification'}</strong> problem.</p>
+      </div>
+      <div class="card" style="border-color:var(--amber)">
+        <h4 style="margin-bottom:8px;color:var(--amber)">Data leakage check</h4>
+        <p style="font-size:13px">Columns that could contain information not available at prediction time:</p>
+        <p style="font-size:13px;margin-top:6px;color:var(--muted)">Review ID columns, timestamps, and any column that logically depends on the outcome.</p>
+      </div>
+    </div>`;
+}
+
+window.showEdaTab=(tab,btn)=>{
+  ['preview','stats','missing','dist','framing'].forEach(t=>document.getElementById('edatab-'+t).style.display='none');
+  document.getElementById('edatab-'+tab).style.display='block';
+  document.querySelectorAll('#edaTabs .btn').forEach(b=>b.className='btn btn-ghost btn-sm');
+  btn.className='btn btn-primary btn-sm';
+  if(tab==='dist') drawDistribution();
+};
+
+loadSample('titanic');
+</script>
+</body>
+</html>

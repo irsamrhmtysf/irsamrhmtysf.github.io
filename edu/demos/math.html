@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Math & Stats · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+.math-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.formula{font-family:var(--mono);font-size:14px;background:var(--bg3);padding:10px 14px;border-radius:8px;color:var(--accent);margin:10px 0;display:block}
+.matrix-grid{display:inline-grid;gap:8px;background:var(--bg3);padding:12px 16px;border-radius:8px;margin:8px 0}
+.matrix-grid input{width:52px;padding:6px;text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px}
+.plot-canvas{border-radius:8px;background:#060a10;display:block;width:100%}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="history.html">History</a>
+      <a href="supervised.html">Supervised</a>
+      <a href="neural.html">Neural Nets</a>
+    </div>
+    <span class="nav-badge">Topic 02 · Math</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 02 · Math &amp; Stats Basics</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">Interactive Math Playground</h1>
+  <p style="margin-bottom:32px;max-width:600px">Every AI concept has math behind it. Explore each concept with live, editable examples.</p>
+
+  <!-- Tab nav -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px" id="mathTabs">
+    <button class="btn btn-primary btn-sm" onclick="showSection('vectors',this)">Vectors</button>
+    <button class="btn btn-ghost btn-sm" onclick="showSection('matrix',this)">Matrix Ops</button>
+    <button class="btn btn-ghost btn-sm" onclick="showSection('gradient',this)">Gradient Descent</button>
+    <button class="btn btn-ghost btn-sm" onclick="showSection('probability',this)">Probability</button>
+    <button class="btn btn-ghost btn-sm" onclick="showSection('stats',this)">Statistics</button>
+  </div>
+
+  <!-- VECTORS -->
+  <div id="sec-vectors">
+    <div class="grid-2" style="gap:20px;align-items:start">
+      <div class="math-card">
+        <h3 style="margin-bottom:8px">Vector operations</h3>
+        <p style="font-size:13px;margin-bottom:14px">In ML, every training example is a vector of features. Enter two 3D vectors and see all operations live.</p>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+          <div>
+            <label class="label">Vector A</label>
+            <div style="display:flex;gap:6px">
+              <input class="input" id="ax" value="3" style="width:52px;text-align:center" oninput="updateVectors()"/>
+              <input class="input" id="ay" value="1" style="width:52px;text-align:center" oninput="updateVectors()"/>
+              <input class="input" id="az" value="4" style="width:52px;text-align:center" oninput="updateVectors()"/>
+            </div>
+          </div>
+          <div>
+            <label class="label">Vector B</label>
+            <div style="display:flex;gap:6px">
+              <input class="input" id="bx" value="1" style="width:52px;text-align:center" oninput="updateVectors()"/>
+              <input class="input" id="by" value="5" style="width:52px;text-align:center" oninput="updateVectors()"/>
+              <input class="input" id="bz" value="9" style="width:52px;text-align:center" oninput="updateVectors()"/>
+            </div>
+          </div>
+        </div>
+        <div id="vecResults" class="result-box" style="font-family:var(--mono);font-size:13px"></div>
+        <div class="terminal" style="margin-top:14px;font-size:12px">
+<span class="cm">// Dot product — core of every neuron</span>
+dot(A,B) = A[0]*B[0] + A[1]*B[1] + A[2]*B[2]
+<span class="cm">// Cosine similarity — used in NLP embeddings</span>
+cos(A,B) = dot(A,B) / (|A| * |B|)</div>
+      </div>
+      <div class="math-card">
+        <h3 style="margin-bottom:8px">Vector visualisation</h3>
+        <canvas id="vecCanvas" height="220" class="plot-canvas"></canvas>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">2D projection of vectors A and B. The angle between them relates to cosine similarity — 0° = identical, 90° = orthogonal, 180° = opposite.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATRIX -->
+  <div id="sec-matrix" style="display:none">
+    <div class="grid-2" style="gap:20px;align-items:start">
+      <div class="math-card">
+        <h3 style="margin-bottom:8px">Matrix multiplication A × B</h3>
+        <p style="font-size:13px;margin-bottom:12px">The core operation of neural network forward passes. Each output element is a dot product of a row of A with a column of B.</p>
+        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+          <div>
+            <label class="label">Matrix A (2×2)</label>
+            <div class="matrix-grid" style="grid-template-columns:1fr 1fr">
+              <input id="a00" value="1" oninput="matMul()"/><input id="a01" value="2" oninput="matMul()"/>
+              <input id="a10" value="3" oninput="matMul()"/><input id="a11" value="4" oninput="matMul()"/>
+            </div>
+          </div>
+          <div style="font-size:28px;color:var(--muted);padding-top:24px">×</div>
+          <div>
+            <label class="label">Matrix B (2×2)</label>
+            <div class="matrix-grid" style="grid-template-columns:1fr 1fr">
+              <input id="b00" value="5" oninput="matMul()"/><input id="b01" value="6" oninput="matMul()"/>
+              <input id="b10" value="7" oninput="matMul()"/><input id="b11" value="8" oninput="matMul()"/>
+            </div>
+          </div>
+          <div style="font-size:28px;color:var(--muted);padding-top:24px">=</div>
+          <div>
+            <label class="label">Result C = A×B</label>
+            <div class="matrix-grid" style="grid-template-columns:1fr 1fr;opacity:.8">
+              <input id="c00" readonly style="background:rgba(59,130,246,.1);border-color:var(--accent)"/>
+              <input id="c01" readonly style="background:rgba(59,130,246,.1);border-color:var(--accent)"/>
+              <input id="c10" readonly style="background:rgba(59,130,246,.1);border-color:var(--accent)"/>
+              <input id="c11" readonly style="background:rgba(59,130,246,.1);border-color:var(--accent)"/>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px">
+          <strong style="color:var(--accent)">C[i][j]</strong> = sum of A[i][k] × B[k][j] for all k<br/>
+          <span style="color:var(--muted)">In a neural layer: <code>output = W × input + bias</code></span>
+        </div>
+      </div>
+      <div class="math-card">
+        <h3 style="margin-bottom:8px">Why matrices matter in AI</h3>
+        <p style="font-size:13px;margin-bottom:12px">A neural network layer with 784 inputs and 256 neurons computes:</p>
+        <code class="formula">output[256] = W[256×784] × input[784] + bias[256]</code>
+        <p style="font-size:13px;margin-bottom:10px">This single matrix multiply — evaluated on a GPU — processes one forward pass. With batch size 32:</p>
+        <code class="formula">output[32×256] = input[32×784] × W.T[784×256] + bias[256]</code>
+        <div style="margin-top:14px;padding:12px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:13px">
+          GPUs are fast at matrix multiplication because thousands of cores compute each C[i][j] in parallel. This is why GPU compute is the bottleneck for AI training.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRADIENT DESCENT -->
+  <div id="sec-gradient" style="display:none">
+    <div class="grid-2" style="gap:20px;align-items:start">
+      <div class="math-card">
+        <h3 style="margin-bottom:8px">Gradient Descent visualised</h3>
+        <p style="font-size:13px;margin-bottom:12px">Watch the algorithm find the minimum of f(x) = x² + 2x + 1. Adjust learning rate to see how it affects convergence.</p>
+        <label class="label">Learning rate: <span id="lrDisplay">0.10</span></label>
+        <input type="range" id="lrRange" min="0.01" max="0.95" step="0.01" value="0.1" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('lrDisplay').textContent=parseFloat(this.value).toFixed(2)"/>
+        <label class="label" style="margin-top:10px">Starting point: <span id="startDisplay">3.00</span></label>
+        <input type="range" id="startRange" min="-5" max="5" step="0.1" value="3" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('startDisplay').textContent=parseFloat(this.value).toFixed(2)"/>
+        <button class="btn btn-primary" onclick="runGD()" style="margin-top:12px;width:100%">Run Gradient Descent</button>
+        <div id="gdResult" style="margin-top:12px;font-size:13px;color:var(--muted);min-height:40px"></div>
+      </div>
+      <div class="math-card">
+        <canvas id="gdCanvas" height="240" class="plot-canvas"></canvas>
+        <div class="terminal" style="margin-top:12px;font-size:12px">
+<span class="cm">// Gradient descent update rule</span>
+f(x)  = x² + 2x + 1  <span class="cm">// loss function</span>
+f'(x) = 2x + 2       <span class="cm">// gradient (derivative)</span>
+x_new = x - lr * f'(x) <span class="cm">// step</span>
+<span class="cm">// Repeat until |gradient| ≈ 0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROBABILITY -->
+  <div id="sec-probability" style="display:none">
+    <div class="grid-2" style="gap:20px;align-items:start">
+      <div class="math-card">
+        <h3 style="margin-bottom:8px">Bayes' Theorem</h3>
+        <p style="font-size:13px;margin-bottom:12px">P(A|B) = P(B|A) × P(A) / P(B) — the foundation of probabilistic AI.</p>
+        <code class="formula">P(Disease | Test+) = P(Test+ | Disease) × P(Disease) / P(Test+)</code>
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+          <div><label class="label">Disease prevalence P(Disease): <span id="prevDisplay">1%</span></label>
+            <input type="range" id="prev" min="0.001" max="0.5" step="0.001" value="0.01" style="width:100%;accent-color:var(--accent)" oninput="updateBayes()"/></div>
+          <div><label class="label">Test sensitivity P(+|Disease): <span id="sensDisplay">99%</span></label>
+            <input type="range" id="sens" min="0.5" max="1" step="0.01" value="0.99" style="width:100%;accent-color:var(--accent)" oninput="updateBayes()"/></div>
+          <div><label class="label">False positive rate P(+|No disease): <span id="fprDisplay">5%</span></label>
+            <input type="range" id="fpr" min="0.001" max="0.5" step="0.001" value="0.05" style="width:100%;accent-color:var(--accent)" oninput="updateBayes()"/></div>
+        </div>
+        <div id="bayesResult" class="result-box" style="margin-top:14px"></div>
+      </div>
+      <div class="math-card">
+        <h3 style="margin-bottom:8px">Gaussian Distribution</h3>
+        <p style="font-size:13px;margin-bottom:12px">The bell curve. Used everywhere in ML for modelling uncertainty, initialising weights, and understanding data.</p>
+        <div style="display:flex;gap:12px;margin-bottom:12px">
+          <div><label class="label">Mean μ: <span id="muD">0</span></label>
+            <input type="range" id="muSlider" min="-3" max="3" step="0.1" value="0" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('muD').textContent=this.value;drawGaussian()"/></div>
+          <div><label class="label">Std σ: <span id="sigD">1.0</span></label>
+            <input type="range" id="sigSlider" min="0.3" max="3" step="0.1" value="1" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('sigD').textContent=this.value;drawGaussian()"/></div>
+        </div>
+        <canvas id="gaussCanvas" height="180" class="plot-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="sec-stats" style="display:none">
+    <div class="math-card">
+      <h3 style="margin-bottom:8px">Descriptive Statistics Calculator</h3>
+      <p style="font-size:13px;margin-bottom:12px">Enter numbers to compute all key statistics. These are the first thing you check on any dataset.</p>
+      <label class="label">Data (comma-separated)</label>
+      <input class="input" id="statsInput" value="12,45,67,23,89,34,56,78,91,42,33,77" oninput="computeStats()" style="margin-bottom:14px"/>
+      <div id="statsResult" class="result-box"></div>
+      <canvas id="histCanvas" height="140" class="plot-canvas" style="margin-top:14px"></canvas>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Topic 02 · Math &amp; Stats</p></div></footer>
+
+<script>
+// ── Tab switching ──
+function showSection(id,btn){
+  ['vectors','matrix','gradient','probability','stats'].forEach(s=>document.getElementById('sec-'+s).style.display='none');
+  document.getElementById('sec-'+id).style.display='block';
+  document.querySelectorAll('#mathTabs .btn').forEach(b=>b.className='btn btn-ghost btn-sm');
+  btn.className='btn btn-primary btn-sm';
+  if(id==='gradient') drawGDCanvas();
+  if(id==='probability'){ updateBayes(); drawGaussian(); }
+  if(id==='stats') computeStats();
+  if(id==='vectors') updateVectors();
+}
+
+// ── Vectors ──
+function updateVectors(){
+  const A=[parseFloat(document.getElementById('ax').value)||0, parseFloat(document.getElementById('ay').value)||0, parseFloat(document.getElementById('az').value)||0];
+  const B=[parseFloat(document.getElementById('bx').value)||0, parseFloat(document.getElementById('by').value)||0, parseFloat(document.getElementById('bz').value)||0];
+  const dot=A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
+  const magA=Math.sqrt(A[0]**2+A[1]**2+A[2]**2);
+  const magB=Math.sqrt(B[0]**2+B[1]**2+B[2]**2);
+  const cos=(magA>0&&magB>0)?dot/(magA*magB):0;
+  const angle=(Math.acos(Math.max(-1,Math.min(1,cos)))*180/Math.PI).toFixed(1);
+  const add=A.map((a,i)=>a+B[i]), sub=A.map((a,i)=>a-B[i]);
+  document.getElementById('vecResults').innerHTML=
+    `A = [${A.join(', ')}]  |A| = ${magA.toFixed(3)}\n`+
+    `B = [${B.join(', ')}]  |B| = ${magB.toFixed(3)}\n\n`+
+    `A + B = [${add.join(', ')}]\nA - B = [${sub.join(', ')}]\n\n`+
+    `Dot product A·B = ${dot.toFixed(4)}\nCosine similarity = ${cos.toFixed(4)}\nAngle between = ${angle}°`;
+  drawVecCanvas(A,B);
+}
+
+function drawVecCanvas(A,B){
+  const c=document.getElementById('vecCanvas');
+  c.width=c.offsetWidth||300; c.height=220;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10'; ctx.fillRect(0,0,c.width,c.height);
+  const cx=c.width/2, cy=c.height/2, sc=50;
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.lineWidth=1;
+  for(let i=-4;i<=4;i++){ ctx.beginPath();ctx.moveTo(cx+i*sc,0);ctx.lineTo(cx+i*sc,c.height);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,cy+i*sc);ctx.lineTo(c.width,cy+i*sc);ctx.stroke(); }
+  ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(c.width,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,c.height);ctx.stroke();
+  // vectors (2D projection using x,y)
+  const drawVec=(v,color,lbl)=>{
+    const ex=cx+v[0]*sc, ey=cy-v[1]*sc;
+    ctx.strokeStyle=color; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex,ey); ctx.stroke();
+    const ang=Math.atan2(ey-cy,ex-cx);
+    ctx.fillStyle=color;
+    ctx.beginPath();ctx.moveTo(ex,ey);
+    ctx.lineTo(ex-10*Math.cos(ang-0.3),ey-10*Math.sin(ang-0.3));
+    ctx.lineTo(ex-10*Math.cos(ang+0.3),ey-10*Math.sin(ang+0.3));
+    ctx.closePath();ctx.fill();
+    ctx.font='bold 12px Inter'; ctx.fillStyle=color; ctx.fillText(lbl,ex+6,ey-6);
+  };
+  drawVec(A,'#3b82f6','A');
+  drawVec(B,'#f43f5e','B');
+}
+
+// ── Matrix ──
+function matMul(){
+  const g=id=>parseFloat(document.getElementById(id).value)||0;
+  const a=[[g('a00'),g('a01')],[g('a10'),g('a11')]];
+  const b=[[g('b00'),g('b01')],[g('b10'),g('b11')]];
+  const c=[[a[0][0]*b[0][0]+a[0][1]*b[1][0],a[0][0]*b[0][1]+a[0][1]*b[1][1]],
+            [a[1][0]*b[0][0]+a[1][1]*b[1][0],a[1][0]*b[0][1]+a[1][1]*b[1][1]]];
+  document.getElementById('c00').value=c[0][0];document.getElementById('c01').value=c[0][1];
+  document.getElementById('c10').value=c[1][0];document.getElementById('c11').value=c[1][1];
+}
+
+// ── Gradient Descent ──
+const f=x=>x*x+2*x+1, fd=x=>2*x+2;
+function drawGDCanvas(path){
+  const c=document.getElementById('gdCanvas');
+  c.width=c.offsetWidth||300; c.height=240;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10'; ctx.fillRect(0,0,c.width,c.height);
+  const W=c.width,H=c.height,pad=24;
+  const xMin=-6,xMax=4,yMin=-1,yMax=20;
+  function px(x){return pad+(x-xMin)/(xMax-xMin)*(W-pad*2);}
+  function py(y){return H-pad-(y-yMin)/(yMax-yMin)*(H-pad*2);}
+  // axes
+  ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,H-pad);ctx.lineTo(W-pad,H-pad);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px(0),pad);ctx.lineTo(px(0),H-pad);ctx.stroke();
+  // curve
+  ctx.strokeStyle='#6366f1';ctx.lineWidth=2;ctx.beginPath();
+  for(let i=0;i<=200;i++){const x=xMin+i*(xMax-xMin)/200;i===0?ctx.moveTo(px(x),py(f(x))):ctx.lineTo(px(x),py(f(x)));}
+  ctx.stroke();
+  // minimum
+  ctx.fillStyle='#22c55e';ctx.beginPath();ctx.arc(px(-1),py(0),5,0,Math.PI*2);ctx.fill();
+  // path
+  if(path&&path.length>1){
+    ctx.strokeStyle='#f59e0b';ctx.lineWidth=1.5;ctx.beginPath();
+    path.forEach((p,i)=>{i===0?ctx.moveTo(px(p[0]),py(p[1])):ctx.lineTo(px(p[0]),py(p[1]));});
+    ctx.stroke();
+    path.forEach(p=>{ctx.fillStyle='rgba(245,158,11,.8)';ctx.beginPath();ctx.arc(px(p[0]),py(p[1]),3,0,Math.PI*2);ctx.fill();});
+  }
+  ctx.fillStyle='var(--muted)';ctx.font='11px Inter';
+  ctx.fillText('f(x) = x² + 2x + 1',pad+4,pad+12);
+  ctx.fillStyle='#22c55e';ctx.fillText('min at x=-1',px(-1)+6,py(0)-8);
+}
+
+window.runGD=()=>{
+  const lr=parseFloat(document.getElementById('lrRange').value);
+  let x=parseFloat(document.getElementById('startRange').value);
+  const path=[[x,f(x)]];
+  for(let i=0;i<60;i++){
+    const g=fd(x); x-=lr*g; path.push([x,f(x)]);
+    if(Math.abs(g)<0.001) break;
+  }
+  drawGDCanvas(path);
+  document.getElementById('gdResult').innerHTML=
+    `Steps: ${path.length-1} · Final x: ${x.toFixed(5)} · f(x): ${f(x).toFixed(6)}<br/>`+
+    `<span style="color:var(--green)">Optimal: x=-1, f(-1)=0</span>`;
+};
+
+// ── Bayes ──
+function updateBayes(){
+  const prev=parseFloat(document.getElementById('prev').value);
+  const sens=parseFloat(document.getElementById('sens').value);
+  const fpr=parseFloat(document.getElementById('fpr').value);
+  document.getElementById('prevDisplay').textContent=(prev*100).toFixed(1)+'%';
+  document.getElementById('sensDisplay').textContent=(sens*100).toFixed(0)+'%';
+  document.getElementById('fprDisplay').textContent=(fpr*100).toFixed(1)+'%';
+  const pPos=sens*prev+fpr*(1-prev);
+  const posterior=(sens*prev)/pPos;
+  const color=posterior>0.5?'#22c55e':posterior>0.2?'#f59e0b':'#f43f5e';
+  document.getElementById('bayesResult').innerHTML=
+    `P(Test+) = ${(pPos*100).toFixed(2)}%\n\n`+
+    `P(Disease | Test+) = <span style="color:${color};font-weight:700;font-size:1.2em">${(posterior*100).toFixed(1)}%</span>\n\n`+
+    `Insight: Even with a 99% sensitive test, if prevalence is ${(prev*100).toFixed(1)}%, a positive result is only ${(posterior*100).toFixed(0)}% likely to indicate disease. This is why base rates matter enormously in medical AI.`;
+}
+
+// ── Gaussian ──
+function drawGaussian(){
+  const c=document.getElementById('gaussCanvas');
+  c.width=c.offsetWidth||300; c.height=180;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10'; ctx.fillRect(0,0,c.width,c.height);
+  const mu=parseFloat(document.getElementById('muSlider').value);
+  const sig=parseFloat(document.getElementById('sigSlider').value);
+  const W=c.width,H=c.height,pad=20;
+  const xMin=-6,xMax=6;
+  function px(x){return pad+(x-xMin)/(xMax-xMin)*(W-pad*2);}
+  const gauss=x=>Math.exp(-(x-mu)**2/(2*sig**2))/(sig*Math.sqrt(2*Math.PI));
+  const yMax=gauss(mu)*1.1;
+  function py(y){return H-pad-(y/yMax)*(H-pad*2);}
+  // fill
+  ctx.fillStyle='rgba(99,102,241,.15)'; ctx.beginPath();
+  for(let i=0;i<=300;i++){const x=xMin+i*(xMax-xMin)/300; i===0?ctx.moveTo(px(x),py(gauss(x))):ctx.lineTo(px(x),py(gauss(x)));}
+  ctx.lineTo(W-pad,H-pad);ctx.lineTo(pad,H-pad);ctx.closePath();ctx.fill();
+  // curve
+  ctx.strokeStyle='#6366f1';ctx.lineWidth=2;ctx.beginPath();
+  for(let i=0;i<=300;i++){const x=xMin+i*(xMax-xMin)/300;i===0?ctx.moveTo(px(x),py(gauss(x))):ctx.lineTo(px(x),py(gauss(x)));}
+  ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.2)';ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(px(mu),H-pad);ctx.lineTo(px(mu),pad);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#f59e0b';ctx.font='11px Inter';ctx.fillText(`μ=${mu}`,px(mu)+4,pad+14);
+}
+
+// ── Stats ──
+function computeStats(){
+  const raw=document.getElementById('statsInput').value;
+  const nums=raw.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+  if(nums.length<2){document.getElementById('statsResult').textContent='Enter at least 2 numbers.';return;}
+  const n=nums.length, sum=nums.reduce((a,b)=>a+b,0), mean=sum/n;
+  const sorted=[...nums].sort((a,b)=>a-b);
+  const median=n%2===0?(sorted[n/2-1]+sorted[n/2])/2:sorted[Math.floor(n/2)];
+  const variance=nums.reduce((a,b)=>a+(b-mean)**2,0)/n;
+  const std=Math.sqrt(variance);
+  const q1=sorted[Math.floor(n/4)], q3=sorted[Math.floor(3*n/4)];
+  document.getElementById('statsResult').innerHTML=
+    `N = ${n}  |  Sum = ${sum.toFixed(2)}\n`+
+    `Mean = ${mean.toFixed(4)}  |  Median = ${median.toFixed(4)}\n`+
+    `Std Dev = ${std.toFixed(4)}  |  Variance = ${variance.toFixed(4)}\n`+
+    `Min = ${sorted[0]}  |  Max = ${sorted[n-1]}  |  Range = ${(sorted[n-1]-sorted[0]).toFixed(2)}\n`+
+    `Q1 = ${q1}  |  Q3 = ${q3}  |  IQR = ${(q3-q1).toFixed(2)}`;
+  drawHistogram(nums);
+}
+
+function drawHistogram(nums){
+  const c=document.getElementById('histCanvas');
+  c.width=c.offsetWidth||400; c.height=140;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#060a10'; ctx.fillRect(0,0,c.width,c.height);
+  const bins=8,min=Math.min(...nums),max=Math.max(...nums)+0.001;
+  const bw=(max-min)/bins;
+  const counts=Array(bins).fill(0);
+  nums.forEach(v=>{const bi=Math.min(Math.floor((v-min)/bw),bins-1);counts[bi]++;});
+  const maxC=Math.max(...counts);
+  const W=c.width,H=c.height,pad=20;
+  counts.forEach((cnt,i)=>{
+    const bx=pad+i*(W-pad*2)/bins, bwidth=(W-pad*2)/bins-2;
+    const bh=(cnt/maxC)*(H-pad*2);
+    ctx.fillStyle=`rgba(99,102,241,${0.4+cnt/maxC*0.5})`;
+    ctx.fillRect(bx,H-pad-bh,bwidth,bh);
+    ctx.fillStyle='var(--muted)';ctx.font='9px Inter';
+    const lbl=(min+i*bw).toFixed(0);
+    ctx.fillText(lbl,bx,H-4);
+  });
+}
+
+// Init
+updateVectors(); matMul();
+document.getElementById('gdCanvas').width=300;
+drawGDCanvas();
+</script>
+</body>
+</html>

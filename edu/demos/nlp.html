@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NLP Demo · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="vision.html">Vision</a>
+      <a href="speech.html">Speech</a>
+      <a href="chatbot.html">Chatbot</a>
+    </div>
+    <span class="nav-badge">Topic 09 · NLP</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:48px;padding-bottom:80px">
+  <div class="section-label">Topic 09 · NLP & Sequence Models</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">Text Intelligence</h1>
+  <p style="margin-bottom:32px;max-width:580px">Four NLP tasks, one model. DistilBERT runs entirely in your browser. Your text never leaves your device.</p>
+
+  <!-- Model status -->
+  <div id="status" class="model-status" style="margin-bottom:8px">
+    <div class="status-dot idle" id="statusDot"></div>
+    <span class="status-text" id="statusText">Click a task to load the model</span>
+  </div>
+  <div class="progress-bar-wrap" style="margin-bottom:32px">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px" id="tabs">
+    <button class="btn btn-primary" onclick="switchTab('sentiment',this)">Sentiment</button>
+    <button class="btn btn-ghost" onclick="switchTab('zeroshot',this)">Zero-shot classify</button>
+    <button class="btn btn-ghost" onclick="switchTab('ner',this)">Named entities (NER)</button>
+    <button class="btn btn-ghost" onclick="switchTab('similarity',this)">Semantic similarity</button>
+  </div>
+
+  <!-- SENTIMENT -->
+  <div id="tab-sentiment" class="tab-panel">
+    <div class="card" style="max-width:700px">
+      <h3 style="margin-bottom:6px">Sentiment Analysis</h3>
+      <p style="font-size:13px;margin-bottom:16px">What emotion does this text carry? Model: <code>distilbert-base-uncased-finetuned-sst-2-english</code></p>
+      <label class="label">Your text</label>
+      <textarea class="textarea" id="sentText" rows="3" placeholder="Type anything — a review, a tweet, a sentence...">I absolutely love how Transformers.js makes AI accessible to everyone!</textarea>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" id="sentBtn" onclick="runSentiment()"><i class="ti ti-brain"></i> Analyse</button>
+        <span style="font-size:12px;color:var(--muted)">Model: distilbert-base-uncased-finetuned-sst-2-english</span>
+      </div>
+      <div id="sentResult" class="result-box" style="margin-top:16px"><span class="result-placeholder">Result will appear here…</span></div>
+    </div>
+
+    <div class="card" style="max-width:700px;margin-top:20px">
+      <h4 style="margin-bottom:8px">What's happening under the hood</h4>
+      <div class="terminal"><span class="cm">// Transformers.js — sentiment in 4 lines</span>
+<span class="kw">import</span> { pipeline } <span class="kw">from</span> <span class="st">'@huggingface/transformers'</span>;
+<span class="kw">const</span> clf = <span class="kw">await</span> <span class="fn">pipeline</span>(<span class="st">'sentiment-analysis'</span>);
+<span class="kw">const</span> out = <span class="kw">await</span> <span class="fn">clf</span>(<span class="st">'I love this!'</span>);
+<span class="cm">// → [{label: 'POSITIVE', score: 0.9998}]</span></div>
+    </div>
+  </div>
+
+  <!-- ZERO-SHOT -->
+  <div id="tab-zeroshot" class="tab-panel" style="display:none">
+    <div class="card" style="max-width:700px">
+      <h3 style="margin-bottom:6px">Zero-shot Classification</h3>
+      <p style="font-size:13px;margin-bottom:16px">Classify text into categories — without retraining. Define any labels you like.</p>
+      <label class="label">Text to classify</label>
+      <textarea class="textarea" id="zsText" rows="3" placeholder="Enter your text...">The new iPhone 15 camera takes stunning photos and the battery lasts all day.</textarea>
+      <label class="label" style="margin-top:12px">Labels (comma-separated)</label>
+      <input class="input" id="zsLabels" value="technology, finance, sports, food, travel, health"/>
+      <button class="btn btn-primary" onclick="runZeroShot()" style="margin-top:12px"><i class="ti ti-tags"></i> Classify</button>
+      <div id="zsResult" class="result-box" style="margin-top:16px"><span class="result-placeholder">Result will appear here…</span></div>
+    </div>
+  </div>
+
+  <!-- NER -->
+  <div id="tab-ner" class="tab-panel" style="display:none">
+    <div class="card" style="max-width:700px">
+      <h3 style="margin-bottom:6px">Named Entity Recognition</h3>
+      <p style="font-size:13px;margin-bottom:16px">Find people, organisations, locations, and dates in text.</p>
+      <label class="label">Text</label>
+      <textarea class="textarea" id="nerText" rows="4" placeholder="Enter text with names, places, organisations...">Elon Musk, CEO of Tesla and SpaceX, announced yesterday in Austin, Texas that the company will invest $2 billion in AI research by 2025.</textarea>
+      <button class="btn btn-primary" onclick="runNER()" style="margin-top:12px"><i class="ti ti-tag"></i> Find entities</button>
+      <div id="nerResult" class="result-box" style="margin-top:16px"><span class="result-placeholder">Entities will be highlighted here…</span></div>
+    </div>
+  </div>
+
+  <!-- SIMILARITY -->
+  <div id="tab-similarity" class="tab-panel" style="display:none">
+    <div class="card" style="max-width:700px">
+      <h3 style="margin-bottom:6px">Semantic Similarity</h3>
+      <p style="font-size:13px;margin-bottom:16px">Compare two sentences by meaning — not just keywords. Uses sentence embeddings + cosine similarity.</p>
+      <label class="label">Sentence A</label>
+      <input class="input" id="simA" value="The cat sat on the mat."/>
+      <label class="label" style="margin-top:12px">Sentence B</label>
+      <input class="input" id="simB" value="A kitten was resting on the rug."/>
+      <button class="btn btn-primary" onclick="runSimilarity()" style="margin-top:12px"><i class="ti ti-vectors"></i> Compare</button>
+      <div id="simResult" class="result-box" style="margin-top:16px"><span class="result-placeholder">Similarity score will appear here…</span></div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · NLP Demo · DistilBERT via Transformers.js</p></div></footer>
+
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js';
+
+env.allowLocalModels = false;
+
+let sentPipeline = null, zsPipeline = null, nerPipeline = null, embPipeline = null;
+let currentTask = 'sentiment';
+
+const statusDot  = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const progressBar= document.getElementById('progressBar');
+
+function setStatus(state, msg) {
+  statusDot.className = `status-dot ${state}`;
+  statusText.textContent = msg;
+}
+function setProgress(pct) { progressBar.style.width = pct + '%'; }
+
+function progressCb(p) {
+  if (p.status === 'progress' && p.total) setProgress(p.loaded/p.total*100);
+  if (p.status === 'initiate') setStatus('loading', `Downloading ${p.name || 'model'}…`);
+  if (p.status === 'done')     { setStatus('loading', 'Initialising…'); }
+}
+
+window.switchTab = function(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  document.querySelectorAll('#tabs .btn').forEach(b => { b.className='btn btn-ghost'; });
+  btn.className = 'btn btn-primary';
+  currentTask = tab;
+};
+
+window.runSentiment = async function() {
+  const text = document.getElementById('sentText').value.trim();
+  if (!text) return;
+  const res = document.getElementById('sentResult');
+  try {
+    if (!sentPipeline) {
+      setStatus('loading','Loading sentiment model…'); setProgress(0);
+      sentPipeline = await pipeline('sentiment-analysis',
+        'Xenova/distilbert-base-uncased-finetuned-sst-2-english',
+        { progress_callback: progressCb });
+      setStatus('ready','Model ready'); setProgress(100);
+    }
+    res.innerHTML = '<span style="color:var(--muted)">Analysing…</span>';
+    const out = await sentPipeline(text);
+    const item = out[0];
+    const color = item.label === 'POSITIVE' ? '#22c55e' : '#f43f5e';
+    const icon  = item.label === 'POSITIVE' ? '😊' : '😔';
+    const pct   = Math.round(item.score * 100);
+    res.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <span style="font-size:2rem">${icon}</span>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:${color}">${item.label}</div>
+          <div style="font-size:12px;color:var(--muted)">Confidence: ${pct}%</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border-radius:4px;height:8px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width .5s"></div>
+      </div>`;
+  } catch(e) { setStatus('error','Error'); res.textContent = 'Error: ' + e.message; }
+};
+
+window.runZeroShot = async function() {
+  const text   = document.getElementById('zsText').value.trim();
+  const labels = document.getElementById('zsLabels').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if (!text || !labels.length) return;
+  const res = document.getElementById('zsResult');
+  try {
+    if (!zsPipeline) {
+      setStatus('loading','Loading zero-shot model…'); setProgress(0);
+      zsPipeline = await pipeline('zero-shot-classification',
+        'Xenova/mobilebert-uncased-mnli', { progress_callback: progressCb });
+      setStatus('ready','Model ready'); setProgress(100);
+    }
+    res.innerHTML = '<span style="color:var(--muted)">Classifying…</span>';
+    const out = await zsPipeline(text, labels);
+    let html = '';
+    out.labels.forEach((lbl, i) => {
+      const pct = Math.round(out.scores[i]*100);
+      const colors = ['#3b82f6','#6366f1','#14b8a6','#f59e0b','#f43f5e','#a855f7','#22c55e'];
+      const c = colors[i % colors.length];
+      html += `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span style="color:var(--text);font-weight:${i===0?'600':'400'}">${lbl}</span>
+          <span style="font-family:var(--mono);color:${i===0?c:'var(--muted)'}">${pct}%</span>
+        </div>
+        <div style="background:var(--bg);border-radius:4px;height:6px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${c};border-radius:4px;transition:width .5s"></div>
+        </div></div>`;
+    });
+    res.innerHTML = html;
+  } catch(e) { setStatus('error','Error'); res.textContent = 'Error: ' + e.message; }
+};
+
+window.runNER = async function() {
+  const text = document.getElementById('nerText').value.trim();
+  if (!text) return;
+  const res = document.getElementById('nerResult');
+  try {
+    if (!nerPipeline) {
+      setStatus('loading','Loading NER model…'); setProgress(0);
+      nerPipeline = await pipeline('token-classification',
+        'Xenova/bert-base-NER', { progress_callback: progressCb });
+      setStatus('ready','Model ready'); setProgress(100);
+    }
+    res.innerHTML = '<span style="color:var(--muted)">Detecting entities…</span>';
+    const out = await nerPipeline(text, { aggregation_strategy: 'simple' });
+    const typeColors = { PER:'#3b82f6', ORG:'#14b8a6', LOC:'#f59e0b', MISC:'#a855f7' };
+
+    let highlighted = text;
+    const sorted = [...out].sort((a,b) => b.start - a.start);
+    sorted.forEach(e => {
+      const c = typeColors[e.entity_group] || '#6366f1';
+      const pct = Math.round((e.score||0)*100);
+      const span = `<mark style="background:${c}22;color:${c};border:1px solid ${c}44;border-radius:4px;padding:1px 5px;font-weight:600" title="${e.entity_group} (${pct}%)">${text.slice(e.start,e.end)}<sup style="font-size:9px;margin-left:2px">${e.entity_group}</sup></mark>`;
+      highlighted = highlighted.slice(0,e.start) + span + highlighted.slice(e.end);
+    });
+
+    const legend = ['PER','ORG','LOC','MISC'].map(t =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;margin-right:10px">
+        <span style="width:10px;height:10px;border-radius:2px;background:${typeColors[t]}"></span>${t}</span>`
+    ).join('');
+
+    res.innerHTML = `<div style="margin-bottom:12px;font-size:12px;color:var(--muted)">${legend}</div>
+      <div style="font-size:14px;line-height:2">${highlighted}</div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
+        Found ${out.length} entit${out.length===1?'y':'ies'}</div>`;
+  } catch(e) { setStatus('error','Error'); res.textContent = 'Error: ' + e.message; }
+};
+
+function cosineSim(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) { dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
+
+window.runSimilarity = async function() {
+  const textA = document.getElementById('simA').value.trim();
+  const textB = document.getElementById('simB').value.trim();
+  if (!textA || !textB) return;
+  const res = document.getElementById('simResult');
+  try {
+    if (!embPipeline) {
+      setStatus('loading','Loading embedding model…'); setProgress(0);
+      embPipeline = await pipeline('feature-extraction',
+        'Xenova/all-MiniLM-L6-v2', { progress_callback: progressCb });
+      setStatus('ready','Model ready'); setProgress(100);
+    }
+    res.innerHTML = '<span style="color:var(--muted)">Computing embeddings…</span>';
+    const [embA, embB] = await Promise.all([
+      embPipeline(textA, { pooling:'mean', normalize:true }),
+      embPipeline(textB, { pooling:'mean', normalize:true })
+    ]);
+    const sim = cosineSim(Array.from(embA.data), Array.from(embB.data));
+    const pct = Math.round(sim * 100);
+    const color = pct > 70 ? '#22c55e' : pct > 40 ? '#f59e0b' : '#f43f5e';
+    const label = pct > 70 ? 'High similarity' : pct > 40 ? 'Moderate similarity' : 'Low similarity';
+    res.innerHTML = `
+      <div style="text-align:center;padding:16px 0">
+        <div style="font-size:3rem;font-weight:800;color:${color};font-family:var(--display)">${pct}%</div>
+        <div style="font-size:14px;font-weight:600;color:${color};margin-top:4px">${label}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Cosine similarity on 384-dimensional embeddings</div>
+      </div>
+      <div style="background:var(--bg);border-radius:6px;height:10px;overflow:hidden;margin-top:8px">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:6px;transition:width .6s"></div>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--bg);padding:8px;border-radius:6px"><strong style="color:var(--text)">A:</strong> ${textA}</div>
+        <div style="background:var(--bg);padding:8px;border-radius:6px"><strong style="color:var(--text)">B:</strong> ${textB}</div>
+      </div>`;
+  } catch(e) { setStatus('error','Error'); res.textContent = 'Error: ' + e.message; }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI History · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+.timeline { position:relative; padding:0 0 0 32px; }
+.timeline::before { content:''; position:absolute; left:8px; top:0; bottom:0; width:2px; background:linear-gradient(to bottom,var(--accent),var(--teal),var(--violet)); border-radius:2px; }
+.t-item { position:relative; margin-bottom:28px; cursor:pointer; }
+.t-dot { position:absolute; left:-28px; top:4px; width:16px; height:16px; border-radius:50%; border:3px solid var(--accent); background:var(--bg); transition:all .2s; }
+.t-item:hover .t-dot, .t-item.active .t-dot { background:var(--accent); box-shadow:0 0 12px rgba(59,130,246,.5); transform:scale(1.2); }
+.t-year { font-family:var(--mono); font-size:11px; color:var(--accent); font-weight:700; margin-bottom:3px; }
+.t-title { font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.t-desc { font-size:13px; color:var(--muted); line-height:1.5; }
+.era-badge { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:700; padding:2px 8px; border-radius:8px; margin-bottom:8px; letter-spacing:.04em; }
+.detail-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; position:sticky; top:80px; }
+.paradigm-bar { display:flex; flex-direction:column; gap:6px; margin-top:16px; }
+.p-row { display:flex; align-items:center; gap:10px; font-size:12px; }
+.p-bar { height:8px; border-radius:4px; transition:width .5s; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="math.html">Math</a>
+      <a href="supervised.html">Supervised</a>
+      <a href="neural.html">Neural Nets</a>
+    </div>
+    <span class="nav-badge">Topic 01 · History</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 01 · What is AI &amp; History</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">The History of Artificial Intelligence</h1>
+  <p style="margin-bottom:32px;max-width:600px">Click any milestone to explore what happened, why it mattered, and how it connects to what you'll learn in this course.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 360px;gap:32px;align-items:start">
+
+    <!-- Timeline -->
+    <div class="timeline" id="timeline"></div>
+
+    <!-- Detail panel -->
+    <div class="detail-card" id="detailCard">
+      <div style="text-align:center;padding:32px 0;color:var(--muted)">
+        <i class="ti ti-timeline" style="font-size:40px;display:block;margin-bottom:12px;opacity:.4"></i>
+        <div style="font-size:14px">Click a milestone to learn more</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paradigm visualiser -->
+  <div class="card" style="margin-top:48px">
+    <h3 style="margin-bottom:6px">Three Paradigms of AI</h3>
+    <p style="font-size:13px;margin-bottom:20px">How the dominant approach to AI has shifted over time. Each wave built on — and sometimes replaced — the last.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px">
+      <div>
+        <div class="era-badge" style="background:rgba(99,102,241,.12);color:var(--accent2)">1950s – 1980s</div>
+        <h4 style="margin-bottom:6px">Symbolic AI</h4>
+        <p style="font-size:13px">Hand-coded rules and logic. Expert systems. IF-THEN reasoning. Could solve constrained problems but couldn't handle uncertainty or learn.</p>
+        <div style="margin-top:10px;background:var(--bg3);border-radius:6px;height:8px;overflow:hidden"><div style="width:30%;height:100%;background:var(--accent2);border-radius:6px"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">~30% of current AI research</div>
+      </div>
+      <div>
+        <div class="era-badge" style="background:rgba(20,184,166,.1);color:var(--teal)">1980s – 2010s</div>
+        <h4 style="margin-bottom:6px">Statistical AI</h4>
+        <p style="font-size:13px">Learning patterns from data using probability. SVMs, Naive Bayes, decision trees. Requires feature engineering by humans.</p>
+        <div style="margin-top:10px;background:var(--bg3);border-radius:6px;height:8px;overflow:hidden"><div style="width:20%;height:100%;background:var(--teal);border-radius:6px"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">~20% of current AI research</div>
+      </div>
+      <div>
+        <div class="era-badge" style="background:rgba(59,130,246,.12);color:var(--accent)">2012 – present</div>
+        <h4 style="margin-bottom:6px">Deep Learning</h4>
+        <p style="font-size:13px">Neural networks learn hierarchical representations directly from raw data. No manual feature engineering. Requires large data and compute.</p>
+        <div style="margin-top:10px;background:var(--bg3);border-radius:6px;height:8px;overflow:hidden"><div style="width:85%;height:100%;background:var(--accent);border-radius:6px"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">~85% of current AI research</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Narrow vs AGI -->
+  <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card" style="border-color:var(--teal)">
+      <h4 style="margin-bottom:8px;color:var(--teal)">Narrow AI (ANI) — exists today</h4>
+      <p style="font-size:13px">Superhuman performance on one specific task. Cannot transfer that skill to another domain. Examples: AlphaGo (Go only), GPT-4 (language), AlphaFold (protein structure).</p>
+    </div>
+    <div class="card" style="border-color:var(--amber)">
+      <h4 style="margin-bottom:8px;color:var(--amber)">General AI (AGI) — not yet achieved</h4>
+      <p style="font-size:13px">Human-level performance across any cognitive task, including learning new domains. Expert timelines range from 2027 to "never". Currently the field's central open question.</p>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Topic 01 · What is AI &amp; History</p></div></footer>
+
+<script>
+const milestones = [
+  { year:1950, era:'Foundations', eraColor:'#6366f1', title:'Turing Test proposed', desc:'Alan Turing asks "Can machines think?" and proposes a test: if a human cannot distinguish a machine from a person in text conversation, the machine is deemed intelligent. Still debated today.',
+    detail:'The imitation game paper is one of the most cited in computer science. Turing also contributed the idea of a "child machine" — an AI that learns rather than one that is pre-programmed.', topic:'Topic 01', link:null },
+  { year:1956, era:'Foundations', eraColor:'#6366f1', title:'Birth of AI (Dartmouth)', desc:'John McCarthy coins "Artificial Intelligence" at the Dartmouth Conference. The field officially begins. Early optimism: "machines will be able to do any work a man can do" within 20 years.',
+    detail:'Attendees included Marvin Minsky, Claude Shannon, and Herbert Simon. The conference lasted 6 weeks and set the agenda for symbolic AI for the next three decades.',topic:'Topic 01',link:null},
+  { year:1966, era:'First AI Winter', eraColor:'#f43f5e', title:'First AI Winter begins', desc:'ALPAC report criticises machine translation. Funding collapses. AI researchers oversold what was possible with symbolic rule-based systems. The field enters a decade of reduced investment.',
+    detail:'This is a key lesson: AI has cycles of hype and disillusionment. The current wave of deep learning has lasted longer than any previous wave, but researchers remain cautious about promises.',topic:'Topic 01',link:null},
+  { year:1986, era:'Statistical AI', eraColor:'#14b8a6', title:'Backpropagation popularised', desc:'Rumelhart, Hinton & Williams publish the landmark paper making neural network training practical. Gradient descent can now efficiently train multi-layer networks.',
+    detail:'Backpropagation was actually invented earlier (Werbos, 1974) but this paper demonstrated it convincingly on real problems. You will implement it yourself in Topic 08.',topic:'Topic 08',link:'neural.html'},
+  { year:1997, era:'Statistical AI', eraColor:'#14b8a6', title:'Deep Blue defeats Kasparov', desc:'IBM\'s chess computer defeats world champion Garry Kasparov. A symbolic AI milestone — Deep Blue used a combination of hand-coded rules, alpha-beta search, and evaluation heuristics.',
+    detail:'Notably NOT machine learning. Deep Blue could not play checkers or any game other than chess. The perfect example of narrow AI: superhuman at one task, useless at another.',topic:'Topic 01',link:null},
+  { year:2001, era:'Statistical AI', eraColor:'#14b8a6', title:'SVMs & kernel methods peak', desc:'Support Vector Machines become the dominant ML algorithm. They find the optimal hyperplane separating classes. Require careful feature engineering but work well on small datasets.',
+    detail:'SVMs are still used in production today for text classification, bioinformatics, and cases where interpretability or small data matters more than raw accuracy.',topic:'Topic 05',link:'supervised.html'},
+  { year:2006, era:'Deep Learning', eraColor:'#3b82f6', title:'Deep Belief Networks', desc:'Geoffrey Hinton shows that deep neural networks can be pre-trained layer by layer, then fine-tuned. Reignites interest in neural networks after the "second AI winter".',
+    detail:'This work showed that "deep" architectures — many layers — could learn useful representations. The 2012 ImageNet breakthrough followed from this foundation.',topic:'Topic 08',link:'neural.html'},
+  { year:2012, era:'Deep Learning', eraColor:'#3b82f6', title:'AlexNet — ImageNet moment', desc:'AlexNet (Krizhevsky, Sutskever, Hinton) wins ImageNet with 26% error vs 40%+ for traditional methods. Convolutional neural networks + GPU training change everything.',
+    detail:'This is widely considered the turning point. The key ingredients: large dataset (ImageNet), GPU compute, ReLU activations, dropout regularisation. CNNs now power every image system you use.',topic:'Topic 09',link:'vision.html'},
+  { year:2014, era:'Deep Learning', eraColor:'#3b82f6', title:'GANs invented', desc:'Ian Goodfellow invents Generative Adversarial Networks — two networks (generator vs discriminator) competing until the generator produces realistic data. Enables image synthesis.',
+    detail:'GANs led to deepfakes, synthetic data, and image editing tools. They have since been partially displaced by diffusion models (Stable Diffusion, DALL-E) which are more stable to train.',topic:'Topic 10',link:'llm.html'},
+  { year:2017, era:'Transformer Era', eraColor:'#f59e0b', title:'"Attention is All You Need"', desc:'Google Brain publishes the Transformer architecture. Self-attention replaces recurrence. Parallelisable, scalable, and the foundation of every modern AI system.',
+    detail:'Authors: Vaswani et al. The Transformer is now the backbone of GPT, BERT, Claude, Gemini, Stable Diffusion, AlphaFold, and most other frontier models. You use a Transformer in every demo on this site.',topic:'Topic 09',link:'nlp.html'},
+  { year:2018, era:'Transformer Era', eraColor:'#f59e0b', title:'BERT & GPT-1', desc:'Google releases BERT (bidirectional encoder), OpenAI releases GPT-1 (decoder). Fine-tuning pre-trained language models on downstream tasks becomes the dominant NLP paradigm.',
+    detail:'BERT introduced masked language modelling (predict a hidden word from context). GPT used next-token prediction. Both approaches scale dramatically — their descendants power modern AI.',topic:'Topic 09',link:'nlp.html'},
+  { year:2020, era:'Foundation Models', eraColor:'#a855f7', title:'GPT-3 — scale changes everything', desc:'GPT-3 with 175B parameters demonstrates "emergent" capabilities: few-shot learning, code generation, reasoning — abilities not seen in smaller models. Scaling laws are formalised.',
+    detail:'For the first time, a model could learn a task from just 3 examples in the prompt — with no gradient update. This led to the entire field of prompt engineering.',topic:'Topic 10',link:'llm.html'},
+  { year:2022, era:'Foundation Models', eraColor:'#a855f7', title:'ChatGPT & RLHF', desc:'OpenAI releases ChatGPT using RLHF (Reinforcement Learning from Human Feedback). Reaches 100M users in 2 months — fastest product in history. Public AI moment.',
+    detail:'RLHF transforms a raw language model into a helpful assistant. Human raters rank outputs; a reward model is trained; the LLM is fine-tuned to maximise rewards. You\'ll learn this in Topic 10.',topic:'Topic 10',link:'llm.html'},
+  { year:2024, era:'Current Frontier', eraColor:'#22c55e', title:'Multimodal & Agentic AI', desc:'GPT-4o, Claude 3.5, Gemini Ultra: models see, hear, speak, and reason across modalities. Agentic AI (Operator, Computer Use) completes multi-step tasks autonomously.',
+    detail:'This is where we are now. Models running in browsers via Transformers.js achieve what required data centers in 2020. The demos on this site use models that wouldn\'t have been possible in a browser 2 years ago.',topic:'All topics',link:null},
+];
+
+const eraColors={'Foundations':'#6366f1','First AI Winter':'#f43f5e','Statistical AI':'#14b8a6','Deep Learning':'#3b82f6','Transformer Era':'#f59e0b','Foundation Models':'#a855f7','Current Frontier':'#22c55e'};
+
+function buildTimeline(){
+  const tl=document.getElementById('timeline');
+  tl.innerHTML=milestones.map((m,i)=>`
+    <div class="t-item" onclick="showDetail(${i})" id="ti-${i}">
+      <div class="t-dot" id="dot-${i}" style="border-color:${eraColors[m.era]||'var(--accent)'}"></div>
+      <div class="t-year">${m.year}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span class="era-badge" style="background:${eraColors[m.era]}18;color:${eraColors[m.era]}">${m.era}</span>
+      </div>
+      <div class="t-title">${m.title}</div>
+      <div class="t-desc">${m.desc}</div>
+    </div>`).join('');
+}
+
+let activeIdx=-1;
+function showDetail(i){
+  if(activeIdx===i) return;
+  if(activeIdx>=0){ document.getElementById(`ti-${activeIdx}`).classList.remove('active'); }
+  activeIdx=i;
+  document.getElementById(`ti-${i}`).classList.add('active');
+  const m=milestones[i];
+  const c=eraColors[m.era]||'var(--accent)';
+  document.getElementById('detailCard').innerHTML=`
+    <div class="era-badge" style="background:${c}18;color:${c};margin-bottom:8px">${m.era} · ${m.year}</div>
+    <h3 style="margin-bottom:12px;color:var(--text)">${m.title}</h3>
+    <p style="font-size:14px;margin-bottom:14px">${m.desc}</p>
+    <div style="background:var(--bg3);border-radius:8px;padding:14px;border-left:3px solid ${c};margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:${c};text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Deeper insight</div>
+      <p style="font-size:13px;margin:0">${m.detail}</p>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:12px;color:var(--muted)">Related: <strong style="color:var(--text)">${m.topic}</strong></span>
+      ${m.link?`<a href="${m.link}" class="btn btn-sm btn-primary">Try demo →</a>`:''}
+    </div>`;
+}
+
+buildTimeline();
+showDetail(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Neural Networks · LearnAI</title>
+<link rel="stylesheet" href="../css/main.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <div class="nav-links">
+      <a href="../index.html">← Home</a>
+      <a href="nlp.html">NLP</a>
+      <a href="vision.html">Vision</a>
+      <a href="chatbot.html">Chatbot</a>
+    </div>
+    <span class="nav-badge">Topic 08 · Neural Networks</span>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:40px;padding-bottom:80px">
+  <div class="section-label">Topic 08 · Neural Networks &amp; Backpropagation</div>
+  <h1 style="font-size:2rem;margin-bottom:8px">Train a Neural Network Live</h1>
+  <p style="margin-bottom:32px;max-width:600px">A 2-layer MLP trains from scratch in your browser using pure JavaScript — no library. Watch weights update, loss drop, and the decision boundary form.</p>
+
+  <div class="grid-2" style="align-items:start;gap:24px">
+
+    <!-- Controls -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div class="card">
+        <h3 style="margin-bottom:14px">Dataset</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="datasetBtns">
+          <button class="btn btn-primary btn-sm" onclick="setDataset('xor',this)">XOR</button>
+          <button class="btn btn-ghost btn-sm" onclick="setDataset('circle',this)">Circle</button>
+          <button class="btn btn-ghost btn-sm" onclick="setDataset('spiral',this)">Spiral</button>
+          <button class="btn btn-ghost btn-sm" onclick="setDataset('linear',this)">Linear</button>
+        </div>
+        <canvas id="dataCanvas" width="260" height="200" style="border-radius:8px;width:100%;background:#060a10;display:block"></canvas>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:14px">Architecture</h3>
+        <label class="label">Hidden units: <span id="hidVal">8</span></label>
+        <input type="range" id="hidSlider" min="2" max="32" step="2" value="8" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('hidVal').textContent=this.value"/>
+        <label class="label" style="margin-top:12px">Activation</label>
+        <select class="input" id="actSelect">
+          <option value="relu">ReLU</option>
+          <option value="sigmoid">Sigmoid</option>
+          <option value="tanh">Tanh</option>
+        </select>
+        <label class="label" style="margin-top:12px">Learning rate: <span id="lrVal">0.10</span></label>
+        <input type="range" id="lrSlider" min="-3" max="0" step="0.1" value="-1" style="width:100%;accent-color:var(--accent)"
+          oninput="const v=Math.pow(10,parseFloat(this.value));document.getElementById('lrVal').textContent=v.toFixed(3)"/>
+        <label class="label" style="margin-top:12px">Epochs: <span id="epochVal">500</span></label>
+        <input type="range" id="epochSlider" min="100" max="5000" step="100" value="500" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('epochVal').textContent=this.value"/>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" id="trainBtn" onclick="startTraining()" style="flex:1"><i class="ti ti-player-play"></i> Train</button>
+        <button class="btn btn-ghost" onclick="resetAll()"><i class="ti ti-refresh"></i> Reset</button>
+      </div>
+
+      <div class="card" style="padding:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:800;color:var(--accent);font-family:var(--display)" id="lossDisplay">—</div>
+            <div style="font-size:11px;color:var(--muted)">Final Loss</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:800;color:var(--green);font-family:var(--display)" id="accDisplay">—</div>
+            <div style="font-size:11px;color:var(--muted)">Accuracy</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:800;color:var(--amber);font-family:var(--display)" id="epochDisplay">0</div>
+            <div style="font-size:11px;color:var(--muted)">Epoch</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:800;color:var(--teal);font-family:var(--display)" id="timeDisplay">—</div>
+            <div style="font-size:11px;color:var(--muted)">Time (ms)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visualisation -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">Decision Boundary</div>
+        <canvas id="boundaryCanvas" width="320" height="280" style="width:100%;background:#060a10;display:block"></canvas>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">Loss Curve</div>
+        <canvas id="lossCanvas" width="320" height="160" style="width:100%;background:#060a10;display:block"></canvas>
+      </div>
+      <div class="card">
+        <h4 style="margin-bottom:10px">How backpropagation works</h4>
+        <p style="font-size:13px">The network makes a prediction → we compute loss → we compute the gradient of loss with respect to each weight using the <strong style="color:var(--accent)">chain rule</strong> → we update weights in the direction that reduces loss.</p>
+        <div class="terminal" style="margin-top:12px;font-size:12px">
+<span class="cm">// Forward pass</span>
+z1 = X  @ W1 + b1 ; a1 = relu(z1)
+z2 = a1 @ W2 + b2 ; a2 = sigmoid(z2)
+loss = -mean(y*log(a2) + (1-y)*log(1-a2))
+<span class="cm">// Backward pass (chain rule)</span>
+dL/dW2 = a1.T @ dL/da2
+dL/dW1 = X.T  @ (dL/da2 @ W2.T * relu'(z1))
+<span class="cm">// Update weights (gradient descent)</span>
+W1 -= lr * dL/dW1 ; W2 -= lr * dL/dW2</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><p>LearnAI · Neural Network Demo · Pure JS · No library</p></div></footer>
+
+<script>
+// ── Pure JS neural network ────────────────────────────────────────────────────
+let data = [], labels = [], W1, b1, W2, b2;
+let lossHistory = [], trainRunning = false, currentDataset = 'xor';
+
+function relu(x){ return Math.max(0,x); }
+function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+function tanh(x){ return Math.tanh(x); }
+function reluD(x){ return x>0?1:0; }
+function sigmoidD(x){ const s=sigmoid(x); return s*(1-s); }
+function tanhD(x){ const t=Math.tanh(x); return 1-t*t; }
+
+function getAct(){ return document.getElementById('actSelect').value; }
+function act(x){ const a=getAct(); return a==='relu'?relu(x):a==='sigmoid'?sigmoid(x):tanh(x); }
+function actD(x){ const a=getAct(); return a==='relu'?reluD(x):a==='sigmoid'?sigmoidD(x):tanhD(x); }
+
+function initWeights(){
+  const h=parseInt(document.getElementById('hidSlider').value);
+  W1=Array.from({length:2},()=>Array.from({length:h},()=>(Math.random()-.5)*.5));
+  b1=Array(h).fill(0);
+  W2=Array.from({length:h},()=>[(Math.random()-.5)*.5]);
+  b2=[0];
+}
+
+function forward(x){
+  const h=b1.length;
+  const z1=Array(h).fill(0), a1=Array(h).fill(0);
+  for(let j=0;j<h;j++){
+    z1[j]=W1[0][j]*x[0]+W1[1][j]*x[1]+b1[j];
+    a1[j]=act(z1[j]);
+  }
+  const z2=W2.reduce((s,w,j)=>s+w[0]*a1[j],b2[0]);
+  const a2=sigmoid(z2);
+  return {z1,a1,z2,a2};
+}
+
+function trainStep(lr){
+  const h=b1.length; let totalLoss=0;
+  const dW1=Array.from({length:2},()=>Array(h).fill(0));
+  const db1=Array(h).fill(0);
+  const dW2=Array.from({length:h},()=>[0]);
+  const db2=[0];
+
+  for(let i=0;i<data.length;i++){
+    const {z1,a1,z2,a2}=forward(data[i]);
+    const y=labels[i];
+    totalLoss+=-(y*Math.log(a2+1e-8)+(1-y)*Math.log(1-a2+1e-8));
+    const dL_da2=(-y/(a2+1e-8)+(1-y)/(1-a2+1e-8));
+    const dL_dz2=dL_da2*sigmoidD(z2);
+    for(let j=0;j<h;j++){
+      dW2[j][0]+=dL_dz2*a1[j];
+      const dL_da1=dL_dz2*W2[j][0];
+      const dL_dz1=dL_da1*actD(z1[j]);
+      dW1[0][j]+=dL_dz1*data[i][0];
+      dW1[1][j]+=dL_dz1*data[i][1];
+      db1[j]+=dL_dz1;
+    }
+    db2[0]+=dL_dz2;
+  }
+  const n=data.length;
+  for(let i=0;i<2;i++) for(let j=0;j<h;j++) W1[i][j]-=lr*dW1[i][j]/n;
+  for(let j=0;j<h;j++){ b1[j]-=lr*db1[j]/n; W2[j][0]-=lr*dW2[j][0]/n; }
+  b2[0]-=lr*db2[0]/n;
+  return totalLoss/n;
+}
+
+function accuracy(){
+  let correct=0;
+  for(let i=0;i<data.length;i++){
+    const {a2}=forward(data[i]);
+    if(Math.round(a2)===labels[i]) correct++;
+  }
+  return correct/data.length;
+}
+
+// Datasets
+function setDataset(name, btn){
+  currentDataset=name;
+  document.querySelectorAll('#datasetBtns .btn').forEach(b=>b.className='btn btn-ghost btn-sm');
+  btn.className='btn btn-primary btn-sm';
+  generateData(name); initWeights(); lossHistory=[];
+  drawData(); drawBoundary(); drawLoss();
+  ['lossDisplay','accDisplay','epochDisplay','timeDisplay'].forEach(id=>{
+    document.getElementById(id).textContent='—';
+  });
+  document.getElementById('epochDisplay').textContent='0';
+}
+
+function generateData(name){
+  data=[]; labels=[];
+  const N=80;
+  if(name==='xor'){
+    for(let i=0;i<N;i++){
+      const x=(Math.random()*1.8-.9), y=(Math.random()*1.8-.9);
+      data.push([x,y]); labels.push((x>0)!==(y>0)?1:0);
+    }
+  } else if(name==='circle'){
+    for(let i=0;i<N;i++){
+      const a=Math.random()*2*Math.PI, r=Math.random();
+      const x=r*Math.cos(a), y=r*Math.sin(a);
+      data.push([x,y]); labels.push(r<.5?1:0);
+    }
+  } else if(name==='spiral'){
+    for(let c=0;c<2;c++) for(let i=0;i<N/2;i++){
+      const t=(i/40)*4*Math.PI, r=t/4+.1;
+      const off=c*Math.PI;
+      data.push([r*Math.cos(t+off)*0.5, r*Math.sin(t+off)*0.5]);
+      labels.push(c);
+    }
+  } else {
+    for(let i=0;i<N;i++){
+      const x=(Math.random()*1.8-.9), y=(Math.random()*1.8-.9);
+      data.push([x,y]); labels.push(x+y+(.3*(Math.random()-.5))>0?1:0);
+    }
+  }
+}
+
+function drawData(ctx){
+  const canvas=document.getElementById('dataCanvas');
+  const c=ctx||canvas.getContext('2d');
+  if(!ctx){ c.fillStyle='#060a10'; c.fillRect(0,0,canvas.width,canvas.height); }
+  const cx=canvas.width/2, cy=canvas.height/2, sc=Math.min(cx,cy)*0.88;
+  data.forEach((pt,i)=>{
+    c.beginPath(); c.arc(cx+pt[0]*sc, cy-pt[1]*sc, 5, 0, Math.PI*2);
+    c.fillStyle=labels[i]===1?'#3b82f6':'#f43f5e';
+    c.fill(); c.strokeStyle='rgba(255,255,255,.3)'; c.lineWidth=1; c.stroke();
+  });
+}
+
+function drawBoundary(){
+  const canvas=document.getElementById('boundaryCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const cx=W/2, cy=H/2, sc=Math.min(cx,cy)*0.88;
+  const res=4;
+  const img=ctx.createImageData(W,H);
+  for(let py=0;py<H;py+=res) for(let px=0;px<W;px+=res){
+    const x=(px-cx)/sc, y=(cy-py)/sc;
+    const {a2}=forward([x,y]);
+    const r=a2>0.5?59:244, g=a2>0.5?130:63, b=a2>0.5?246:94;
+    for(let dy=0;dy<res&&py+dy<H;dy++) for(let dx=0;dx<res&&px+dx<W;dx++){
+      const idx=((py+dy)*W+(px+dx))*4;
+      img.data[idx]=r; img.data[idx+1]=g; img.data[idx+2]=b; img.data[idx+3]=40;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  drawData(ctx);
+}
+
+function drawLoss(){
+  const canvas=document.getElementById('lossCanvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height, pad=24;
+  ctx.fillStyle='#060a10'; ctx.fillRect(0,0,W,H);
+  if(lossHistory.length<2) return;
+  const maxL=Math.max(...lossHistory), minL=Math.min(...lossHistory);
+  ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2; ctx.beginPath();
+  lossHistory.forEach((l,i)=>{
+    const x=pad+(i/(lossHistory.length-1))*(W-pad*2);
+    const y=H-pad-(l-minL)/(maxL-minL+1e-8)*(H-pad*2);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle='#64748b'; ctx.font='10px Inter'; ctx.fillText(`Loss`,4,12);
+  ctx.fillText(minL.toFixed(3),4,H-8);
+}
+
+window.startTraining=async()=>{
+  if(trainRunning) return;
+  trainRunning=true;
+  const btn=document.getElementById('trainBtn');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader ti-spin"></i> Training…';
+  const totalEpochs=parseInt(document.getElementById('epochSlider').value);
+  const lr=Math.pow(10,parseFloat(document.getElementById('lrSlider').value));
+  lossHistory=[]; initWeights();
+  const t0=Date.now();
+  const batchSize=Math.ceil(totalEpochs/60);
+  async function step(e){
+    if(e>=totalEpochs||!trainRunning){
+      trainRunning=false;
+      btn.disabled=false; btn.innerHTML='<i class="ti ti-player-play"></i> Train';
+      document.getElementById('timeDisplay').textContent=Date.now()-t0;
+      return;
+    }
+    for(let k=0;k<batchSize&&e+k<totalEpochs;k++){
+      const loss=trainStep(lr);
+      lossHistory.push(loss);
+    }
+    const ep=Math.min(e+batchSize,totalEpochs);
+    document.getElementById('epochDisplay').textContent=ep;
+    document.getElementById('lossDisplay').textContent=lossHistory.at(-1).toFixed(4);
+    document.getElementById('accDisplay').textContent=(accuracy()*100).toFixed(1)+'%';
+    drawBoundary(); drawLoss();
+    requestAnimationFrame(()=>step(e+batchSize));
+  }
+  step(0);
+};
+
+window.resetAll=()=>{
+  trainRunning=false;
+  lossHistory=[]; initWeights();
+  drawData(); drawBoundary(); drawLoss();
+  ['lossDisplay','accDisplay','timeDisplay'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('epochDisplay').textContent='0';
+};
+
+// Init
+generateData('xor'); initWeights(); drawData(); drawBoundary(); drawLoss();
+</script>
+</body>
+</html>
