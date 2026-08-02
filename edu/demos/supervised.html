@@ -6,8 +6,14 @@
 <title>Supervised Learning · LearnAI</title>
 <link rel="stylesheet" href="../css/main.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+canvas { display: block; }
+.algo-btn { transition: all .15s; }
+.class-btn { transition: all .15s; }
+</style>
 </head>
 <body>
+
 <nav class="nav">
   <div class="nav-inner">
     <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
@@ -15,7 +21,7 @@
       <a href="../index.html">← Home</a>
       <a href="neural.html">Neural Nets</a>
       <a href="evaluation.html">Evaluation</a>
-      <a href="chatbot.html">Chatbot</a>
+      <a href="unsupervised.html">Unsupervised</a>
     </div>
     <span class="nav-badge">Topic 05 · Supervised</span>
   </div>
@@ -24,282 +30,738 @@
 <div class="container" style="padding-top:40px;padding-bottom:80px">
   <div class="section-label">Topic 05 · Supervised Learning</div>
   <h1 style="font-size:2rem;margin-bottom:8px">Train a Classifier Live</h1>
-  <p style="margin-bottom:32px;max-width:600px">Click the canvas to add training points, pick a class, then watch different algorithms draw their decision boundary. No library — pure math in JavaScript.</p>
+  <p style="margin-bottom:28px;max-width:600px">
+    Click the canvas to add training points, choose a class colour, then pick an algorithm and click <strong>Train</strong>. 
+    Watch the decision boundary form in real time — pure JavaScript, no library.
+  </p>
 
   <div class="grid-2" style="gap:24px;align-items:start">
 
+    <!-- ── LEFT COLUMN ── -->
     <div style="display:flex;flex-direction:column;gap:16px">
+
+      <!-- Data entry -->
       <div class="card">
-        <h3 style="margin-bottom:12px">Add Training Data</h3>
-        <p style="font-size:13px;margin-bottom:12px">Click anywhere on the canvas to place a point. Switch class colour to add the other class.</p>
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button id="cls0Btn" class="btn btn-primary btn-sm" onclick="setClass(0,this)">Class A (Blue)</button>
-          <button id="cls1Btn" class="btn btn-ghost btn-sm" onclick="setClass(1,this)">Class B (Red)</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearPoints()">Clear</button>
+        <h3 style="margin-bottom:10px">1 · Add Training Points</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">
+          Click the canvas to place points. Toggle class below. Or load a preset.
+        </p>
+
+        <!-- Class toggle -->
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button id="cls0Btn" class="btn btn-sm class-btn"
+            style="background:#3b82f6;color:#fff;border:none"
+            onclick="setClass(0)">● Class A</button>
+          <button id="cls1Btn" class="btn btn-ghost btn-sm class-btn"
+            onclick="setClass(1)">● Class B</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearAll()" style="margin-left:auto">
+            <i class="ti ti-trash"></i> Clear
+          </button>
         </div>
-        <canvas id="trainCanvas" width="300" height="260" style="width:100%;border-radius:8px;background:#060a10;cursor:crosshair;display:block;border:1px solid var(--border2)"></canvas>
-        <div style="font-size:12px;color:var(--muted);margin-top:8px" id="pointCount">Points: 0</div>
+
+        <!-- Canvas -->
+        <div style="position:relative">
+          <canvas id="trainCanvas" width="320" height="260"
+            style="width:100%;border-radius:8px;background:#060a10;cursor:crosshair;border:1px solid var(--border2)">
+          </canvas>
+          <div id="canvasHint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--dim);font-size:13px;pointer-events:none;text-align:center">
+            <i class="ti ti-click" style="font-size:28px;display:block;margin-bottom:6px"></i>
+            Click to add points
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <span id="pointCount" style="font-size:12px;color:var(--muted)">Points: 0</span>
+          <div style="display:flex;gap:8px;font-size:12px">
+            <span style="color:#3b82f6;font-weight:600" id="countA">A: 0</span>
+            <span style="color:#f43f5e;font-weight:600" id="countB">B: 0</span>
+          </div>
+        </div>
+
+        <!-- Presets -->
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;font-weight:600">Load preset</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="loadPreset('linear')">Linear</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadPreset('circle')">Circle</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadPreset('xor')">XOR</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadPreset('blobs')">Blobs</button>
+          </div>
+        </div>
       </div>
 
+      <!-- Algorithm picker -->
       <div class="card">
-        <h3 style="margin-bottom:12px">Algorithm</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-          <button class="btn btn-primary btn-sm" onclick="setAlgo('knn',this)">K-Nearest Neighbours</button>
-          <button class="btn btn-ghost btn-sm" onclick="setAlgo('lr',this)">Logistic Regression</button>
-          <button class="btn btn-ghost btn-sm" onclick="setAlgo('dt',this)">Decision Tree</button>
-          <button class="btn btn-ghost btn-sm" onclick="setAlgo('nb',this)">Naive Bayes</button>
+        <h3 style="margin-bottom:10px">2 · Choose Algorithm</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="algoBtns">
+          <button class="btn btn-primary btn-sm algo-btn" data-algo="knn"  onclick="setAlgo('knn')">K-Nearest Neighbours</button>
+          <button class="btn btn-ghost  btn-sm algo-btn" data-algo="lr"   onclick="setAlgo('lr')">Logistic Regression</button>
+          <button class="btn btn-ghost  btn-sm algo-btn" data-algo="dt"   onclick="setAlgo('dt')">Decision Tree</button>
+          <button class="btn btn-ghost  btn-sm algo-btn" data-algo="nb"   onclick="setAlgo('nb')">Naive Bayes</button>
         </div>
-        <div id="algoParams"></div>
-        <button class="btn btn-primary" onclick="runAlgo()" style="width:100%;margin-top:12px" id="trainBtn">Train &amp; Show Boundary</button>
+
+        <!-- KNN K param (only shown for KNN) -->
+        <div id="knnParams" style="margin-bottom:12px">
+          <label class="label">K neighbours: <span id="kValDisplay">3</span></label>
+          <input type="range" id="kSlider" min="1" max="15" step="2" value="3"
+            style="width:100%;accent-color:var(--accent)"
+            oninput="kParam=parseInt(this.value);document.getElementById('kValDisplay').textContent=this.value"/>
+        </div>
+
+        <!-- SVM-like margin (LR) -->
+        <div id="lrParams" style="margin-bottom:12px;display:none">
+          <label class="label">Learning rate: <span id="lrValDisplay">0.1</span></label>
+          <input type="range" id="lrSlider" min="0.01" max="0.5" step="0.01" value="0.1"
+            style="width:100%;accent-color:var(--accent)"
+            oninput="lrParam=parseFloat(this.value);document.getElementById('lrValDisplay').textContent=this.value"/>
+        </div>
+
+        <button class="btn btn-primary" id="trainBtn" onclick="trainAndDraw()" style="width:100%">
+          <i class="ti ti-player-play"></i> 3 · Train &amp; Show Boundary
+        </button>
+
+        <div id="trainMsg" style="margin-top:8px;font-size:12px;min-height:18px;color:var(--muted)"></div>
       </div>
 
+      <!-- Predict -->
       <div class="card">
         <h4 style="margin-bottom:10px">Predict a new point</h4>
-        <div class="grid-2" style="gap:8px;margin-bottom:10px">
-          <div><label class="label">X</label><input class="input" id="predX" type="number" value="0.5" step="0.05" min="-1" max="1"/></div>
-          <div><label class="label">Y</label><input class="input" id="predY" type="number" value="0.5" step="0.05" min="-1" max="1"/></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label class="label">X (−1 to 1)</label>
+            <input class="input" id="predX" type="number" value="0.3" step="0.05" min="-1" max="1"/>
+          </div>
+          <div>
+            <label class="label">Y (−1 to 1)</label>
+            <input class="input" id="predY" type="number" value="0.3" step="0.05" min="-1" max="1"/>
+          </div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="predict()">Predict class</button>
-        <div id="predResult" style="margin-top:10px;font-size:14px;font-weight:600;min-height:22px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="predictPoint()">
+          <i class="ti ti-crosshair"></i> Predict
+        </button>
+        <div id="predResult" style="margin-top:10px;font-size:14px;font-weight:600;min-height:24px"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="card" style="padding:14px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
+          <div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent);font-family:var(--display)" id="trainAcc">—</div>
+            <div style="font-size:11px;color:var(--muted)">Train Accuracy</div>
+          </div>
+          <div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--green);font-family:var(--display)" id="statA">0</div>
+            <div style="font-size:11px;color:var(--muted)">Class A</div>
+          </div>
+          <div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--rose);font-family:var(--display)" id="statB">0</div>
+            <div style="font-size:11px;color:var(--muted)">Class B</div>
+          </div>
+        </div>
       </div>
     </div>
 
+    <!-- ── RIGHT COLUMN ── -->
     <div style="display:flex;flex-direction:column;gap:16px">
+
+      <!-- Boundary canvas -->
       <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600" id="boundaryTitle">Decision Boundary</div>
-        <canvas id="boundaryCanvas" width="340" height="280" style="width:100%;display:block;background:#060a10"></canvas>
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between">
+          <span id="boundaryTitle">Decision Boundary</span>
+          <span id="boundaryAlgo" style="font-size:11px;color:var(--muted)"></span>
+        </div>
+        <div style="position:relative">
+          <canvas id="boundaryCanvas" width="360" height="300"
+            style="width:100%;background:#060a10">
+          </canvas>
+          <div id="boundaryHint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--dim);font-size:13px;pointer-events:none;text-align:center">
+            Train a model to see the boundary
+          </div>
+        </div>
       </div>
 
+      <!-- Explanation -->
       <div class="card">
-        <h4 style="margin-bottom:10px" id="algoTitle">K-Nearest Neighbours</h4>
-        <p style="font-size:13px" id="algoExplain">KNN classifies a new point by finding the K closest training points and taking a majority vote. No training phase — all computation happens at prediction time.</p>
-        <div class="terminal" style="margin-top:12px;font-size:12px" id="algoCode">
-<span class="cm">// K-Nearest Neighbours</span>
-<span class="kw">function</span> <span class="fn">knn</span>(trainX, trainY, query, k) {
-  <span class="kw">const</span> dists = trainX.<span class="fn">map</span>((x, i) => ({ d: <span class="fn">dist</span>(x, query), y: trainY[i] }));
-  dists.<span class="fn">sort</span>((a, b) => a.d - b.d);
-  <span class="kw">const</span> votes = dists.<span class="fn">slice</span>(0, k).<span class="fn">map</span>(p => p.y);
-  <span class="kw">return</span> votes.<span class="fn">filter</span>(v => v===1).length > k/2 ? 1 : 0;
-}</div>
+        <h4 style="margin-bottom:8px;color:var(--text)" id="algoTitle">K-Nearest Neighbours</h4>
+        <p style="font-size:13px;margin-bottom:12px" id="algoExplain">
+          KNN classifies a new point by finding the K closest training points and taking a majority vote. 
+          There is no training phase — all computation happens at prediction time.
+        </p>
+        <div class="terminal" style="font-size:12px" id="algoCode">
+<span class="cm">// K-Nearest Neighbours — predict(x, y)</span>
+<span class="kw">const</span> distances = points.<span class="fn">map</span>(p => ({
+  d: <span class="fn">euclidean</span>([p.x, p.y], [x, y]),  c: p.cls
+})).<span class="fn">sort</span>((a, b) => a.d - b.d);
+
+<span class="kw">const</span> votes = distances.<span class="fn">slice</span>(0, K).<span class="fn">map</span>(p => p.c);
+<span class="kw">return</span> votes.<span class="fn">filter</span>(v => v === 1).length > K / 2 ? 1 : 0;</div>
       </div>
 
-      <div class="card" style="padding:14px">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
-          <div><div style="font-size:1.4rem;font-weight:800;color:var(--accent);font-family:var(--display)" id="trainAcc">—</div><div style="font-size:11px;color:var(--muted)">Train Acc</div></div>
-          <div><div style="font-size:1.4rem;font-weight:800;color:var(--green);font-family:var(--display)" id="classA">0</div><div style="font-size:11px;color:var(--muted)">Class A pts</div></div>
-          <div><div style="font-size:1.4rem;font-weight:800;color:var(--rose);font-family:var(--display)" id="classB">0</div><div style="font-size:11px;color:var(--muted)">Class B pts</div></div>
+      <!-- Concept cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="card" style="padding:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Decision Boundary</div>
+          <p style="font-size:12px">The line (or surface) that separates predicted Class A from Class B. Shape depends entirely on the algorithm.</p>
+        </div>
+        <div class="card" style="padding:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Overfitting Risk</div>
+          <p style="font-size:12px">Complex models (high-K KNN, deep trees) memorise training data. Try XOR preset to see this happen.</p>
+        </div>
+        <div class="card" style="padding:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Linear vs Non-linear</div>
+          <p style="font-size:12px">Logistic Regression draws a straight line. KNN and Decision Trees draw complex, non-linear boundaries.</p>
+        </div>
+        <div class="card" style="padding:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--rose);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">No Free Lunch</div>
+          <p style="font-size:12px">No algorithm works best on all datasets. Try each on Circle and Linear — results vary dramatically.</p>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<footer class="footer"><div class="container"><p>LearnAI · Supervised Learning Demo · Pure JS</p></div></footer>
+<footer class="footer">
+  <div class="container"><p>LearnAI · Supervised Learning · Pure JS — KNN · Logistic Regression · Decision Tree · Naive Bayes</p></div>
+</footer>
 
 <script>
-let points=[],currentClass=0,currentAlgo='knn',kParam=3,trainedModel=null;
+'use strict';
 
-const trainCanvas=document.getElementById('trainCanvas');
-const boundaryCanvas=document.getElementById('boundaryCanvas');
-const TC=trainCanvas.getContext('2d');
-const BC=boundaryCanvas.getContext('2d');
+// ── State ─────────────────────────────────────────────────────────────────────
+let points       = [];          // [{x, y, cls}]  x,y in [-1,+1]
+let currentClass = 0;
+let currentAlgo  = 'knn';
+let kParam       = 3;
+let lrParam      = 0.1;
+let trainedModel = null;        // function(x,y) → 0|1
 
-function toCanvas(v,size){return(v+1)/2*size;}
-function fromCanvas(px,size){return px/size*2-1;}
-function dist(a,b){return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2);}
+// ── Canvas refs ───────────────────────────────────────────────────────────────
+const trainCanvas    = document.getElementById('trainCanvas');
+const boundaryCanvas = document.getElementById('boundaryCanvas');
+const TC = trainCanvas.getContext('2d');
+const BC = boundaryCanvas.getContext('2d');
 
-trainCanvas.addEventListener('click',e=>{
-  const r=trainCanvas.getBoundingClientRect();
-  const x=fromCanvas((e.clientX-r.left)*(trainCanvas.width/r.width),trainCanvas.width);
-  const y=fromCanvas((e.clientY-r.top)*(trainCanvas.height/r.height),trainCanvas.height);
-  points.push({x,y:(-y),cls:currentClass});
-  redrawTrain();
-  document.getElementById('classA').textContent=points.filter(p=>p.cls===0).length;
-  document.getElementById('classB').textContent=points.filter(p=>p.cls===1).length;
-  document.getElementById('pointCount').textContent=`Points: ${points.length}`;
+// ── Coordinate helpers ────────────────────────────────────────────────────────
+// Canvas pixel (0..W) ↔ data space (-1..+1)
+// Data X increases right, Data Y increases UP (canvas Y increases DOWN)
+
+function dataToCanvasX(v, W) { return (v + 1) / 2 * W; }
+function dataToCanvasY(v, H) { return (1 - (v + 1) / 2) * H; }   // flip Y
+
+function canvasToDataX(px, W) { return (px / W) * 2 - 1; }
+function canvasToDataY(py, H) { return 1 - (py / H) * 2; }       // flip Y
+
+function euclidean(a, b) {
+  return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
+}
+
+// ── Grid overlay ──────────────────────────────────────────────────────────────
+function drawGrid(ctx, W, H) {
+  ctx.save();
+  // Minor gridlines
+  ctx.strokeStyle = 'rgba(255,255,255,.04)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 8; i++) {
+    ctx.beginPath(); ctx.moveTo(W * i / 8, 0); ctx.lineTo(W * i / 8, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, H * i / 8); ctx.lineTo(W, H * i / 8); ctx.stroke();
+  }
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,.14)';
+  ctx.lineWidth = 1;
+  const mx = dataToCanvasX(0, W);
+  const my = dataToCanvasY(0, H);
+  ctx.beginPath(); ctx.moveTo(mx, 0); ctx.lineTo(mx, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, my); ctx.lineTo(W, my); ctx.stroke();
+  // Axis labels
+  ctx.fillStyle = 'rgba(255,255,255,.2)';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('x', W - 12, my - 4);
+  ctx.textAlign = 'right';
+  ctx.fillText('y', mx - 4, 12);
+  ctx.restore();
+}
+
+// ── Draw training points ──────────────────────────────────────────────────────
+function drawPoints(ctx, W, H, highlightLast = false) {
+  points.forEach((p, idx) => {
+    const cx = dataToCanvasX(p.x, W);
+    const cy = dataToCanvasY(p.y, H);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+    ctx.fillStyle   = p.cls === 0 ? '#3b82f6' : '#f43f5e';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth   = highlightLast && idx === points.length - 1 ? 2.5 : 1.5;
+    ctx.stroke();
+  });
+}
+
+// ── Redraw train canvas ───────────────────────────────────────────────────────
+function redrawTrain(highlightLast = false) {
+  const W = trainCanvas.width, H = trainCanvas.height;
+  TC.fillStyle = '#060a10';
+  TC.fillRect(0, 0, W, H);
+  drawGrid(TC, W, H);
+  drawPoints(TC, W, H, highlightLast);
+
+  // Hide hint once points added
+  document.getElementById('canvasHint').style.display = points.length ? 'none' : 'block';
+}
+
+// ── Canvas click → add point ──────────────────────────────────────────────────
+trainCanvas.addEventListener('click', e => {
+  const r    = trainCanvas.getBoundingClientRect();
+  const scaleX = trainCanvas.width  / r.width;
+  const scaleY = trainCanvas.height / r.height;
+  const px   = (e.clientX - r.left) * scaleX;
+  const py   = (e.clientY - r.top)  * scaleY;
+  const x    = canvasToDataX(px, trainCanvas.width);
+  const y    = canvasToDataY(py, trainCanvas.height);
+
+  points.push({ x, y, cls: currentClass });
+  updateCounts();
+  redrawTrain(true);
+  // Auto-retrain if model exists
+  if (trainedModel) trainAndDraw(false);
 });
 
-function redrawTrain(){
-  TC.fillStyle='#060a10';TC.fillRect(0,0,trainCanvas.width,trainCanvas.height);
-  drawGrid(TC,trainCanvas.width,trainCanvas.height);
-  points.forEach(p=>{
-    TC.beginPath();TC.arc(toCanvas(p.x,trainCanvas.width),toCanvas(-p.y,trainCanvas.height),7,0,Math.PI*2);
-    TC.fillStyle=p.cls===0?'#3b82f6':'#f43f5e';TC.fill();
-    TC.strokeStyle='rgba(255,255,255,.4)';TC.lineWidth=1.5;TC.stroke();
-  });
+function updateCounts() {
+  const nA = points.filter(p => p.cls === 0).length;
+  const nB = points.filter(p => p.cls === 1).length;
+  document.getElementById('pointCount').textContent = `Points: ${points.length}`;
+  document.getElementById('countA').textContent     = `A: ${nA}`;
+  document.getElementById('countB').textContent     = `B: ${nB}`;
+  document.getElementById('statA').textContent      = nA;
+  document.getElementById('statB').textContent      = nB;
 }
 
-function drawGrid(ctx,W,H){
-  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
-  for(let i=1;i<4;i++){
-    ctx.beginPath();ctx.moveTo(W*i/4,0);ctx.lineTo(W*i/4,H);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,H*i/4);ctx.lineTo(W,H*i/4);ctx.stroke();
+// ── Class toggle ──────────────────────────────────────────────────────────────
+window.setClass = cls => {
+  currentClass = cls;
+  const b0 = document.getElementById('cls0Btn');
+  const b1 = document.getElementById('cls1Btn');
+  if (cls === 0) {
+    b0.style.background = '#3b82f6'; b0.style.color = '#fff'; b0.style.border = 'none';
+    b1.className = 'btn btn-ghost btn-sm class-btn';
+    b1.style.background = ''; b1.style.color = ''; b1.style.border = '';
+  } else {
+    b1.style.background = '#f43f5e'; b1.style.color = '#fff'; b1.style.border = 'none';
+    b0.className = 'btn btn-ghost btn-sm class-btn';
+    b0.style.background = ''; b0.style.color = ''; b0.style.border = '';
   }
-  ctx.strokeStyle='rgba(255,255,255,.12)';
-  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+};
+
+// ── Clear ─────────────────────────────────────────────────────────────────────
+window.clearAll = () => {
+  points = [];
+  trainedModel = null;
+  updateCounts();
+  redrawTrain();
+  clearBoundary();
+  document.getElementById('trainAcc').textContent  = '—';
+  document.getElementById('predResult').textContent = '';
+  document.getElementById('trainMsg').textContent   = '';
+};
+
+function clearBoundary() {
+  const W = boundaryCanvas.width, H = boundaryCanvas.height;
+  BC.fillStyle = '#060a10';
+  BC.fillRect(0, 0, W, H);
+  drawGrid(BC, W, H);
+  document.getElementById('boundaryHint').style.display = 'block';
 }
 
-window.setClass=(c,btn)=>{
-  currentClass=c;
-  document.querySelectorAll('.card .btn').forEach(b=>{
-    if(b.id==='cls0Btn'||b.id==='cls1Btn') b.className='btn btn-ghost btn-sm';
+// ── Algorithm selection ───────────────────────────────────────────────────────
+const ALGO_INFO = {
+  knn: {
+    title:   'K-Nearest Neighbours (KNN)',
+    explain: 'KNN classifies a new point by finding the K closest training points and taking a majority vote. No training phase — all computation happens at prediction time. Try K=1 vs K=9 to see overfitting vs smoothing.',
+    code: `<span class="cm">// K-Nearest Neighbours — predict(x, y)</span>
+<span class="kw">const</span> distances = points.<span class="fn">map</span>(p => ({
+  d: <span class="fn">euclidean</span>([p.x, p.y], [x, y]),  c: p.cls
+})).<span class="fn">sort</span>((a, b) => a.d - b.d);
+
+<span class="kw">const</span> votes = distances.<span class="fn">slice</span>(0, K).<span class="fn">map</span>(p => p.c);
+<span class="kw">return</span> votes.<span class="fn">filter</span>(v => v === 1).length > K / 2 ? 1 : 0;`
+  },
+  lr: {
+    title:   'Logistic Regression',
+    explain: 'Logistic Regression learns a single linear decision boundary using gradient descent. It outputs a probability via the sigmoid function. Fast and interpretable, but can only separate linearly separable data. Try it on the Circle preset to see it struggle.',
+    code: `<span class="cm">// Logistic Regression — gradient descent</span>
+<span class="kw">for</span> (epoch of epochs) {
+  <span class="kw">const</span> z    = w0*x + w1*y + bias;
+  <span class="kw">const</span> pred = <span class="fn">sigmoid</span>(z);           <span class="cm">// 0..1</span>
+  <span class="kw">const</span> err  = pred - trueClass;
+  w0 -= lr * err * x;  w1 -= lr * err * y;
+}
+<span class="kw">return</span> <span class="fn">sigmoid</span>(w0*x + w1*y + bias) > 0.5 ? 1 : 0;`
+  },
+  dt: {
+    title:   'Decision Tree',
+    explain: 'A Decision Tree recursively splits the data on the feature and threshold that best separates classes, measured by Gini impurity. Produces axis-aligned rectangular regions. Very prone to overfitting on small datasets.',
+    code: `<span class="cm">// Decision Tree — Gini-based split</span>
+<span class="kw">function</span> <span class="fn">gini</span>(pts) {
+  <span class="kw">const</span> p1 = pts.<span class="fn">filter</span>(p => p.cls===1).length / pts.length;
+  <span class="kw">return</span> 2 * p1 * (1 - p1);   <span class="cm">// 0=pure, 0.5=mixed</span>
+}
+<span class="cm">// Try every feature × threshold → pick min impurity</span>
+<span class="cm">// Recurse until max_depth or pure leaf</span>`
+  },
+  nb: {
+    title:   'Gaussian Naive Bayes',
+    explain: "Naive Bayes assumes each feature is conditionally independent given the class label (the 'naive' assumption). It models each class as a 2D Gaussian distribution and classifies by comparing posteriors P(class|x,y). Works surprisingly well and is very fast.",
+    code: `<span class="cm">// Gaussian Naive Bayes — P(class | x, y)</span>
+<span class="kw">const</span> score0 = <span class="fn">gauss</span>(x, μ0x, σ0x) * <span class="fn">gauss</span>(y, μ0y, σ0y) * prior0;
+<span class="kw">const</span> score1 = <span class="fn">gauss</span>(x, μ1x, σ1x) * <span class="fn">gauss</span>(y, μ1y, σ1y) * prior1;
+<span class="kw">return</span> score1 > score0 ? 1 : 0;
+<span class="cm">// gauss(v,μ,σ) = exp(-(v-μ)²/2σ²) / (σ√2π)</span>`
+  }
+};
+
+window.setAlgo = algo => {
+  currentAlgo = algo;
+  // Update button styles — only touch algo buttons
+  document.querySelectorAll('#algoBtns .algo-btn').forEach(btn => {
+    if (btn.dataset.algo === algo) {
+      btn.className = 'btn btn-primary btn-sm algo-btn';
+    } else {
+      btn.className = 'btn btn-ghost btn-sm algo-btn';
+    }
   });
-  btn.className='btn btn-primary btn-sm';
+  // Show/hide params
+  document.getElementById('knnParams').style.display = algo === 'knn' ? 'block' : 'none';
+  document.getElementById('lrParams').style.display  = algo === 'lr'  ? 'block' : 'none';
+  // Update info panel
+  const info = ALGO_INFO[algo];
+  document.getElementById('algoTitle').textContent   = info.title;
+  document.getElementById('algoExplain').textContent = info.explain;
+  document.getElementById('algoCode').innerHTML      = info.code;
+  // Retrain if data exists
+  if (points.length >= 4 && trainedModel) trainAndDraw(false);
 };
 
-window.clearPoints=()=>{
-  points=[];redrawTrain();
-  BC.fillStyle='#060a10';BC.fillRect(0,0,boundaryCanvas.width,boundaryCanvas.height);
-  drawGrid(BC,boundaryCanvas.width,boundaryCanvas.height);
-  document.getElementById('trainAcc').textContent='—';
-  document.getElementById('classA').textContent='0';
-  document.getElementById('classB').textContent='0';
-  document.getElementById('pointCount').textContent='Points: 0';
-  document.getElementById('predResult').textContent='';
+// ── Presets ───────────────────────────────────────────────────────────────────
+window.loadPreset = type => {
+  points = [];
+  const N = 40;
+  if (type === 'linear') {
+    for (let i = 0; i < N; i++) {
+      const x = (Math.random() - 0.5) * 1.8;
+      const y = (Math.random() - 0.5) * 1.8;
+      points.push({ x, y, cls: (x + y + (Math.random() - 0.5) * 0.4 > 0) ? 1 : 0 });
+    }
+  } else if (type === 'circle') {
+    for (let i = 0; i < N; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const r     = Math.random();
+      points.push({ x: r * Math.cos(angle), y: r * Math.sin(angle), cls: r < 0.5 ? 1 : 0 });
+    }
+  } else if (type === 'xor') {
+    for (let i = 0; i < N; i++) {
+      const x = (Math.random() - 0.5) * 1.8;
+      const y = (Math.random() - 0.5) * 1.8;
+      points.push({ x, y, cls: ((x > 0) !== (y > 0)) ? 1 : 0 });
+    }
+  } else if (type === 'blobs') {
+    const centres = [[-0.5, -0.5, 0], [0.5, 0.5, 0], [-0.5, 0.6, 1], [0.6, -0.5, 1]];
+    for (let i = 0; i < N; i++) {
+      const c = centres[i % centres.length];
+      points.push({ x: c[0] + (Math.random() - 0.5) * 0.5, y: c[1] + (Math.random() - 0.5) * 0.5, cls: c[2] });
+    }
+  }
+  trainedModel = null;
+  updateCounts();
+  redrawTrain();
+  clearBoundary();
+  document.getElementById('trainAcc').textContent  = '—';
+  document.getElementById('predResult').textContent = '';
+  document.getElementById('trainMsg').textContent   = `Loaded ${type} preset — ${points.length} points`;
 };
 
-const ALGOS={
-  knn:{title:'K-Nearest Neighbours',explain:'Classifies by majority vote of K nearest neighbours. No training — all work at prediction time. Sensitive to K and scale.',
-    code:`<span class="cm">// K-Nearest Neighbours</span>\n<span class="kw">const</span> sorted = train.<span class="fn">sort</span>((a,b) => <span class="fn">dist</span>(a,query) - <span class="fn">dist</span>(b,query));\n<span class="kw">const</span> votes  = sorted.<span class="fn">slice</span>(0,k).<span class="fn">map</span>(p=>p.cls);\n<span class="kw">return</span> votes.<span class="fn">filter</span>(v=>v===1).length > k/2 ? 1 : 0;`,
-    params:`<label class="label">K neighbours: <span id="kVal">3</span></label><input type="range" class="input" id="kSlider" min="1" max="15" step="2" value="3" style="padding:0;height:4px;accent-color:var(--accent)" oninput="document.getElementById('kVal').textContent=this.value;kParam=parseInt(this.value)"/>`},
-  lr:{title:'Logistic Regression',explain:'Learns a linear decision boundary. Outputs probability via sigmoid. Fast, interpretable, works best on linearly separable data.',
-    code:`<span class="cm">// Logistic Regression predict</span>\n<span class="kw">const</span> z   = w[0]*x + w[1]*y + bias;\n<span class="kw">const</span> prob = 1 / (1 + Math.exp(-z));\n<span class="kw">return</span> prob > 0.5 ? 1 : 0;`,params:''},
-  dt:{title:'Decision Tree',explain:'Recursively splits data on the feature+threshold that best separates classes (using Gini impurity). Highly interpretable.',
-    code:`<span class="cm">// Decision Tree split</span>\n<span class="kw">function</span> <span class="fn">gini</span>(left, right) {\n  <span class="kw">return</span> ... <span class="cm">// weighted impurity</span>\n}\n<span class="cm">// Try all features × thresholds, pick best split</span>`,params:''},
-  nb:{title:'Naive Bayes',explain:'Assumes features are conditionally independent given the class (the "naive" assumption). Models P(class|x,y) using Gaussian distributions.',
-    code:`<span class="cm">// Gaussian Naive Bayes</span>\n<span class="kw">const</span> prob0 = <span class="fn">gaussPDF</span>(x, mu0x, sig0x) * <span class="fn">gaussPDF</span>(y, mu0y, sig0y) * prior0;\n<span class="kw">const</span> prob1 = <span class="fn">gaussPDF</span>(x, mu1x, sig1x) * <span class="fn">gaussPDF</span>(y, mu1y, sig1y) * prior1;\n<span class="kw">return</span> prob1 > prob0 ? 1 : 0;`,params:''},
-};
+// ── Algorithms ────────────────────────────────────────────────────────────────
 
-window.setAlgo=(algo,btn)=>{
-  currentAlgo=algo;
-  document.querySelectorAll('.card .btn-sm').forEach(b=>{
-    if(['knn','lr','dt','nb'].some(a=>b.textContent.includes(ALGOS[a]?.title?.split(' ')[0]))) b.className='btn btn-ghost btn-sm';
-  });
-  btn.className='btn btn-primary btn-sm';
-  document.getElementById('algoTitle').textContent=ALGOS[algo].title;
-  document.getElementById('algoExplain').textContent=ALGOS[algo].explain;
-  document.getElementById('algoCode').innerHTML=ALGOS[algo].code;
-  document.getElementById('algoParams').innerHTML=ALGOS[algo].params||'';
-};
-
-function trainKNN(){
-  return function(x,y){
-    const d=points.map(p=>({d:dist([p.x,p.y],[x,y]),c:p.cls})).sort((a,b)=>a.d-b.d);
-    return d.slice(0,kParam).filter(p=>p.c===1).length>kParam/2?1:0;
+// KNN
+function buildKNN() {
+  const k = kParam;
+  return function predict(x, y) {
+    const sorted = points
+      .map(p => ({ d: euclidean([p.x, p.y], [x, y]), c: p.cls }))
+      .sort((a, b) => a.d - b.d);
+    const neighbours = sorted.slice(0, k);
+    const votes1 = neighbours.filter(n => n.c === 1).length;
+    return votes1 > k / 2 ? 1 : 0;
   };
 }
 
-function trainLR(){
-  let w0=0,w1=0,b=0;
-  for(let ep=0;ep<500;ep++){
-    let dw0=0,dw1=0,db=0;
-    points.forEach(p=>{
-      const z=w0*p.x+w1*p.y+b;
-      const a=1/(1+Math.exp(-z));
-      const e=a-p.cls;
-      dw0+=e*p.x;dw1+=e*p.y;db+=e;
-    });
-    const n=points.length;
-    w0-=0.1*dw0/n;w1-=0.1*dw1/n;b-=0.1*db/n;
-  }
-  return (x,y)=>{ const z=w0*x+w1*y+b; return 1/(1+Math.exp(-z))>0.5?1:0; };
-}
+// Logistic Regression
+function buildLR() {
+  let w0 = 0, w1 = 0, bias = 0;
+  const lr = lrParam;
+  const epochs = 800;
+  const sigmoid = z => 1 / (1 + Math.exp(-Math.max(-50, Math.min(50, z))));
 
-function gini(pts){ if(!pts.length) return 0; const p1=pts.filter(p=>p.cls===1).length/pts.length; return 2*p1*(1-p1); }
-
-function trainDT(){
-  function bestSplit(pts){
-    let best={gain:-Infinity,feat:0,thresh:0};
-    const base=gini(pts);
-    ['x','y'].forEach(feat=>{
-      const vals=[...new Set(pts.map(p=>p[feat]))].sort((a,b)=>a-b);
-      vals.forEach(t=>{
-        const L=pts.filter(p=>p[feat]<=t),R=pts.filter(p=>p[feat]>t);
-        if(!L.length||!R.length) return;
-        const g=base-(L.length/pts.length)*gini(L)-(R.length/pts.length)*gini(R);
-        if(g>best.gain){ best={gain:g,feat,thresh:t,L,R}; }
-      });
-    });
-    return best;
-  }
-  function buildTree(pts,depth){
-    if(depth>5||pts.length<3||gini(pts)<0.01){
-      const c1=pts.filter(p=>p.cls===1).length;
-      return {leaf:true,cls:c1>pts.length-c1?1:0};
+  for (let e = 0; e < epochs; e++) {
+    let g0 = 0, g1 = 0, gb = 0;
+    for (const p of points) {
+      const z    = w0 * p.x + w1 * p.y + bias;
+      const pred = sigmoid(z);
+      const err  = pred - p.cls;
+      g0 += err * p.x;
+      g1 += err * p.y;
+      gb += err;
     }
-    const {feat,thresh,L,R,gain}=bestSplit(pts);
-    if(!feat||gain<=0){ const c1=pts.filter(p=>p.cls===1).length; return {leaf:true,cls:c1>pts.length-c1?1:0}; }
-    return {feat,thresh,L:buildTree(L,depth+1),R:buildTree(R,depth+1)};
+    const n = points.length;
+    w0   -= lr * g0 / n;
+    w1   -= lr * g1 / n;
+    bias -= lr * gb / n;
   }
-  const tree=buildTree(points,0);
-  function predict(node,x,y){ if(node.leaf) return node.cls; return (node.feat==='x'?x:y)<=node.thresh?predict(node.L,x,y):predict(node.R,x,y); }
-  return (x,y)=>predict(tree,x,y);
-}
 
-// Infinity is built-in
-function trainNB(){
-  const c0=points.filter(p=>p.cls===0),c1=points.filter(p=>p.cls===1);
-  function stats(pts,feat){ const v=pts.map(p=>p[feat]); const m=v.reduce((a,b)=>a+b,0)/v.length; const s=Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/v.length+1e-6); return{m,s}; }
-  const mu0x=stats(c0,'x'),mu0y=stats(c0,'y'),mu1x=stats(c1,'x'),mu1y=stats(c1,'y');
-  const p0=c0.length/points.length,p1=c1.length/points.length;
-  function gauss(v,{m,s}){ return Math.exp(-(v-m)**2/(2*s**2))/(s*Math.sqrt(2*Math.PI)); }
-  return (x,y)=>{
-    const s0=gauss(x,mu0x)*gauss(y,mu0y)*p0;
-    const s1=gauss(x,mu1x)*gauss(y,mu1y)*p1;
-    return s1>s0?1:0;
+  const sigmoid2 = z => 1 / (1 + Math.exp(-Math.max(-50, Math.min(50, z))));
+  return function predict(x, y) {
+    return sigmoid2(w0 * x + w1 * y + bias) >= 0.5 ? 1 : 0;
   };
 }
 
-window.runAlgo=()=>{
-  if(points.length<4){ alert('Add at least 4 points (both classes) to train.'); return; }
-  if(!points.some(p=>p.cls===0)||!points.some(p=>p.cls===1)){ alert('Need points from both classes.'); return; }
-  const trainers={knn:trainKNN,lr:trainLR,dt:trainDT,nb:trainNB};
-  trainedModel=trainers[currentAlgo]();
-  document.getElementById('boundaryTitle').textContent=ALGOS[currentAlgo].title+' — Decision Boundary';
-  drawBoundary();
-  let correct=0;
-  points.forEach(p=>{ if(trainedModel(p.x,p.y)===p.cls) correct++; });
-  document.getElementById('trainAcc').textContent=(correct/points.length*100).toFixed(1)+'%';
-};
-
-function drawBoundary(){
-  const W=boundaryCanvas.width,H=boundaryCanvas.height;
-  BC.fillStyle='#060a10';BC.fillRect(0,0,W,H);
-  if(!trainedModel){ drawGrid(BC,W,H); return; }
-  const res=4;
-  const img=BC.createImageData(W,H);
-  for(let py=0;py<H;py+=res) for(let px=0;px<W;px+=res){
-    const x=fromCanvas(px,W),y=-fromCanvas(py,H);
-    const c=trainedModel(x,y);
-    const r=c===0?59:244,g=c===0?130:63,bb=c===0?246:94;
-    for(let dy=0;dy<res&&py+dy<H;dy++) for(let dx=0;dx<res&&px+dx<W;dx++){
-      const idx=((py+dy)*W+(px+dx))*4;
-      img.data[idx]=r;img.data[idx+1]=g;img.data[idx+2]=bb;img.data[idx+3]=40;
-    }
-  }
-  BC.putImageData(img,0,0);
-  drawGrid(BC,W,H);
-  points.forEach(p=>{
-    BC.beginPath();BC.arc(toCanvas(p.x,W),toCanvas(-p.y,H),7,0,Math.PI*2);
-    BC.fillStyle=p.cls===0?'#3b82f6':'#f43f5e';BC.fill();
-    BC.strokeStyle='rgba(255,255,255,.5)';BC.lineWidth=1.5;BC.stroke();
-  });
+// Decision Tree
+function giniImpurity(pts) {
+  if (!pts.length) return 0;
+  const p1 = pts.filter(p => p.cls === 1).length / pts.length;
+  return 2 * p1 * (1 - p1);
 }
 
-window.predict=()=>{
-  if(!trainedModel){ document.getElementById('predResult').textContent='Train a model first.'; return; }
-  const x=parseFloat(document.getElementById('predX').value);
-  const y=parseFloat(document.getElementById('predY').value);
-  const cls=trainedModel(x,y);
-  document.getElementById('predResult').innerHTML=`Predicted: <span style="color:${cls===0?'#3b82f6':'#f43f5e'};font-size:1.1rem">Class ${cls===0?'A':'B'}</span>`;
-  // Draw prediction point on boundary canvas
-  BC.beginPath();BC.arc(toCanvas(x,boundaryCanvas.width),toCanvas(-y,boundaryCanvas.height),11,0,Math.PI*2);
-  BC.strokeStyle='#fff';BC.lineWidth=3;BC.stroke();
+function majorityClass(pts) {
+  return pts.filter(p => p.cls === 1).length >= pts.filter(p => p.cls === 0).length ? 1 : 0;
+}
+
+function buildDT() {
+  function bestSplit(pts) {
+    const baseGini = giniImpurity(pts);
+    let bestGain = -1, bestFeat = null, bestThresh = null, bestL = null, bestR = null;
+
+    for (const feat of ['x', 'y']) {
+      // Use midpoints between sorted unique values as candidate thresholds
+      const vals = pts.map(p => p[feat]).sort((a, b) => a - b);
+      const thresholds = [];
+      for (let i = 0; i < vals.length - 1; i++) {
+        thresholds.push((vals[i] + vals[i + 1]) / 2);
+      }
+      // Deduplicate
+      const uniqueThresh = [...new Set(thresholds)];
+
+      for (const thresh of uniqueThresh) {
+        const L = pts.filter(p => p[feat] <= thresh);
+        const R = pts.filter(p => p[feat] >  thresh);
+        if (L.length === 0 || R.length === 0) continue;
+        const weightedGini = (L.length / pts.length) * giniImpurity(L)
+                           + (R.length / pts.length) * giniImpurity(R);
+        const gain = baseGini - weightedGini;
+        if (gain > bestGain) {
+          bestGain = gain; bestFeat = feat; bestThresh = thresh;
+          bestL = L; bestR = R;
+        }
+      }
+    }
+    return { gain: bestGain, feat: bestFeat, thresh: bestThresh, L: bestL, R: bestR };
+  }
+
+  function buildNode(pts, depth) {
+    // Stopping criteria
+    if (depth >= 6 || pts.length < 2 || giniImpurity(pts) < 0.01) {
+      return { leaf: true, cls: majorityClass(pts) };
+    }
+    const { gain, feat, thresh, L, R } = bestSplit(pts);
+    // No useful split found
+    if (feat === null || gain <= 1e-9) {
+      return { leaf: true, cls: majorityClass(pts) };
+    }
+    return {
+      leaf: false, feat, thresh,
+      left:  buildNode(L, depth + 1),
+      right: buildNode(R, depth + 1)
+    };
+  }
+
+  const tree = buildNode(points, 0);
+
+  function predict(node, x, y) {
+    if (node.leaf) return node.cls;
+    const val = node.feat === 'x' ? x : y;
+    return val <= node.thresh ? predict(node.left, x, y) : predict(node.right, x, y);
+  }
+
+  return (x, y) => predict(tree, x, y);
+}
+
+// Naive Bayes
+function buildNB() {
+  const cls0 = points.filter(p => p.cls === 0);
+  const cls1 = points.filter(p => p.cls === 1);
+
+  function stats(pts, feat) {
+    const vals = pts.map(p => p[feat]);
+    const mu   = vals.reduce((s, v) => s + v, 0) / vals.length;
+    const variance = vals.reduce((s, v) => s + (v - mu) ** 2, 0) / vals.length;
+    const sigma = Math.sqrt(variance + 1e-6); // prevent division by zero
+    return { mu, sigma };
+  }
+
+  const s0x = stats(cls0, 'x'), s0y = stats(cls0, 'y');
+  const s1x = stats(cls1, 'x'), s1y = stats(cls1, 'y');
+  const prior0 = cls0.length / points.length;
+  const prior1 = cls1.length / points.length;
+
+  function gaussPDF(v, mu, sigma) {
+    return Math.exp(-0.5 * ((v - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI));
+  }
+
+  return function predict(x, y) {
+    // Use log-probabilities to avoid underflow
+    const log0 = Math.log(prior0 + 1e-300)
+                + Math.log(gaussPDF(x, s0x.mu, s0x.sigma) + 1e-300)
+                + Math.log(gaussPDF(y, s0y.mu, s0y.sigma) + 1e-300);
+    const log1 = Math.log(prior1 + 1e-300)
+                + Math.log(gaussPDF(x, s1x.mu, s1x.sigma) + 1e-300)
+                + Math.log(gaussPDF(y, s1y.mu, s1y.sigma) + 1e-300);
+    return log1 > log0 ? 1 : 0;
+  };
+}
+
+// ── Train + draw boundary ─────────────────────────────────────────────────────
+window.trainAndDraw = function(showMessage = true) {
+  const nA = points.filter(p => p.cls === 0).length;
+  const nB = points.filter(p => p.cls === 1).length;
+
+  if (points.length < 4) {
+    document.getElementById('trainMsg').textContent = '⚠ Add at least 4 points to train.';
+    return;
+  }
+  if (nA === 0 || nB === 0) {
+    document.getElementById('trainMsg').textContent = '⚠ Need points from both Class A and Class B.';
+    return;
+  }
+
+  document.getElementById('trainMsg').textContent = 'Training…';
+
+  try {
+    const builders = { knn: buildKNN, lr: buildLR, dt: buildDT, nb: buildNB };
+    trainedModel = builders[currentAlgo]();
+  } catch (err) {
+    document.getElementById('trainMsg').textContent = 'Error: ' + err.message;
+    return;
+  }
+
+  // Measure accuracy
+  let correct = 0;
+  for (const p of points) {
+    if (trainedModel(p.x, p.y) === p.cls) correct++;
+  }
+  const acc = (correct / points.length * 100).toFixed(1);
+  document.getElementById('trainAcc').textContent = acc + '%';
+
+  // Draw boundary
+  drawDecisionBoundary();
+
+  // Update titles
+  const label = ALGO_INFO[currentAlgo].title;
+  document.getElementById('boundaryTitle').textContent  = 'Decision Boundary';
+  document.getElementById('boundaryAlgo').textContent   = label;
+  document.getElementById('boundaryHint').style.display = 'none';
+
+  if (showMessage) {
+    document.getElementById('trainMsg').textContent = `✓ Trained — ${acc}% accuracy on ${points.length} training points`;
+  } else {
+    document.getElementById('trainMsg').textContent = '';
+  }
 };
 
-// init
-redrawTrain(); drawGrid(BC,boundaryCanvas.width,boundaryCanvas.height);
+function drawDecisionBoundary() {
+  const W = boundaryCanvas.width;
+  const H = boundaryCanvas.height;
+  const STEP = 4; // pixels per grid cell — lower = sharper but slower
+
+  // Build pixel buffer
+  const imgData = BC.createImageData(W, H);
+  const data    = imgData.data;
+
+  for (let py = 0; py < H; py += STEP) {
+    for (let px = 0; px < W; px += STEP) {
+      // Convert canvas pixel → data space
+      const x = canvasToDataX(px, W);
+      const y = canvasToDataY(py, H);
+      const cls = trainedModel(x, y);
+
+      // Class 0 = blue tint, Class 1 = red tint
+      const r = cls === 0 ?  59 : 244;
+      const g = cls === 0 ? 130 :  63;
+      const b = cls === 0 ? 246 :  94;
+
+      // Fill the STEP×STEP block
+      for (let dy = 0; dy < STEP && py + dy < H; dy++) {
+        for (let dx = 0; dx < STEP && px + dx < W; dx++) {
+          const idx = ((py + dy) * W + (px + dx)) * 4;
+          data[idx]     = r;
+          data[idx + 1] = g;
+          data[idx + 2] = b;
+          data[idx + 3] = 45;  // semi-transparent
+        }
+      }
+    }
+  }
+
+  // Render background
+  BC.fillStyle = '#060a10';
+  BC.fillRect(0, 0, W, H);
+  BC.putImageData(imgData, 0, 0);
+
+  // Grid on top of background
+  drawGrid(BC, W, H);
+
+  // Training points on top
+  drawPoints(BC, W, H);
+}
+
+// ── Predict a single point ────────────────────────────────────────────────────
+window.predictPoint = () => {
+  if (!trainedModel) {
+    document.getElementById('predResult').innerHTML = '<span style="color:var(--muted)">Train a model first.</span>';
+    return;
+  }
+  const x   = parseFloat(document.getElementById('predX').value);
+  const y   = parseFloat(document.getElementById('predY').value);
+  const cls = trainedModel(x, y);
+  const color = cls === 0 ? '#3b82f6' : '#f43f5e';
+  const label = cls === 0 ? 'Class A' : 'Class B';
+
+  document.getElementById('predResult').innerHTML =
+    `Predicted: <span style="color:${color};font-size:1.1rem;font-weight:800">${label}</span>`;
+
+  // Redraw boundary + mark prediction point
+  drawDecisionBoundary();
+  const cx = dataToCanvasX(x, boundaryCanvas.width);
+  const cy = dataToCanvasY(y, boundaryCanvas.height);
+  BC.beginPath();
+  BC.arc(cx, cy, 12, 0, Math.PI * 2);
+  BC.strokeStyle = '#fff';
+  BC.lineWidth   = 3;
+  BC.stroke();
+  BC.beginPath();
+  BC.arc(cx, cy, 12, 0, Math.PI * 2);
+  BC.strokeStyle = color;
+  BC.lineWidth   = 6;
+  BC.stroke();
+  // Star marker
+  BC.beginPath();
+  BC.arc(cx, cy, 4, 0, Math.PI * 2);
+  BC.fillStyle = '#fff';
+  BC.fill();
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+redrawTrain();
+clearBoundary();
+// Set initial class button state
+setClass(0);
 </script>
 </body>
 </html>
