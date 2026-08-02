@@ -3,16 +3,17 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Speech · LearnAI</title>
+<title>Speech STT &amp; TTS · LearnAI</title>
 <link rel="stylesheet" href="../css/main.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
 </head>
 <body>
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
     <div class="nav-links">
       <a href="../index.html">← Home</a>
+      <a href="topic9.html">Topic 09</a>
       <a href="nlp.html">NLP</a>
       <a href="vision.html">Vision</a>
       <a href="chatbot.html">Chatbot</a>
@@ -21,330 +22,476 @@
   </div>
 </nav>
 
-<div class="container" style="padding-top:48px;padding-bottom:80px">
+<div class="container" style="padding-top:44px;padding-bottom:80px">
   <div class="section-label">Topic 09 · Sequence Models · Audio</div>
   <h1 style="font-size:2rem;margin-bottom:8px">Speech-to-Text &amp; Text-to-Speech</h1>
-  <p style="margin-bottom:28px;max-width:600px">Whisper runs fully in your browser for transcription. Web Speech API handles synthesis. No audio leaves your device.</p>
+  <p style="margin-bottom:20px;max-width:600px">Whisper transcribes your voice entirely in your browser. Web Speech API reads any text aloud. No audio leaves your device.</p>
 
   <div class="model-status" id="status" style="margin-bottom:8px">
     <div class="status-dot idle" id="statusDot"></div>
-    <span id="statusText">Ready — choose Speech-to-Text or Text-to-Speech below</span>
+    <span id="statusText">Ready — record or upload audio for transcription</span>
   </div>
-  <div class="progress-bar-wrap" style="margin-bottom:28px">
+  <div class="progress-bar-wrap" style="margin-bottom:24px">
     <div class="progress-bar-fill" id="bar" style="width:0"></div>
   </div>
 
-  <div class="grid-2">
+  <div class="grid-2" style="gap:24px;align-items:start">
 
-    <!-- STT -->
+    <!-- ── STT ── -->
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-        <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center">
+        <div style="width:38px;height:38px;border-radius:8px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <i class="ti ti-microphone" style="font-size:20px;color:var(--amber)"></i>
         </div>
-        <h3>Speech → Text</h3>
-        <span class="chip chip-amber" style="margin-left:auto;font-size:10px">Whisper tiny · 39MB</span>
+        <div style="flex:1">
+          <h3 style="margin-bottom:2px">Speech → Text (Whisper)</h3>
+          <p style="font-size:12px;margin:0">Whisper-tiny · 39MB · cached after first load</p>
+        </div>
       </div>
-      <p style="font-size:13px;margin-bottom:20px">Record your voice — Whisper transcribes it locally using a Transformer encoder trained on 680,000 hours of audio.</p>
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0"/>
 
       <!-- Record button -->
-      <div style="text-align:center;margin-bottom:20px">
-        <button id="recordBtn" onclick="toggleRecord()" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--amber);background:rgba(245,158,11,.1);cursor:pointer;font-size:28px;color:var(--amber);transition:all .2s;display:flex;align-items:center;justify-content:center;margin:0 auto">
-          <i class="ti ti-microphone" id="micIcon"></i>
+      <div style="text-align:center;margin-bottom:18px">
+        <button id="recordBtn" onclick="toggleRecord()"
+          style="width:80px;height:80px;border-radius:50%;border:3px solid var(--amber);background:rgba(245,158,11,.1);cursor:pointer;font-size:26px;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;outline:none">
+          <i class="ti ti-microphone" id="micIcon" style="color:var(--amber)"></i>
         </button>
-        <div id="recordLabel" style="font-size:13px;color:var(--muted);margin-top:10px">Click to record</div>
-        <div id="timer" style="font-size:24px;font-family:var(--mono);color:var(--amber);min-height:36px;margin-top:6px"></div>
+        <div id="recordLabel" style="font-size:13px;color:var(--muted);margin-top:10px">Click to start recording</div>
+        <div id="timerDisplay" style="font-size:22px;font-family:var(--mono);color:var(--amber);min-height:32px;margin-top:4px"></div>
       </div>
 
-      <!-- Waveform canvas -->
-      <canvas id="waveCanvas" height="48" style="width:100%;background:var(--bg3);border-radius:8px;margin-bottom:16px;display:block"></canvas>
+      <!-- Waveform -->
+      <canvas id="waveCanvas" height="48" style="width:100%;background:var(--bg3);border-radius:8px;margin-bottom:14px;display:block"></canvas>
 
-      <!-- Or upload audio -->
-      <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Or upload an audio file</div>
-        <input type="file" id="audioUpload" accept="audio/*" onchange="transcribeFile(this)" style="font-size:13px;color:var(--muted)"/>
+      <!-- Upload -->
+      <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:12px">
+        <label class="label">Or upload an audio file</label>
+        <input type="file" id="audioUpload" accept="audio/*,video/*" onchange="handleFileUpload(this)"
+          style="font-size:13px;color:var(--muted);width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer"/>
       </div>
 
-      <label class="label">Language hint (optional)</label>
+      <!-- Language -->
+      <label class="label">Language</label>
       <select class="input" id="langSelect" style="margin-bottom:14px">
         <option value="">Auto-detect</option>
         <option value="english">English</option>
-        <option value="indonesian">Indonesian</option>
+        <option value="indonesian">Indonesian / Bahasa</option>
         <option value="spanish">Spanish</option>
         <option value="french">French</option>
         <option value="german">German</option>
         <option value="japanese">Japanese</option>
         <option value="chinese">Chinese</option>
         <option value="arabic">Arabic</option>
+        <option value="portuguese">Portuguese</option>
       </select>
 
       <label class="label">Transcript</label>
-      <div id="sttResult" class="result-box" style="min-height:80px"><span class="result-placeholder">Record or upload audio to transcribe…</span></div>
-      <div id="sttMeta" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+      <div id="sttResult" class="result-box" style="min-height:90px">
+        <span class="result-placeholder">Record or upload audio to transcribe…</span>
+      </div>
+      <div id="sttMeta" style="font-size:11px;color:var(--muted);margin-top:6px;min-height:16px"></div>
     </div>
 
-    <!-- TTS -->
+    <!-- ── TTS ── -->
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99,102,241,.12);display:flex;align-items:center;justify-content:center">
+        <div style="width:38px;height:38px;border-radius:8px;background:rgba(99,102,241,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <i class="ti ti-volume" style="font-size:20px;color:var(--accent2)"></i>
         </div>
-        <h3>Text → Speech</h3>
-        <span class="chip chip-blue" style="margin-left:auto;font-size:10px">Web Speech API</span>
+        <div style="flex:1">
+          <h3 style="margin-bottom:2px">Text → Speech (TTS)</h3>
+          <p style="font-size:12px;margin:0">Web Speech API · built into your browser</p>
+        </div>
       </div>
-      <p style="font-size:13px;margin-bottom:20px">Type any text and hear it spoken using the browser's built-in speech synthesis. Control voice, rate, and pitch.</p>
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0"/>
 
       <label class="label">Text to speak</label>
-      <textarea class="textarea" id="ttsText" rows="4" style="margin-bottom:14px">Welcome to LearnAI! Artificial Intelligence models can now run entirely in your browser, making powerful AI accessible to everyone without cost or server infrastructure.</textarea>
+      <textarea class="textarea" id="ttsText" rows="4" style="margin-bottom:12px">Welcome to LearnAI! Whisper is an automatic speech recognition model trained by OpenAI on 680,000 hours of multilingual audio.</textarea>
 
-      <div class="grid-2" style="gap:12px;margin-bottom:14px">
+      <div class="grid-2" style="gap:10px;margin-bottom:10px">
         <div>
           <label class="label">Voice</label>
           <select class="input" id="voiceSelect"></select>
         </div>
         <div>
-          <label class="label">Rate: <span id="rateVal">1.0</span>x</label>
-          <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1" style="width:100%;accent-color:var(--accent2)" oninput="document.getElementById('rateVal').textContent=this.value"/>
+          <label class="label">Rate: <span id="rateVal">1.0</span>×</label>
+          <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1"
+            style="width:100%;accent-color:var(--accent2)"
+            oninput="document.getElementById('rateVal').textContent=parseFloat(this.value).toFixed(1)"/>
         </div>
       </div>
 
-      <div class="grid-2" style="gap:12px;margin-bottom:20px">
+      <div class="grid-2" style="gap:10px;margin-bottom:16px">
         <div>
           <label class="label">Pitch: <span id="pitchVal">1.0</span></label>
-          <input type="range" id="pitchSlider" min="0.5" max="2" step="0.1" value="1" style="width:100%;accent-color:var(--accent2)" oninput="document.getElementById('pitchVal').textContent=this.value"/>
+          <input type="range" id="pitchSlider" min="0.5" max="2" step="0.1" value="1"
+            style="width:100%;accent-color:var(--accent2)"
+            oninput="document.getElementById('pitchVal').textContent=parseFloat(this.value).toFixed(1)"/>
         </div>
         <div>
           <label class="label">Volume: <span id="volVal">1.0</span></label>
-          <input type="range" id="volSlider" min="0" max="1" step="0.1" value="1" style="width:100%;accent-color:var(--accent2)" oninput="document.getElementById('volVal').textContent=this.value"/>
+          <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1"
+            style="width:100%;accent-color:var(--accent2)"
+            oninput="document.getElementById('volVal').textContent=parseFloat(this.value).toFixed(2)"/>
         </div>
       </div>
 
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-        <button class="btn btn-primary" onclick="speak()" id="speakBtn"><i class="ti ti-player-play"></i> Speak</button>
-        <button class="btn btn-ghost" onclick="stopSpeak()"><i class="ti ti-player-stop"></i> Stop</button>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-primary" onclick="speakText()" style="flex:1"><i class="ti ti-player-play"></i> Speak</button>
+        <button class="btn btn-ghost" onclick="stopSpeech()"><i class="ti ti-player-stop"></i> Stop</button>
       </div>
 
-      <!-- Speaking progress -->
-      <div id="speakStatus" style="font-size:13px;color:var(--muted);min-height:20px"></div>
-      <canvas id="ttsWave" height="48" style="width:100%;background:var(--bg3);border-radius:8px;margin-top:12px;display:block"></canvas>
+      <div id="speakStatus" style="font-size:13px;color:var(--muted);min-height:18px;margin-bottom:10px"></div>
+      <canvas id="ttsWave" height="44" style="width:100%;background:var(--bg3);border-radius:8px;display:block;margin-bottom:14px"></canvas>
 
-      <!-- Preset phrases -->
-      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Quick phrases</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <button class="btn btn-ghost btn-sm" onclick="setPhrase('Hello! I am an artificial intelligence assistant.')">Hello AI</button>
-          <button class="btn btn-ghost btn-sm" onclick="setPhrase('The transformer architecture revolutionised natural language processing in 2017.')">Transformers</button>
-          <button class="btn btn-ghost btn-sm" onclick="setPhrase('Backpropagation computes gradients using the chain rule of calculus.')">Backprop</button>
-          <button class="btn btn-ghost btn-sm" onclick="setPhrase('Selamat datang di LearnAI, platform belajar kecerdasan buatan.')">Indonesian</button>
+      <div style="border-top:1px solid var(--border);padding-top:12px">
+        <label class="label">Quick phrases</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+          <button class="btn btn-ghost btn-sm" onclick="setTTS('The transformer architecture uses self-attention to process all tokens simultaneously, unlike RNNs.')">Transformers</button>
+          <button class="btn btn-ghost btn-sm" onclick="setTTS('Backpropagation computes gradients of the loss with respect to each weight using the chain rule.')">Backprop</button>
+          <button class="btn btn-ghost btn-sm" onclick="setTTS('Selamat datang di LearnAI, platform belajar kecerdasan buatan berbasis browser.')">Indonesian</button>
+          <button class="btn btn-ghost btn-sm" onclick="setTTS('Un réseau de neurones apprend en ajustant ses poids grâce à la descente de gradient.')">French</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Concept card -->
+  <!-- How it works -->
   <div class="card" style="margin-top:32px">
-    <h3 style="margin-bottom:16px">How Whisper Works</h3>
+    <h3 style="margin-bottom:16px">How Whisper Works — Architecture</h3>
     <div class="grid-3">
-      <div><div class="chip chip-amber" style="margin-bottom:8px">1 · Audio encoding</div><p style="font-size:13px">Audio is split into 30-second chunks and converted to log-Mel spectrograms — a visual representation of frequencies over time.</p></div>
-      <div><div class="chip chip-amber" style="margin-bottom:8px">2 · Transformer encoder</div><p style="font-size:13px">A 12-layer Transformer encoder processes the spectrogram, learning to represent phonemes, words, and acoustic patterns.</p></div>
-      <div><div class="chip chip-amber" style="margin-bottom:8px">3 · Autoregressive decode</div><p style="font-size:13px">A Transformer decoder generates the transcript token-by-token, conditioned on the audio encoding and all previously generated tokens.</p></div>
+      <div>
+        <div class="chip chip-amber" style="margin-bottom:8px">1 · Audio preprocessing</div>
+        <p style="font-size:13px">Audio is resampled to 16 kHz, split into 30-second chunks, and converted to an 80-channel log-Mel spectrogram — a visual time-frequency representation.</p>
+      </div>
+      <div>
+        <div class="chip chip-amber" style="margin-bottom:8px">2 · Transformer encoder</div>
+        <p style="font-size:13px">A 12-layer Transformer encoder processes the spectrogram using 2D sinusoidal position encodings, learning acoustic representations of phonemes, words, and prosody.</p>
+      </div>
+      <div>
+        <div class="chip chip-amber" style="margin-bottom:8px">3 · Autoregressive decoder</div>
+        <p style="font-size:13px">A Transformer decoder generates tokens one-by-one, attending to the encoder output and all previously decoded tokens. Language detection and timestamps are special tokens.</p>
+      </div>
     </div>
     <div class="terminal" style="margin-top:16px">
-<span class="cm">// Speech-to-text with Transformers.js</span>
-<span class="kw">import</span> { pipeline } <span class="kw">from</span> <span class="st">'@huggingface/transformers'</span>;
-<span class="kw">const</span> asr = <span class="kw">await</span> <span class="fn">pipeline</span>(<span class="st">'automatic-speech-recognition'</span>, <span class="st">'Xenova/whisper-tiny'</span>);
-<span class="kw">const</span> out = <span class="kw">await</span> <span class="fn">asr</span>(audioArray, { language: <span class="st">'english'</span>, task: <span class="st">'transcribe'</span> });
-<span class="cm">// → { text: "Hello from Whisper running in your browser!" }</span></div>
+<span class="cm">// Correct way to pass audio to Whisper in the browser</span>
+<span class="kw">const</span> audioCtx = <span class="kw">new</span> <span class="fn">AudioContext</span>({ sampleRate: 16000 });
+<span class="kw">const</span> decoded  = <span class="kw">await</span> audioCtx.<span class="fn">decodeAudioData</span>(arrayBuffer);
+<span class="kw">const</span> pcm      = decoded.getChannelData(0);  <span class="cm">// Float32Array at 16kHz</span>
+<span class="kw">const</span> result   = <span class="kw">await</span> <span class="fn">whisper</span>(pcm, { language: <span class="st">'english'</span>, task: <span class="st">'transcribe'</span> });
+<span class="cm">// → { text: "Hello from Whisper, running in your browser!" }</span></div>
   </div>
 </div>
 
-<footer class="footer"><div class="container"><p>LearnAI · Speech Demo · Whisper via Transformers.js + Web Speech API</p></div></footer>
+<footer class="footer"><div class="container"><p>LearnAI · Speech Demo · Whisper-tiny via Transformers.js · Web Speech API</p></div></footer>
 
 <script type="module">
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js';
 env.allowLocalModels = false;
+env.useBrowserCache  = true;
 
-let asrPipeline = null;
-let mediaRecorder = null, audioChunks = [], recording = false;
-let timerInterval = null, elapsedSecs = 0;
-let audioCtx = null, analyser = null, animId = null;
-let ttsWaveAnimId = null, ttsWavePaused = true;
+let asrPipeline   = null;
+let mediaRecorder = null;
+let audioChunks   = [];
+let recording     = false;
+let timerInterval = null;
+let elapsedSecs   = 0;
+let vizCtx        = null;
+let vizSrc        = null;
+let vizAniId      = null;
+let ttsWaveAni    = null;
+let ttsPlaying    = false;
 
 const statusDot  = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
-const bar        = document.getElementById('bar');
+const barEl      = document.getElementById('bar');
 
-function setStatus(s,m){statusDot.className=`status-dot ${s}`;statusText.textContent=m;}
-function setBar(p){bar.style.width=p+'%';}
+function setStatus(s, m) { statusDot.className = `status-dot ${s}`; statusText.textContent = m; }
+function setBar(p)        { barEl.style.width = Math.min(p, 100) + '%'; }
 
 const progressCb = p => {
-  if(p.status==='initiate') setStatus('loading',`Downloading Whisper…`);
-  if(p.status==='progress'&&p.total) setBar(p.loaded/p.total*100);
-  if(p.status==='done') setStatus('ready','Whisper ready ✓');
+  if (p.status === 'initiate') setStatus('loading', `Downloading Whisper-tiny…`);
+  if (p.status === 'progress' && p.total) {
+    const pct = (p.loaded / p.total) * 100;
+    setBar(pct);
+    setStatus('loading', `Whisper-tiny — ${Math.round(pct)}%`);
+  }
+  if (p.status === 'done') { setStatus('ready', 'Whisper ready ✓'); setBar(100); }
 };
 
-// ── Waveform visualiser ──
-function startViz(stream){
-  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  audioCtx.createMediaStreamSource(stream).connect(analyser);
-  drawWave();
-}
-function stopViz(){
-  if(animId){cancelAnimationFrame(animId);animId=null;}
-  if(audioCtx){audioCtx.close();audioCtx=null;}
-  const c=document.getElementById('waveCanvas');
-  const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
-}
-function drawWave(){
-  const canvas=document.getElementById('waveCanvas');
-  canvas.width=canvas.offsetWidth||300;
-  const ctx=canvas.getContext('2d');
-  const buf=new Uint8Array(analyser.frequencyBinCount);
-  function loop(){
-    animId=requestAnimationFrame(loop);
+// ── Waveform visualiser ──────────────────────────────────────────────────────
+function startWaveViz(stream) {
+  const ac = new AudioContext();
+  const analyser = ac.createAnalyser();
+  analyser.fftSize = 512;
+  ac.createMediaStreamSource(stream).connect(analyser);
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  const canvas = document.getElementById('waveCanvas');
+  canvas.width = canvas.offsetWidth || 400;
+
+  function draw() {
+    vizAniId = requestAnimationFrame(draw);
     analyser.getByteTimeDomainData(buf);
-    ctx.fillStyle='#111927';ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.beginPath();
-    const sl=canvas.width/buf.length;
-    buf.forEach((v,i)=>{
-      const x=i*sl, y=(v/128-1)*(canvas.height/2)+canvas.height/2;
-      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#111927';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const sliceW = canvas.width / buf.length;
+    buf.forEach((v, i) => {
+      const x = i * sliceW;
+      const y = (v / 128 - 1) * (canvas.height / 2) + canvas.height / 2;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
   }
-  loop();
+  draw();
+  return ac;
 }
 
-// ── Recording ──
+function stopWaveViz(ac) {
+  if (vizAniId) cancelAnimationFrame(vizAniId);
+  if (ac) ac.close();
+  const canvas = document.getElementById('waveCanvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ── CRITICAL FIX: decode audio buffer properly ──────────────────────────────
+// The old code passed raw bytes as Float32Array — wrong!
+// We must decode with AudioContext.decodeAudioData → get PCM samples → pass to Whisper
+async function blobToPcm(blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+
+  // Use OfflineAudioContext for decoding — works even when no output device
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+  try {
+    const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+    // Get mono channel at 16kHz (Whisper expects exactly this)
+    const raw = decoded.getChannelData(0);
+    // If stereo, average channels for better quality
+    if (decoded.numberOfChannels > 1) {
+      const ch1 = decoded.getChannelData(1);
+      const mono = new Float32Array(raw.length);
+      for (let i = 0; i < raw.length; i++) mono[i] = (raw[i] + ch1[i]) / 2;
+      await audioCtx.close();
+      return mono;
+    }
+    await audioCtx.close();
+    return new Float32Array(raw); // copy to ensure proper alignment
+  } catch (e) {
+    await audioCtx.close();
+    throw new Error('Could not decode audio: ' + e.message + '. Try a WAV or MP3 file.');
+  }
+}
+
+// ── Recording ────────────────────────────────────────────────────────────────
 window.toggleRecord = async () => {
-  if(recording) stopRecord();
-  else startRecord();
+  if (recording) {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
 };
 
-async function startRecord(){
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    audioChunks=[];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
-    mediaRecorder.onstop = () => { stream.getTracks().forEach(t=>t.stop()); processRecording(); };
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMime() });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      processRecording();
+    };
     mediaRecorder.start(100);
-    recording=true;
-    elapsedSecs=0;
-    document.getElementById('recordBtn').style.background='rgba(244,63,94,.2)';
-    document.getElementById('recordBtn').style.borderColor='#f43f5e';
-    document.getElementById('micIcon').className='ti ti-player-stop';
-    document.getElementById('recordLabel').textContent='Recording… click to stop';
-    timerInterval=setInterval(()=>{
+    recording = true;
+    elapsedSecs = 0;
+
+    document.getElementById('recordBtn').style.background    = 'rgba(244,63,94,.15)';
+    document.getElementById('recordBtn').style.borderColor   = '#f43f5e';
+    document.getElementById('micIcon').className = 'ti ti-player-stop';
+    document.getElementById('micIcon').style.color = '#f43f5e';
+    document.getElementById('recordLabel').textContent = 'Recording… click to stop';
+
+    timerInterval = setInterval(() => {
       elapsedSecs++;
-      const m=Math.floor(elapsedSecs/60),s=elapsedSecs%60;
-      document.getElementById('timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
-    },1000);
-    startViz(stream);
-  }catch(e){setStatus('error','Mic error: '+e.message);}
+      const m = Math.floor(elapsedSecs / 60), s = elapsedSecs % 60;
+      document.getElementById('timerDisplay').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    }, 1000);
+
+    const ac = startWaveViz(stream);
+    vizCtx = ac;
+  } catch (e) {
+    setStatus('error', 'Microphone access denied: ' + e.message);
+  }
 }
 
-function stopRecord(){
-  if(!mediaRecorder||mediaRecorder.state==='inactive') return;
+function getSupportedMime() {
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+  return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
+
+function stopRecording() {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
   mediaRecorder.stop();
-  recording=false;
+  recording = false;
   clearInterval(timerInterval);
-  stopViz();
-  document.getElementById('recordBtn').style.background='rgba(245,158,11,.1)';
-  document.getElementById('recordBtn').style.borderColor='var(--amber)';
-  document.getElementById('micIcon').className='ti ti-microphone';
-  document.getElementById('recordLabel').textContent='Processing…';
+  stopWaveViz(vizCtx);
+  vizCtx = null;
+
+  document.getElementById('recordBtn').style.background  = 'rgba(245,158,11,.1)';
+  document.getElementById('recordBtn').style.borderColor = 'var(--amber)';
+  document.getElementById('micIcon').className = 'ti ti-microphone';
+  document.getElementById('micIcon').style.color = 'var(--amber)';
+  document.getElementById('recordLabel').textContent = 'Processing…';
+  document.getElementById('timerDisplay').textContent = '';
 }
 
-async function processRecording(){
-  if(!audioChunks.length) return;
-  const blob=new Blob(audioChunks,{type:'audio/webm'});
+async function processRecording() {
+  if (!audioChunks.length) return;
+  const mime = audioChunks[0].type || 'audio/webm';
+  const blob = new Blob(audioChunks, { type: mime });
   await transcribeBlob(blob);
-  document.getElementById('recordLabel').textContent='Click to record again';
-  document.getElementById('timer').textContent='';
+  document.getElementById('recordLabel').textContent = 'Click to record again';
 }
 
-window.transcribeFile = async input => {
-  if(!input.files[0]) return;
+// ── File upload ──────────────────────────────────────────────────────────────
+window.handleFileUpload = async input => {
+  if (!input.files[0]) return;
   await transcribeBlob(input.files[0]);
 };
 
-async function transcribeBlob(blob){
-  const res=document.getElementById('sttResult');
-  const meta=document.getElementById('sttMeta');
-  try{
-    if(!asrPipeline){
-      setStatus('loading','Loading Whisper tiny…');setBar(0);
-      asrPipeline=await pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{progress_callback:progressCb});
+// ── Core transcription function ──────────────────────────────────────────────
+async function transcribeBlob(blob) {
+  const res  = document.getElementById('sttResult');
+  const meta = document.getElementById('sttMeta');
+  try {
+    if (!asrPipeline) {
+      setStatus('loading', 'Loading Whisper-tiny (39MB)…');
+      setBar(0);
+      asrPipeline = await pipeline(
+        'automatic-speech-recognition',
+        'Xenova/whisper-tiny',
+        { progress_callback: progressCb }
+      );
     }
-    setStatus('loading','Transcribing…');
-    res.innerHTML='<span style="color:var(--muted)">Transcribing with Whisper…</span>';
-    const lang=document.getElementById('langSelect').value||undefined;
-    const arrayBuffer=await blob.arrayBuffer();
-    const t0=Date.now();
-    const out=await asrPipeline(new Float32Array(arrayBuffer),{language:lang,task:'transcribe'});
-    const elapsed=((Date.now()-t0)/1000).toFixed(1);
-    res.textContent=out.text||'(no speech detected)';
-    meta.textContent=`Transcribed in ${elapsed}s · Whisper tiny`;
-    setStatus('ready','Transcription complete');
-  }catch(e){setStatus('error','Error');res.textContent='Error: '+e.message;}
+
+    setStatus('loading', 'Transcribing…');
+    res.innerHTML = '<span style="color:var(--muted)">Decoding audio → transcribing with Whisper…</span>';
+
+    // CRITICAL FIX: properly decode audio to PCM Float32Array
+    let pcmData;
+    try {
+      pcmData = await blobToPcm(blob);
+    } catch (decodeErr) {
+      // Fallback: try passing the URL directly (works for some formats)
+      const url = URL.createObjectURL(blob);
+      const t0 = Date.now();
+      const lang = document.getElementById('langSelect').value || undefined;
+      const out = await asrPipeline(url, { language: lang, task: 'transcribe' });
+      const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+      res.textContent = out.text || '(no speech detected)';
+      meta.textContent = `Transcribed in ${elapsed}s via URL fallback · Whisper-tiny`;
+      setStatus('ready', 'Done ✓');
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    const lang = document.getElementById('langSelect').value || undefined;
+    const t0 = Date.now();
+
+    const out = await asrPipeline(pcmData, {
+      language: lang,
+      task: 'transcribe',
+      return_timestamps: false,
+    });
+
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+    const text = (out.text || '').trim() || '(no speech detected)';
+    res.textContent = text;
+    meta.textContent = `Transcribed ${pcmData.length / 16000 | 0}s of audio in ${elapsed}s · Whisper-tiny · ${pcmData.length} samples @ 16kHz`;
+    setStatus('ready', 'Transcription complete ✓');
+  } catch (e) {
+    setStatus('error', 'Transcription failed');
+    res.textContent = 'Error: ' + e.message;
+    console.error('Whisper error:', e);
+  }
 }
 
-// ── TTS ──
-let voices=[];
-function loadVoices(){
-  voices=speechSynthesis.getVoices();
-  const sel=document.getElementById('voiceSelect');
-  sel.innerHTML=voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+// ── TTS ──────────────────────────────────────────────────────────────────────
+let voices = [];
+
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  const sel = document.getElementById('voiceSelect');
+  sel.innerHTML = voices.map((v, i) =>
+    `<option value="${i}">${v.name} (${v.lang})</option>`
+  ).join('');
 }
-speechSynthesis.onvoiceschanged=loadVoices;
+speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
-window.speak = () => {
-  const text=document.getElementById('ttsText').value.trim();
-  if(!text) return;
+window.speakText = () => {
+  const text = document.getElementById('ttsText').value.trim();
+  if (!text) return;
   speechSynthesis.cancel();
-  const utt=new SpeechSynthesisUtterance(text);
-  utt.voice=voices[document.getElementById('voiceSelect').value]||null;
-  utt.rate=parseFloat(document.getElementById('rateSlider').value);
-  utt.pitch=parseFloat(document.getElementById('pitchSlider').value);
-  utt.volume=parseFloat(document.getElementById('volSlider').value);
-  utt.onstart=()=>{
-    document.getElementById('speakStatus').textContent='Speaking…';
-    ttsWavePaused=false; drawTtsWave();
+
+  const utt = new SpeechSynthesisUtterance(text);
+  const voiceIdx = document.getElementById('voiceSelect').value;
+  utt.voice  = voices[voiceIdx] || null;
+  utt.rate   = parseFloat(document.getElementById('rateSlider').value);
+  utt.pitch  = parseFloat(document.getElementById('pitchSlider').value);
+  utt.volume = parseFloat(document.getElementById('volSlider').value);
+
+  utt.onstart = () => {
+    document.getElementById('speakStatus').textContent = '🔊 Speaking…';
+    ttsPlaying = true;
+    drawTtsWave();
   };
-  utt.onend=()=>{
-    document.getElementById('speakStatus').textContent='Done';
-    ttsWavePaused=true;
+  utt.onend = utt.onerror = () => {
+    ttsPlaying = false;
+    document.getElementById('speakStatus').textContent = '';
+    if (ttsWaveAni) cancelAnimationFrame(ttsWaveAni);
+    const c = document.getElementById('ttsWave');
+    c.getContext('2d').clearRect(0, 0, c.width, c.height);
   };
-  utt.onerror=e=>{ document.getElementById('speakStatus').textContent='Error: '+e.error; };
+
   speechSynthesis.speak(utt);
 };
 
-window.stopSpeak=()=>{ speechSynthesis.cancel(); document.getElementById('speakStatus').textContent=''; ttsWavePaused=true; };
+window.stopSpeech = () => {
+  speechSynthesis.cancel();
+  ttsPlaying = false;
+  document.getElementById('speakStatus').textContent = '';
+};
 
-function drawTtsWave(){
-  const canvas=document.getElementById('ttsWave');
-  canvas.width=canvas.offsetWidth||300;
-  const ctx=canvas.getContext('2d');
-  let t=0;
-  function loop(){
-    if(ttsWavePaused){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
-    ttsWaveAnimId=requestAnimationFrame(loop);
-    ctx.fillStyle='#111927';ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.strokeStyle='#6366f1';ctx.lineWidth=2;ctx.beginPath();
-    for(let i=0;i<canvas.width;i++){
-      const y=canvas.height/2+Math.sin((i/canvas.width)*6*Math.PI+t)*18+Math.sin((i/canvas.width)*12*Math.PI+t*1.5)*8;
-      i===0?ctx.moveTo(i,y):ctx.lineTo(i,y);
+function drawTtsWave() {
+  const canvas = document.getElementById('ttsWave');
+  canvas.width = canvas.offsetWidth || 400;
+  const ctx = canvas.getContext('2d');
+  let t = 0;
+  function loop() {
+    if (!ttsPlaying) return;
+    ttsWaveAni = requestAnimationFrame(loop);
+    ctx.fillStyle = '#111927';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < canvas.width; i++) {
+      const y = canvas.height / 2
+        + Math.sin((i / canvas.width) * 6 * Math.PI + t) * 14
+        + Math.sin((i / canvas.width) * 14 * Math.PI + t * 1.7) * 6;
+      i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
     }
-    ctx.stroke();t+=0.08;
+    ctx.stroke();
+    t += 0.07;
   }
   loop();
 }
 
-window.setPhrase=txt=>{ document.getElementById('ttsText').value=txt; };
+window.setTTS = txt => { document.getElementById('ttsText').value = txt; };
 </script>
 </body>
 </html>
