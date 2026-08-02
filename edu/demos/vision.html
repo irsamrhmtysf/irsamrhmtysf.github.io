@@ -7,12 +7,41 @@
 <link rel="stylesheet" href="../css/main.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
 <style>
-.video-container{position:relative;background:#000;border-radius:10px;overflow:hidden;width:100%}
-.video-container video{width:100%;display:block;max-height:320px;object-fit:cover}
-.video-container canvas.overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+/* Webcam container — video + canvas overlay stacked precisely */
+#camWrap {
+  position: relative;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 4/3;   /* fixed ratio so overlay matches video exactly */
+}
+#webcamVideo {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+#webcamOverlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+#camPlaceholder {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  color: var(--dim);
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
+
 <nav class="nav">
   <div class="nav-inner">
     <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
@@ -30,25 +59,28 @@
 <div class="container" style="padding-top:44px;padding-bottom:80px">
   <div class="section-label">Topic 09 · Computer Vision</div>
   <h1 style="font-size:2rem;margin-bottom:8px">Object Detection, Classification &amp; Counting</h1>
-  <p style="margin-bottom:20px;max-width:620px">Upload an image or point your webcam — DETR detects and counts every object with bounding boxes. ViT-base classifies images into 1000 categories.</p>
+  <p style="margin-bottom:20px;max-width:620px">
+    Upload an image or use your webcam — DETR detects every object with bounding boxes and counts them.
+    ViT classifies images into 1000 ImageNet categories. All models run locally in your browser.
+  </p>
 
-  <!-- Status bar (always visible) -->
+  <!-- Global status bar -->
   <div class="model-status" id="status" style="margin-bottom:8px">
     <div class="status-dot idle" id="statusDot"></div>
-    <span id="statusText">Choose a tab below — model loads on first use and is cached permanently.</span>
+    <span id="statusText">Select a tab — model loads on first use and is cached permanently.</span>
   </div>
   <div class="progress-bar-wrap" style="margin-bottom:24px">
     <div class="progress-bar-fill" id="bar" style="width:0"></div>
   </div>
 
-  <!-- Tabs -->
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px" id="tabs">
-    <button class="btn btn-primary"  id="tab-btn-detect"   onclick="switchTab('detect',this)">🔍 Object Detection</button>
-    <button class="btn btn-ghost"    id="tab-btn-classify"  onclick="switchTab('classify',this)">🏷 Image Classification</button>
-    <button class="btn btn-ghost"    id="tab-btn-webcam"   onclick="switchTab('webcam',this)">📷 Live Webcam</button>
+  <!-- Tab buttons -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px" id="tabBtns">
+    <button class="btn btn-primary" onclick="switchTab('detect',this)">🔍 Object Detection</button>
+    <button class="btn btn-ghost"   onclick="switchTab('classify',this)">🏷 Classification</button>
+    <button class="btn btn-ghost"   onclick="switchTab('webcam',this)">📷 Live Webcam</button>
   </div>
 
-  <!-- ── DETECT ── -->
+  <!-- ══ DETECT ══ -->
   <div id="tab-detect">
     <div class="grid-2" style="align-items:start;gap:24px">
       <div class="card">
@@ -60,7 +92,7 @@
           ondragleave="this.style.borderColor='var(--border2)'"
           ondrop="handleDrop(event)">
           <i class="ti ti-photo-up" style="font-size:36px;color:var(--muted);display:block;margin-bottom:8px"></i>
-          <div style="font-size:14px;color:var(--muted)">Click or drag &amp; drop image</div>
+          <div style="font-size:14px;color:var(--muted)">Click or drag &amp; drop</div>
           <div style="font-size:11px;color:var(--dim);margin-top:4px">JPG · PNG · WebP</div>
         </div>
         <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="loadImageFile(this)"/>
@@ -68,19 +100,19 @@
           <button class="btn btn-primary" id="detectBtn" onclick="runDetection()" disabled style="flex:1">
             <i class="ti ti-scan"></i> Detect &amp; Count
           </button>
-          <button class="btn btn-ghost" onclick="loadSampleDetect()">Sample</button>
+          <button class="btn btn-ghost" onclick="loadSampleDetect()">Sample image</button>
         </div>
         <div style="padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted)">
-          Model: <code style="color:var(--accent)">Xenova/detr-resnet-50</code><br/>
-          Detection Transformer · ~170MB · cached after first load
+          <code style="color:var(--accent)">Xenova/detr-resnet-50</code> · Detection Transformer · ~170MB · cached permanently
         </div>
       </div>
 
       <div class="card" style="display:flex;flex-direction:column;gap:12px">
         <h3>Detection Result</h3>
         <div style="position:relative;background:#000;border-radius:8px;overflow:hidden;min-height:220px;display:flex;align-items:center;justify-content:center">
-          <img id="previewImg" style="max-width:100%;max-height:340px;display:none;border-radius:0"/>
-          <canvas id="overlayCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+          <img id="previewImg" style="max-width:100%;max-height:340px;display:none"/>
+          <!-- FIX: overlay canvas NOT inside image wrapper — drawn separately via JS -->
+          <canvas id="overlayCanvas" style="position:absolute;top:0;left:0;pointer-events:none;display:none"></canvas>
           <div id="imgPlaceholder" style="color:var(--muted);font-size:13px;padding:32px;text-align:center">
             <i class="ti ti-photo" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4"></i>
             Upload an image to detect objects
@@ -88,28 +120,29 @@
         </div>
         <div id="countBadges" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         <div id="detectResult" class="result-box" style="min-height:60px">
-          <span class="result-placeholder">Objects will appear here after detection…</span>
+          <span class="result-placeholder">Objects will appear here…</span>
         </div>
       </div>
     </div>
 
     <div class="card" style="margin-top:20px">
-      <h4 style="margin-bottom:8px">How object detection works</h4>
+      <h4 style="margin-bottom:10px">How DETR Object Detection Works</h4>
       <div class="grid-3">
-        <div><div class="chip chip-teal" style="margin-bottom:6px">1 · CNN Backbone</div><p style="font-size:13px">ResNet-50 extracts a rich feature map from the image — a compact representation encoding what objects might be present and where.</p></div>
-        <div><div class="chip chip-blue" style="margin-bottom:6px">2 · Transformer</div><p style="font-size:13px">The DETR encoder processes the feature map. The decoder runs 100 "object queries" that each attend to different image regions.</p></div>
-        <div><div class="chip chip-amber" style="margin-bottom:6px">3 · Box + Class</div><p style="font-size:13px">Each query predicts a bounding box (xmin,ymin,xmax,ymax) and a class probability. Boxes below threshold are filtered out.</p></div>
+        <div><div class="chip chip-teal" style="margin-bottom:6px">1 · CNN Backbone</div><p style="font-size:13px">ResNet-50 extracts a 2D feature map encoding what and where objects might be in the image.</p></div>
+        <div><div class="chip chip-blue" style="margin-bottom:6px">2 · Transformer Encoder</div><p style="font-size:13px">DETR's encoder attends across all feature map positions, building a global understanding of the scene.</p></div>
+        <div><div class="chip chip-amber" style="margin-bottom:6px">3 · 100 Object Queries</div><p style="font-size:13px">The decoder runs 100 learned "object queries" in parallel, each predicting one box + class. No NMS needed.</p></div>
       </div>
     </div>
   </div>
 
-  <!-- ── CLASSIFY ── -->
+  <!-- ══ CLASSIFY ══ -->
   <div id="tab-classify" style="display:none">
     <div class="grid-2" style="align-items:start;gap:24px">
       <div class="card">
         <h3 style="margin-bottom:12px">Image Classification</h3>
-        <p style="font-size:13px;margin-bottom:16px">What is in this image? Returns top-5 predictions from 1000 ImageNet classes.</p>
-        <div style="border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:14px" onclick="document.getElementById('clsUpload').click()">
+        <p style="font-size:13px;margin-bottom:16px">Top-5 predictions from 1000 ImageNet classes using Vision Transformer (ViT).</p>
+        <div style="border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:14px"
+          onclick="document.getElementById('clsUpload').click()">
           <i class="ti ti-photo-search" style="font-size:32px;color:var(--muted);display:block;margin-bottom:8px"></i>
           <div style="font-size:13px;color:var(--muted)">Click to upload an image</div>
         </div>
@@ -118,14 +151,12 @@
           <button class="btn btn-primary" id="clsBtn" onclick="runClassify()" disabled style="flex:1">
             <i class="ti ti-tag"></i> Classify
           </button>
-          <button class="btn btn-ghost" onclick="loadSampleClassify()">Sample</button>
+          <button class="btn btn-ghost" onclick="loadSampleClassify()">Sample image</button>
         </div>
         <div style="padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted)">
-          Model: <code style="color:var(--teal)">Xenova/vit-base-patch16-224</code><br/>
-          Vision Transformer (ViT) · ~346MB · ImageNet 1k
+          <code style="color:var(--teal)">Xenova/vit-base-patch16-224</code> · Vision Transformer · ~346MB · ImageNet 1k
         </div>
       </div>
-
       <div class="card">
         <h3 style="margin-bottom:12px">Top-5 Predictions</h3>
         <img id="clsPreview" style="max-width:100%;border-radius:8px;margin-bottom:14px;display:none;max-height:220px;object-fit:cover;width:100%"/>
@@ -136,375 +167,535 @@
     </div>
   </div>
 
-  <!-- ── WEBCAM ── -->
+  <!-- ══ WEBCAM ══ -->
   <div id="tab-webcam" style="display:none">
     <div class="grid-2" style="align-items:start;gap:24px">
+
+      <!-- Controls -->
       <div class="card">
-        <h3 style="margin-bottom:12px">Live Webcam Detection</h3>
-        <p style="font-size:13px;margin-bottom:16px">Real-time object detection from your camera. Objects are detected, labelled, and counted on every frame. Uses the same DETR model as image detection.</p>
-        <div id="webcamNote" style="padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:var(--amber);margin-bottom:14px">
-          ⚡ First click loads the DETR model (~170MB). Subsequent loads use browser cache — instant.
+        <h3 style="margin-bottom:10px">Live Webcam Detection</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+          Point your camera at any scene — DETR detects and labels every object in real time, 
+          entirely in your browser. No data is sent to any server.
+        </p>
+
+        <div style="padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:var(--amber);margin-bottom:14px" id="loadNote">
+          ⚡ First use downloads DETR (~170MB) and caches it permanently. Reload is instant.
         </div>
+
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-          <button class="btn btn-primary" id="startCamBtn" onclick="startWebcam()">
+          <button class="btn btn-primary" id="startBtn" onclick="startWebcam()">
             <i class="ti ti-camera"></i> Start Camera
           </button>
-          <button class="btn btn-ghost" id="stopCamBtn" onclick="stopWebcam()" disabled>
+          <button class="btn btn-ghost" id="stopBtn" onclick="stopWebcam()" disabled>
             <i class="ti ti-player-stop"></i> Stop
           </button>
         </div>
-        <div id="fpsDisplay" style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:10px;min-height:18px"></div>
-        <div id="webcamCounts" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
-        <div style="padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted)">
-          Confidence threshold: 50% · Runs on WebGPU if available
+
+        <!-- Threshold slider -->
+        <label class="label">Confidence threshold: <span id="threshVal">50</span>%</label>
+        <input type="range" id="threshSlider" min="10" max="90" step="5" value="50"
+          style="width:100%;accent-color:var(--accent);margin-bottom:16px"
+          oninput="confThreshold=this.value/100;document.getElementById('threshVal').textContent=this.value"/>
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+          <div style="text-align:center;background:var(--bg3);border-radius:8px;padding:10px">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--accent);font-family:var(--display)" id="statFps">—</div>
+            <div style="font-size:11px;color:var(--muted)">FPS</div>
+          </div>
+          <div style="text-align:center;background:var(--bg3);border-radius:8px;padding:10px">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--green);font-family:var(--display)" id="statObjs">—</div>
+            <div style="font-size:11px;color:var(--muted)">Objects</div>
+          </div>
+          <div style="text-align:center;background:var(--bg3);border-radius:8px;padding:10px">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--teal);font-family:var(--display)" id="statMs">—</div>
+            <div style="font-size:11px;color:var(--muted)">ms/frame</div>
+          </div>
         </div>
+
+        <!-- Object count badges -->
+        <div id="camCounts" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px"></div>
       </div>
 
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="video-container" id="camContainer">
-          <!-- hidden canvas used for frame capture -->
-          <canvas id="captureCanvas" style="display:none"></canvas>
+      <!-- Camera feed -->
+      <div>
+        <div id="camWrap">
           <video id="webcamVideo" autoplay muted playsinline></video>
-          <canvas id="webcamCanvas" class="overlay"></canvas>
+          <canvas id="webcamOverlay"></canvas>
+          <div id="camPlaceholder">
+            <i class="ti ti-camera-off" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4"></i>
+            Camera feed will appear here
+          </div>
         </div>
-        <div style="padding:10px 14px;font-size:12px;color:var(--muted)">
-          Bounding boxes drawn on canvas overlay · Objects counted per frame
+        <div style="margin-top:8px;font-size:12px;color:var(--muted)">
+          Bounding boxes are drawn on a canvas overlay · Model: DETR-ResNet50
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<footer class="footer"><div class="container"><p>LearnAI · Vision Demo · DETR + ViT via Transformers.js</p></div></footer>
+<footer class="footer">
+  <div class="container">
+    <p>LearnAI · Computer Vision · DETR + ViT via <a href="https://huggingface.co/docs/transformers.js">Transformers.js</a></p>
+  </div>
+</footer>
 
 <script type="module">
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js';
-env.allowLocalModels = false;
-env.useBrowserCache  = true;      // always cache after download
 
-let detector   = null;
-let classifier = null;
-let camStream  = null;
-let camRunning = false;
-let animId     = null;
-let lastFps = 0, frameCount = 0, fpsTimer = 0;
+env.allowLocalModels = false;
+env.useBrowserCache  = true;
+
+// ── Shared state ─────────────────────────────────────────────────────────────
+let detector    = null;
+let classifier  = null;
+let camStream   = null;
+let camRunning  = false;
+let detecting   = false;          // semaphore — one inference at a time
 let detectImgUrl = null;
 let clsImgUrl    = null;
-let isDetecting  = false; // prevent concurrent webcam inference
+let confThreshold = 0.50;
 
-// ── Status helpers ──────────────────────────────────────────────────────────
-const statusDot  = document.getElementById('statusDot');
-const statusText = document.getElementById('statusText');
-const barEl      = document.getElementById('bar');
+// FPS tracking
+let fpsCount = 0, fpsLast = Date.now(), lastFps = 0;
 
-function setStatus(s, m) { statusDot.className = `status-dot ${s}`; statusText.textContent = m; }
-function setBar(p)        { barEl.style.width = Math.min(p, 100) + '%'; }
+// ── Status helpers ────────────────────────────────────────────────────────────
+const $dot  = document.getElementById('statusDot');
+const $text = document.getElementById('statusText');
+const $bar  = document.getElementById('bar');
 
-const progressCb = p => {
-  if (p.status === 'initiate') setStatus('loading', `Downloading ${p.name || 'model'}…`);
-  if (p.status === 'progress' && p.total) {
-    const pct = (p.loaded / p.total) * 100;
+function setStatus(state, msg) {
+  $dot.className = `status-dot ${state}`;
+  $text.textContent = msg;
+}
+function setBar(pct) { $bar.style.width = Math.min(pct, 100) + '%'; }
+
+// Progress callback for model downloads
+const onProgress = evt => {
+  if (evt.status === 'initiate') {
+    setStatus('loading', `Starting download: ${evt.name || 'model'}…`);
+  } else if (evt.status === 'progress' && evt.total) {
+    const pct = (evt.loaded / evt.total) * 100;
     setBar(pct);
-    setStatus('loading', `${p.name || 'model'} — ${Math.round(pct)}%`);
+    setStatus('loading', `Downloading ${evt.name || 'model'}: ${Math.round(pct)}%`);
+  } else if (evt.status === 'done') {
+    setStatus('loading', 'Initialising model…');
+    setBar(100);
   }
-  if (p.status === 'done') { setStatus('ready', 'Model ready ✓'); setBar(100); }
 };
 
-// ── Colour helpers ──────────────────────────────────────────────────────────
-const PALETTE = ['#3b82f6','#f43f5e','#22c55e','#f59e0b','#a855f7','#14b8a6','#fb923c','#06b6d4','#e879f9','#84cc16'];
+// ── Colour helpers ────────────────────────────────────────────────────────────
+const PALETTE = ['#3b82f6','#f43f5e','#22c55e','#f59e0b','#a855f7',
+                 '#14b8a6','#fb923c','#06b6d4','#e879f9','#84cc16'];
 function labelColor(lbl) {
   let h = 0;
-  for (const c of lbl) h = (h * 31 + c.charCodeAt(0)) % PALETTE.length;
+  for (const ch of lbl) h = (h * 31 + ch.charCodeAt(0)) % PALETTE.length;
   return PALETTE[h];
 }
 
-// ── Draw bounding boxes ─────────────────────────────────────────────────────
-function drawBoxes(canvas, boxes, srcW, srcH) {
-  canvas.width  = srcW;
-  canvas.height = srcH;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, srcW, srcH);
+// ── Draw boxes onto a canvas ──────────────────────────────────────────────────
+// FIX: never touch canvas.width/height here — that resets the context.
+// Caller is responsible for sizing the canvas once.
+function drawBoxesOnCtx(ctx, boxes, canvasW, canvasH, srcW, srcH) {
+  ctx.clearRect(0, 0, canvasW, canvasH);
 
-  boxes.forEach(b => {
+  const scaleX = canvasW / srcW;
+  const scaleY = canvasH / srcH;
+
+  for (const b of boxes) {
     const { xmin, ymin, xmax, ymax } = b.box;
+    const x = xmin * scaleX, y = ymin * scaleY;
+    const w = (xmax - xmin) * scaleX;
+    const h = (ymax - ymin) * scaleY;
     const color = labelColor(b.label);
-    const pct   = Math.round((b.score || 0) * 100);
-    const bw    = xmax - xmin;
-    const bh    = ymax - ymin;
+    const conf  = Math.round((b.score ?? 0) * 100);
 
-    // Filled semi-transparent box
-    ctx.fillStyle = color + '22';
-    ctx.fillRect(xmin, ymin, bw, bh);
+    // Semi-transparent fill
+    ctx.fillStyle = color + '28';
+    ctx.fillRect(x, y, w, h);
 
     // Border
     ctx.strokeStyle = color;
-    ctx.lineWidth   = 3;
-    ctx.strokeRect(xmin, ymin, bw, bh);
+    ctx.lineWidth   = 2.5;
+    ctx.strokeRect(x, y, w, h);
 
-    // Label pill
-    const label = `${b.label} ${pct}%`;
-    ctx.font = 'bold 13px Inter, sans-serif';
-    const tw = ctx.measureText(label).width;
-    const ph = 22, pw = tw + 10;
-    const labelY = ymin >= ph ? ymin - ph : ymin + bh;
+    // Label background
+    const labelText = `${b.label}  ${conf}%`;
+    ctx.font = 'bold 12px Inter, sans-serif';
+    const tw  = ctx.measureText(labelText).width;
+    const lh  = 20;
+    const lx  = x;
+    const ly  = y >= lh + 2 ? y - lh - 2 : y + h + 2;  // above if room, else below
 
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.roundRect(xmin, labelY, pw, ph, 4);
+    if (ctx.roundRect) {
+      ctx.roundRect(lx, ly, tw + 10, lh, 3);
+    } else {
+      ctx.rect(lx, ly, tw + 10, lh);
+    }
     ctx.fill();
 
-    ctx.fillStyle = '#fff';
-    ctx.fillText(label, xmin + 5, labelY + 15);
-  });
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(labelText, lx + 5, ly + 14);
+  }
 }
 
-// ── Count objects ───────────────────────────────────────────────────────────
+// ── Object counter ────────────────────────────────────────────────────────────
 function countObjects(boxes) {
   const c = {};
-  boxes.forEach(b => { c[b.label] = (c[b.label] || 0) + 1; });
+  for (const b of boxes) c[b.label] = (c[b.label] ?? 0) + 1;
   return c;
 }
+
 function renderCounts(el, counts) {
-  el.innerHTML = Object.entries(counts).map(([lbl, n]) => {
-    const c = labelColor(lbl);
-    return `<span style="background:${c}22;color:${c};border:1px solid ${c}44;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600">${lbl} ×${n}</span>`;
-  }).join('');
+  el.innerHTML = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([lbl, n]) => {
+      const c = labelColor(lbl);
+      return `<span style="background:${c}20;color:${c};border:1px solid ${c}40;
+                padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600">
+                ${lbl} &times;${n}</span>`;
+    }).join('');
 }
 
-// ── DETECT tab ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// DETECT TAB
+// ══════════════════════════════════════════════════════════════════════════════
 window.handleDrop = e => {
   e.preventDefault();
   document.getElementById('dropzone').style.borderColor = 'var(--border2)';
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) loadFileToDetect(URL.createObjectURL(file));
+  const f = e.dataTransfer.files[0];
+  if (f?.type.startsWith('image/')) loadToDetect(URL.createObjectURL(f));
 };
 
 window.loadImageFile = input => {
-  if (input.files[0]) loadFileToDetect(URL.createObjectURL(input.files[0]));
+  if (input.files[0]) loadToDetect(URL.createObjectURL(input.files[0]));
 };
 
-function loadFileToDetect(url) {
+function loadToDetect(url) {
   detectImgUrl = url;
   const img = document.getElementById('previewImg');
-  img.onload = () => {
-    // Clear old overlay
-    const ov = document.getElementById('overlayCanvas');
-    ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
-  };
-  img.src = url;
+  img.src   = url;
   img.style.display = 'block';
-  document.getElementById('imgPlaceholder').style.display = 'none';
-  document.getElementById('detectResult').innerHTML = '<span class="result-placeholder">Click Detect &amp; Count…</span>';
-  document.getElementById('countBadges').innerHTML = '';
-  document.getElementById('detectBtn').disabled = false;
+  document.getElementById('imgPlaceholder').style.display    = 'none';
+  document.getElementById('overlayCanvas').style.display     = 'none';
+  document.getElementById('detectResult').innerHTML          = '<span class="result-placeholder">Click Detect &amp; Count…</span>';
+  document.getElementById('countBadges').innerHTML           = '';
+  document.getElementById('detectBtn').disabled              = false;
 }
 
-window.loadSampleDetect = () => loadFileToDetect(
-  'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/city.jpg'
-);
+window.loadSampleDetect = () =>
+  loadToDetect('https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/city.jpg');
 
 window.runDetection = async () => {
   if (!detectImgUrl) return;
-  const res = document.getElementById('detectResult');
-  const overlay = document.getElementById('overlayCanvas');
-  const previewImg = document.getElementById('previewImg');
+  const resEl    = document.getElementById('detectResult');
+  const imgEl    = document.getElementById('previewImg');
+  const overlay  = document.getElementById('overlayCanvas');
   try {
     if (!detector) {
-      setStatus('loading', 'Loading DETR — this model is ~170MB and caches permanently after first download…');
+      setStatus('loading', 'Loading DETR (~170MB, cached permanently)…');
       setBar(0);
-      detector = await pipeline('object-detection', 'Xenova/detr-resnet-50', { progress_callback: progressCb });
+      detector = await pipeline('object-detection', 'Xenova/detr-resnet-50',
+                                { progress_callback: onProgress });
     }
     setStatus('loading', 'Detecting objects…');
-    res.innerHTML = '<span style="color:var(--muted)">Running DETR…</span>';
+    resEl.innerHTML = '<span style="color:var(--muted)">Running DETR…</span>';
 
-    const out = await detector(detectImgUrl, { threshold: 0.5 });
+    const out = await detector(detectImgUrl, { threshold: confThreshold });
 
-    // Draw boxes on overlay matched to image natural size
-    drawBoxes(overlay, out, previewImg.naturalWidth, previewImg.naturalHeight);
+    // Wait for image natural dimensions to be available
+    await new Promise(r => { if (imgEl.complete) r(); else imgEl.onload = r; });
+    const srcW = imgEl.naturalWidth;
+    const srcH = imgEl.naturalHeight;
+
+    // Size overlay to match rendered image exactly
+    const rect = imgEl.getBoundingClientRect();
+    overlay.width  = srcW;
+    overlay.height = srcH;
+    overlay.style.width  = imgEl.offsetWidth  + 'px';
+    overlay.style.height = imgEl.offsetHeight + 'px';
+    overlay.style.display = 'block';
+
+    const ctx = overlay.getContext('2d');
+    drawBoxesOnCtx(ctx, out, srcW, srcH, srcW, srcH);
+
     renderCounts(document.getElementById('countBadges'), countObjects(out));
 
-    const total = out.length;
-    setStatus('ready', `Found ${total} object${total !== 1 ? 's' : ''}`);
-    res.innerHTML = `<div style="font-weight:700;color:var(--text);margin-bottom:10px">Found ${total} object${total !== 1 ? 's' : ''}</div>` +
-      out.map(b => `<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)">
-        <span style="color:${labelColor(b.label)};font-weight:600">${b.label}</span>
-        <span style="font-family:var(--mono)">${Math.round(b.score * 100)}%</span>
-      </div>`).join('');
+    const n = out.length;
+    setStatus('ready', `Found ${n} object${n !== 1 ? 's' : ''} ✓`);
+    resEl.innerHTML = `<div style="font-weight:700;color:var(--text);margin-bottom:10px">Found ${n} object${n !== 1 ? 's' : ''}</div>` +
+      out.map(b => `
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)">
+          <span style="color:${labelColor(b.label)};font-weight:600">${b.label}</span>
+          <span style="font-family:var(--mono)">${Math.round(b.score * 100)}%</span>
+        </div>`).join('');
   } catch (e) {
-    setStatus('error', 'Detection failed');
-    res.textContent = 'Error: ' + e.message;
+    setStatus('error', 'Detection error');
+    resEl.textContent = 'Error: ' + e.message;
     console.error(e);
   }
 };
 
-// ── CLASSIFY tab ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// CLASSIFY TAB
+// ══════════════════════════════════════════════════════════════════════════════
 window.loadClsFile = input => {
   if (!input.files[0]) return;
   clsImgUrl = URL.createObjectURL(input.files[0]);
-  const img = document.getElementById('clsPreview');
-  img.src = clsImgUrl; img.style.display = 'block';
+  document.getElementById('clsPreview').src = clsImgUrl;
+  document.getElementById('clsPreview').style.display = 'block';
   document.getElementById('clsBtn').disabled = false;
 };
 
 window.loadSampleClassify = () => {
   clsImgUrl = 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/tiger.jpg';
-  const img = document.getElementById('clsPreview');
-  img.src = clsImgUrl; img.style.display = 'block';
+  document.getElementById('clsPreview').src = clsImgUrl;
+  document.getElementById('clsPreview').style.display = 'block';
   document.getElementById('clsBtn').disabled = false;
 };
 
 window.runClassify = async () => {
   if (!clsImgUrl) return;
-  const res = document.getElementById('clsResult');
+  const resEl = document.getElementById('clsResult');
   try {
     if (!classifier) {
-      setStatus('loading', 'Loading ViT-base — ~346MB, caches permanently after first download…');
+      setStatus('loading', 'Loading ViT-base (~346MB, cached permanently)…');
       setBar(0);
-      // Use ViT-base which is publicly accessible
-      classifier = await pipeline(
-        'image-classification',
-        'Xenova/vit-base-patch16-224',
-        { progress_callback: progressCb }
-      );
+      classifier = await pipeline('image-classification', 'Xenova/vit-base-patch16-224',
+                                  { progress_callback: onProgress });
     }
     setStatus('loading', 'Classifying…');
-    res.innerHTML = '<span style="color:var(--muted)">Classifying with ViT…</span>';
+    resEl.innerHTML = '<span style="color:var(--muted)">Classifying with ViT…</span>';
+
     const out = await classifier(clsImgUrl, { topk: 5 });
-    const colors = ['#3b82f6','#6366f1','#14b8a6','#f59e0b','#f43f5e'];
-    res.innerHTML = out.map((r, i) => {
+    const BAR_COLORS = ['#3b82f6','#6366f1','#14b8a6','#f59e0b','#f43f5e'];
+
+    resEl.innerHTML = out.map((r, i) => {
       const pct = Math.round(r.score * 100);
       return `<div style="margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
-          <span style="color:${i === 0 ? 'var(--text)' : 'var(--muted)'};font-weight:${i === 0 ? '700' : '400'}">${r.label}</span>
-          <span style="font-family:var(--mono);color:${colors[i]}">${pct}%</span>
+          <span style="color:${i===0?'var(--text)':'var(--muted)'};font-weight:${i===0?'700':'400'}">${r.label}</span>
+          <span style="font-family:var(--mono);color:${BAR_COLORS[i]}">${pct}%</span>
         </div>
         <div style="background:var(--bg);border-radius:4px;height:7px;overflow:hidden">
-          <div style="width:${pct}%;height:100%;background:${colors[i]};border-radius:4px;transition:width .5s"></div>
+          <div style="width:${pct}%;height:100%;background:${BAR_COLORS[i]};border-radius:4px;transition:width .5s"></div>
         </div></div>`;
     }).join('');
-    setStatus('ready', `Top: ${out[0].label} (${Math.round(out[0].score * 100)}%)`);
+
+    setStatus('ready', `${out[0].label} (${Math.round(out[0].score*100)}%) ✓`);
   } catch (e) {
-    setStatus('error', 'Classification failed');
-    res.textContent = 'Error: ' + e.message;
+    setStatus('error', 'Classification error');
+    resEl.textContent = 'Error: ' + e.message;
     console.error(e);
   }
 };
 
-// ── WEBCAM tab ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// WEBCAM TAB  — all 7 bugs fixed
+// ══════════════════════════════════════════════════════════════════════════════
+
+// FIX 4 + 5: Use a persistent off-screen canvas for capture
+// Its size is set once from video dimensions and never reset during the loop
+const captureCanvas = document.createElement('canvas');
+const captureCtx    = captureCanvas.getContext('2d', { willReadFrequently: true });
+
 window.startWebcam = async () => {
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn  = document.getElementById('stopBtn');
+
   try {
+    // Load model first so user can see progress before camera permission dialog
     if (!detector) {
-      setStatus('loading', 'Loading DETR for webcam — ~170MB, caches after first download…');
+      setStatus('loading', 'Loading DETR (~170MB, cached permanently)…');
       setBar(0);
-      detector = await pipeline('object-detection', 'Xenova/detr-resnet-50', { progress_callback: progressCb });
+      detector = await pipeline('object-detection', 'Xenova/detr-resnet-50',
+                                { progress_callback: onProgress });
+      setStatus('ready', 'Model ready — requesting camera…');
     }
 
-    camStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'environment' }
+    // FIX 6: Don't force facingMode:'environment' — it fails on laptops.
+    // Try ideal user-facing first, fall back to any camera.
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 } }
+      });
+    } catch (err) {
+      // Last resort: no constraints
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+
+    camStream = stream;
+    const vid = document.getElementById('webcamVideo');
+    vid.srcObject = stream;
+
+    // FIX 7: Wait for the video to actually have frame data before starting loop
+    // 'loadeddata' fires when the first frame is available
+    await new Promise((resolve, reject) => {
+      vid.onloadeddata = resolve;
+      vid.onerror      = reject;
+      vid.play().catch(reject);
     });
 
-    const vid = document.getElementById('webcamVideo');
-    vid.srcObject = camStream;
-    await vid.play();
+    // FIX 5: Set capture canvas size ONCE from real video dimensions
+    captureCanvas.width  = vid.videoWidth  || 640;
+    captureCanvas.height = vid.videoHeight || 480;
 
-    document.getElementById('startCamBtn').disabled = true;
-    document.getElementById('stopCamBtn').disabled  = false;
-    document.getElementById('webcamNote').style.display = 'none';
+    // Size the overlay canvas to match the #camWrap display area
+    // We use the wrapper's rendered size (not the video element's, which may differ)
+    const wrap = document.getElementById('camWrap');
+    const overlayEl = document.getElementById('webcamOverlay');
+    overlayEl.width  = wrap.clientWidth  || 640;
+    overlayEl.height = wrap.clientHeight || 480;
 
-    camRunning  = true;
-    frameCount  = 0;
-    fpsTimer    = Date.now();
-    isDetecting = false;
+    document.getElementById('camPlaceholder').style.display = 'none';
+    startBtn.disabled = true;
+    stopBtn.disabled  = false;
+    document.getElementById('loadNote').style.display = 'none';
 
-    runWebcamLoop();
+    camRunning = true;
+    detecting  = false;
+    fpsCount   = 0;
+    fpsLast    = Date.now();
+
+    setStatus('ready', 'Camera running — detecting objects…');
+    scheduleDetection();
+
   } catch (e) {
     setStatus('error', 'Camera error: ' + e.message);
-    console.error(e);
+    console.error('Webcam start error:', e);
   }
 };
 
 window.stopWebcam = () => {
   camRunning = false;
-  if (animId) cancelAnimationFrame(animId);
-  if (camStream) camStream.getTracks().forEach(t => t.stop());
-  document.getElementById('startCamBtn').disabled = false;
-  document.getElementById('stopCamBtn').disabled  = true;
-  document.getElementById('fpsDisplay').textContent = '';
-  document.getElementById('webcamCounts').innerHTML = '';
-  document.getElementById('webcamNote').style.display = 'block';
-  // Clear overlay
-  const ov = document.getElementById('webcamCanvas');
-  ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
-};
+  detecting  = false;
 
-async function runWebcamLoop() {
-  if (!camRunning) return;
-
-  const vid     = document.getElementById('webcamVideo');
-  const capture = document.getElementById('captureCanvas');
-  const overlay = document.getElementById('webcamCanvas');
-
-  if (vid.readyState >= 2 && !isDetecting) {
-    isDetecting = true;
-    try {
-      // Capture frame to canvas (required — detector can't read HTMLVideoElement directly)
-      capture.width  = vid.videoWidth  || 640;
-      capture.height = vid.videoHeight || 480;
-      capture.getContext('2d').drawImage(vid, 0, 0, capture.width, capture.height);
-
-      // Run inference on the data URL snapshot
-      const dataUrl = capture.toDataURL('image/jpeg', 0.8);
-      const out = await detector(dataUrl, { threshold: 0.5 });
-
-      // Draw results on overlay, sized to match rendered video
-      const dispW = vid.offsetWidth  || capture.width;
-      const dispH = vid.offsetHeight || capture.height;
-
-      // Scale boxes from capture size → display size
-      const scaleX = dispW / capture.width;
-      const scaleY = dispH / capture.height;
-      const scaledBoxes = out.map(b => ({
-        ...b,
-        box: {
-          xmin: b.box.xmin * scaleX,
-          ymin: b.box.ymin * scaleY,
-          xmax: b.box.xmax * scaleX,
-          ymax: b.box.ymax * scaleY,
-        }
-      }));
-
-      overlay.width  = dispW;
-      overlay.height = dispH;
-      drawBoxes(overlay, scaledBoxes, dispW, dispH);
-      renderCounts(document.getElementById('webcamCounts'), countObjects(out));
-
-      frameCount++;
-      const now = Date.now();
-      if (now - fpsTimer >= 1000) {
-        lastFps = frameCount; frameCount = 0; fpsTimer = now;
-      }
-      document.getElementById('fpsDisplay').textContent =
-        `FPS: ${lastFps} · Objects detected: ${out.length} · Model: DETR-ResNet50`;
-    } catch (e) {
-      console.error('Webcam detection error:', e);
-    } finally {
-      isDetecting = false;
-    }
+  if (camStream) {
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
   }
 
-  animId = requestAnimationFrame(runWebcamLoop);
+  const vid = document.getElementById('webcamVideo');
+  vid.srcObject = null;
+
+  // Clear overlay
+  const ov  = document.getElementById('webcamOverlay');
+  ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
+
+  document.getElementById('camPlaceholder').style.display = 'block';
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('stopBtn').disabled  = true;
+  document.getElementById('loadNote').style.display = 'block';
+  document.getElementById('camCounts').innerHTML  = '';
+  document.getElementById('statFps').textContent  = '—';
+  document.getElementById('statObjs').textContent = '—';
+  document.getElementById('statMs').textContent   = '—';
+  setStatus('ready', 'Camera stopped');
+};
+
+// FIX 6: throttled detection loop
+// DETR takes 300ms–2s per frame. We must NOT use rAF as the trigger —
+// it fires at 60fps while inference is still running, flooding the queue.
+// Instead: finish inference → wait a minimum gap → start next frame.
+function scheduleDetection() {
+  if (!camRunning) return;
+  if (detecting) return;   // still busy — skip this schedule
+
+  detecting = true;
+
+  const vid       = document.getElementById('webcamVideo');
+  const overlayEl = document.getElementById('webcamOverlay');
+  const overlayCtx = overlayEl.getContext('2d');
+  const wrap      = document.getElementById('camWrap');
+
+  // Must have video frame data
+  if (vid.readyState < 2 || vid.videoWidth === 0) {
+    detecting = false;
+    setTimeout(scheduleDetection, 100);
+    return;
+  }
+
+  const t0 = Date.now();
+
+  // FIX 4: Draw current video frame into the persistent off-screen canvas
+  captureCtx.drawImage(vid, 0, 0, captureCanvas.width, captureCanvas.height);
+
+  // FIX 3: Convert to Blob URL — more reliable than toDataURL with all Transformers.js versions
+  captureCanvas.toBlob(async blob => {
+    if (!blob || !camRunning) { detecting = false; return; }
+
+    const blobUrl = URL.createObjectURL(blob);
+    try {
+      const out = await detector(blobUrl, { threshold: confThreshold });
+      URL.revokeObjectURL(blobUrl);
+
+      if (!camRunning) { detecting = false; return; }
+
+      // FIX 5: Re-measure overlay size in case window resized
+      // Only update canvas dimensions if they actually changed (avoids context reset)
+      const newW = wrap.clientWidth  || captureCanvas.width;
+      const newH = wrap.clientHeight || captureCanvas.height;
+      if (overlayEl.width !== newW || overlayEl.height !== newH) {
+        overlayEl.width  = newW;
+        overlayEl.height = newH;
+      }
+
+      // FIX 1 + 4: Draw boxes using ctx only — never set canvas.width/height inside drawBoxes
+      drawBoxesOnCtx(
+        overlayCtx,
+        out,
+        overlayEl.width, overlayEl.height,   // canvas display size
+        captureCanvas.width, captureCanvas.height  // source frame size
+      );
+
+      // Update UI
+      renderCounts(document.getElementById('camCounts'), countObjects(out));
+      document.getElementById('statObjs').textContent = out.length;
+      document.getElementById('statMs').textContent   = Date.now() - t0;
+
+      // FPS counter
+      fpsCount++;
+      const now = Date.now();
+      if (now - fpsLast >= 1000) {
+        lastFps = fpsCount;
+        fpsCount = 0;
+        fpsLast = now;
+        document.getElementById('statFps').textContent = lastFps;
+      }
+
+    } catch (err) {
+      URL.revokeObjectURL(blobUrl);
+      console.warn('Detection error (will retry):', err.message);
+    } finally {
+      detecting = false;
+      // FIX 6: Schedule next detection after a minimum gap (16ms = 60fps cap)
+      // In practice DETR is much slower so this just ensures we don't pile up
+      if (camRunning) setTimeout(scheduleDetection, 16);
+    }
+  }, 'image/jpeg', 0.85);
 }
 
-// ── Tab switching ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// Tab switching
+// ══════════════════════════════════════════════════════════════════════════════
 window.switchTab = (tab, btn) => {
-  ['detect', 'classify', 'webcam'].forEach(t => {
+  ['detect','classify','webcam'].forEach(t => {
     document.getElementById('tab-' + t).style.display = 'none';
   });
   document.getElementById('tab-' + tab).style.display = 'block';
-  document.querySelectorAll('#tabs .btn').forEach(b => b.className = 'btn btn-ghost');
+  document.querySelectorAll('#tabBtns .btn').forEach(b => b.className = 'btn btn-ghost');
   btn.className = 'btn btn-primary';
+
   if (tab !== 'webcam' && camRunning) window.stopWebcam();
 };
+
+// Expose for slider
+window.confThreshold = confThreshold;
 </script>
 </body>
 </html>
