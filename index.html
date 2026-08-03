@@ -1,211 +1,214 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5Q30V1EW8H"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5Q30V1EW8H');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Irsam Rahmat Yusuf | Technopreneur</title>
+  <meta name="description" content="Technopreneur with Master's in IT Engineering." />
+  <link rel="shortcut icon" href="assets/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Space Grotesk', 'sans-serif'] },
+          colors: { brand: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' } }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0a0a0f; }
+    .gradient-text { background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }
+    .glow { box-shadow: 0 0 40px rgba(14,165,233,0.15); }
+    .project-card:hover { border-color: rgba(56,189,248,0.4); transform: translateY(-4px); }
+  </style>
+</head>
+<body class="font-sans text-slate-300 antialiased">
 
-	<head>
-		<!-- Google tag (gtag.js) -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-5Q30V1EW8H"></script>
-		<script>
-		  window.dataLayer = window.dataLayer || [];
-		  function gtag(){dataLayer.push(arguments);}
-		  gtag('js', new Date());
-		
-		  gtag('config', 'G-5Q30V1EW8H');
-		</script>
+  <nav class="fixed top-0 w-full z-50 glass">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="#" class="font-display font-bold text-xl text-white">IRSAM</a>
+      <div class="hidden md:flex gap-8 text-sm font-medium">
+        <a href="#about" class="hover:text-brand-400 transition">About</a>
+        <a href="#projects" class="hover:text-brand-400 transition">Projects</a>
+        <a href="#skills" class="hover:text-brand-400 transition">Skills</a>
+        <a href="#education" class="hover:text-brand-400 transition">Education</a>
+        <a href="#contact" class="hover:text-brand-400 transition">Contact</a>
+      </div>
+      <a href="https://bit.ly/irsam-portfolio" target="_blank" class="text-sm px-4 py-2 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/30 hover:bg-brand-500/20 transition">Portfolio</a>
+    </div>
+  </nav>
 
-		<!-- Meta -->
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <section class="min-h-screen flex items-center pt-20">
+    <div class="max-w-6xl mx-auto px-6 w-full">
+      <div class="max-w-3xl">
+        <p class="text-brand-400 font-medium mb-4 tracking-wide text-sm uppercase">Technopreneur · IT Engineering</p>
+        <h1 class="font-display text-5xl md:text-7xl font-bold text-white leading-tight mb-6">
+          Irsam<br><span class="gradient-text">Rahmat Yusuf</span>
+        </h1>
+        <p class="text-xl text-slate-400 mb-10 leading-relaxed max-w-xl">
+          Master's in IT Engineering. Building scalable digital products, AI-driven solutions & tech ventures.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="#projects" class="px-6 py-3 rounded-full bg-brand-500 text-white font-medium hover:bg-brand-600 transition glow">View Projects</a>
+          <a href="https://github.com/irsamrhmtysf" target="_blank" class="px-6 py-3 rounded-full glass text-white font-medium hover:border-brand-400/40 transition">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-		<!-- Favicons -->
-		<link rel="shortcut icon" href="assets/img/favicon.png">
-		<link rel="apple-touch-icon" href="assets/img/favicon_60x60.png">
-		<link rel="apple-touch-icon" sizes="76x76" href="assets/img/favicon_76x76.png">
-		<link rel="apple-touch-icon" sizes="120x120" href="assets/img/favicon_120x120.png">
-		<link rel="apple-touch-icon" sizes="152x152" href="assets/img/favicon_152x152.png">
+  <!-- PROJECTS -->
+  <section id="projects" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="font-display text-3xl font-bold text-white mb-3">Projects</h2>
+      <p class="text-slate-400 mb-12">Live tools & learning apps — open and try them.</p>
+      
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- LearnAI -->
+        <a href="https://irsamrhmtysf.github.io/edu" target="_blank" class="project-card glass rounded-2xl p-7 transition duration-300 block group">
+          <div class="flex items-start justify-between mb-4">
+            <span class="text-xs font-medium px-3 py-1 rounded-full bg-brand-500/15 text-brand-400">AI Course</span>
+            <span class="text-slate-500 group-hover:text-brand-400 transition">→</span>
+          </div>
+          <h3 class="text-white font-semibold text-xl mb-2">LearnAI</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Complete AI course with live browser demos. Real models run offline — no API, no server.</p>
+        </a>
 
-		<!-- Title -->
-		<title>irsamrhmtysf.github.io</title>
+        <!-- AI in Browser -->
+        <a href="https://irsamrhmtysf.github.io/ai/" target="_blank" class="project-card glass rounded-2xl p-7 transition duration-300 block group">
+          <div class="flex items-start justify-between mb-4">
+            <span class="text-xs font-medium px-3 py-1 rounded-full bg-purple-500/15 text-purple-400">AI Demos</span>
+            <span class="text-slate-500 group-hover:text-brand-400 transition">→</span>
+          </div>
+          <h3 class="text-white font-semibold text-xl mb-2">AI in the Browser</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Interactive demos: transcription, object detection, summarization, sentiment & more — all in-browser.</p>
+        </a>
 
-		<!-- CSS Plugins -->
-		<link rel="stylesheet" href="assets/plugins/bootstrap/dist/css/bootstrap.min.css" />
-		<link rel="stylesheet" href="assets/plugins/animate.css/animate.min.css" />
-		<link rel="stylesheet" href="assets/plugins/slick-carousel/slick/slick.css" />
-		<link rel="stylesheet" href="assets/plugins/fullpage.js/dist/jquery.fullpage.min.css" />
+        <!-- GAMEDUKASI -->
+        <a href="https://irsamrhmtysf.github.io/gamedukasi" target="_blank" class="project-card glass rounded-2xl p-7 transition duration-300 block group">
+          <div class="flex items-start justify-between mb-4">
+            <span class="text-xs font-medium px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400">Edugame</span>
+            <span class="text-slate-500 group-hover:text-brand-400 transition">→</span>
+          </div>
+          <h3 class="text-white font-semibold text-xl mb-2">GAMEDUKASI</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Fun learning game for kids — letters, numbers, shapes, colors, animals & fruits with timed levels.</p>
+        </a>
 
-		<!-- CSS Icons -->
-		<link rel="stylesheet" href="assets/css/themify-icons.css" />
-		<link rel="stylesheet" href="assets/plugins/font-awesome/css/font-awesome.min.css" />
+        <!-- imgproc -->
+        <a href="https://irsamrhmtysf.github.io/imgproc/" target="_blank" class="project-card glass rounded-2xl p-7 transition duration-300 block group">
+          <div class="flex items-start justify-between mb-4">
+            <span class="text-xs font-medium px-3 py-1 rounded-full bg-amber-500/15 text-amber-400">Image Tool</span>
+            <span class="text-slate-500 group-hover:text-brand-400 transition">→</span>
+          </div>
+          <h3 class="text-white font-semibold text-xl mb-2">imgproc</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Private offline image processing. 100% on-device — fast, secure, nothing uploaded.</p>
+        </a>
+      </div>
+    </div>
+  </section>
 
-		<!-- CSS Base -->
-		<link id="theme" rel="stylesheet" href="assets/css/themes/theme-blue.min.css" />
-	</head>
+  <section id="about" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="font-display text-3xl font-bold text-white mb-12">What I do</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="glass rounded-2xl p-8">
+          <h3 class="text-white font-semibold text-lg mb-2">Web & Full-stack</h3>
+          <p class="text-slate-400 text-sm">Laravel, NodeJS, Loopback, Bootstrap, CodeIgniter, WordPress, Ghost</p>
+        </div>
+        <div class="glass rounded-2xl p-8">
+          <h3 class="text-white font-semibold text-lg mb-2">Data & AI</h3>
+          <p class="text-slate-400 text-sm">Data Science, Machine Learning, Anaconda, Matlab, Elasticsearch, Redis</p>
+        </div>
+        <div class="glass rounded-2xl p-8">
+          <h3 class="text-white font-semibold text-lg mb-2">Infra & DevOps</h3>
+          <p class="text-slate-400 text-sm">Docker, VMware, Nginx, Apache, Jenkins, SonarQube, GitLab, Linux</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-	<body class="navigation-panel page-sliding dark-scheme">
+  <section id="skills" class="py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="font-display text-3xl font-bold text-white mb-8">Tech Stack</h2>
+      <div class="flex flex-wrap gap-3">
+        <span class="px-4 py-2 rounded-full glass text-sm">VMware</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Docker</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Android</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Ubuntu</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Nginx</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">MySQL</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">PostgreSQL</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">MongoDB</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Redis</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Laravel</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">NodeJS</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Jenkins</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">SonarQube</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">GitLab</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">VS Code</span>
+        <span class="px-4 py-2 rounded-full glass text-sm">Matlab</span>
+      </div>
+    </div>
+  </section>
 
-		<!-- Loader -->
-		<div id="page-loader">
-			<svg class="loader" viewBox="0 0 28 28">
-				<circle cx="14" cy="14" r="12" stroke-width="2"></circle>
-			</svg>
-		</div>
+  <section id="education" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="font-display text-3xl font-bold text-white mb-12">Education</h2>
+      <div class="space-y-6">
+        <div class="glass rounded-2xl p-8">
+          <h3 class="text-white font-semibold text-xl">Master's in IT Engineering</h3>
+          <p class="text-brand-400 text-sm mt-1">Technopreneur focus · Advanced systems & digital innovation</p>
+        </div>
+        <div class="glass rounded-2xl p-8">
+          <h3 class="text-white font-semibold text-xl">Bachelor of Computer Science</h3>
+          <p class="text-slate-400 text-sm mt-1">Indonesia University of Education</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-		<!-- Navigation -->
-		<nav id="navigation" class="navigation-panel dark">
-			<div class="navigation-inner">
-				<!-- Navigation Primary -->
-				<ul class="nav nav-primary-panel">
-					<li data-menuanchor="start" class="nav-item"><a href="#start" class="nav-link">Start</a></li>
-					<li data-menuanchor="testimonials" class="nav-item"><a href="#testimonials" class="nav-link">Experiences</a></li>
-					<li data-menuanchor="contact" class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
-				</ul>
-			</div>
-		</nav>
-			
-		<!-- Navigation Toggle -->
-		<a id="navigation-toggle" class="nav-toggle"><span></span><span></span><span></span><span></span></a>
+  <section id="contact" class="py-24 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="font-display text-3xl font-bold text-white mb-4">Let's connect</h2>
+      <p class="text-slate-400 mb-12">Open for collaboration, tech ventures & engineering projects.</p>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+        <a href="https://github.com/irsamrhmtysf" target="_blank" class="glass rounded-xl p-5 hover:border-brand-400/30 transition">
+          <p class="text-white font-medium">GitHub</p>
+          <p class="text-slate-500 text-sm">@irsamrhmtysf</p>
+        </a>
+        <a href="https://www.youtube.com/@irsamrahmatyusuf2660" target="_blank" class="glass rounded-xl p-5 hover:border-brand-400/30 transition">
+          <p class="text-white font-medium">YouTube</p>
+          <p class="text-slate-500 text-sm">@irsamrahmatyusuf2660</p>
+        </a>
+        <a href="https://bit.ly/irsam-portfolio" target="_blank" class="glass rounded-xl p-5 hover:border-brand-400/30 transition">
+          <p class="text-white font-medium">Portfolio</p>
+          <p class="text-slate-500 text-sm">bit.ly/irsam-portfolio</p>
+        </a>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-6 text-sm">
+        <div><p class="text-slate-500 mb-1">LinkedIn</p><p class="text-white">irsamrahmatyusuf</p></div>
+        <div><p class="text-slate-500 mb-1">Email</p><a href="mailto:irsam.rhmtysf@gmail.com" class="text-white hover:text-brand-400">irsam.rhmtysf@gmail.com</a></div>
+        <div><p class="text-slate-500 mb-1">WhatsApp</p><a href="https://wa.me/6285765238814" class="text-white hover:text-brand-400">+62 857-6523-8814</a></div>
+      </div>
+    </div>
+  </section>
 
-		<!-- Content -->
-		<div id="content">
-		
-			<section id="section-start" data-anchor="start" class="section section-double fullheight dark bg-dark" data-scheme="dark" data-local-scroll>
-				<div class="section-image col-md-6 bg-primary-animated">
-					<div class="bg-image-container">
-						<img src="assets/img/photos/designer/home.webp" alt="">
-					</div>
-				</div>
-				<div class="section-content pos-v-center">
-					<div class="container-wide" data-local-scroll>
-						<div class="row align-items-center">
-							<div class="col-md-5 push-md-7">			
-								<h3 class="display-2">IR<strong>SAM</strong></h3>
-								<h2><strong style="color:#1E8DEE "><span class="typing">IT ENGINEER</span></strong><a href="#testimonials" class="btn-go ml-2 btn-go-down "><i class="fa fa-angle-down"></i></a></h2>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<section id="section-testimonials" data-anchor="testimonials" class="section bg-white" data-scheme="dark">
-				<div class="bg-image-container"><img src="assets/img/photos/designer/experience-bg.webp" alt=""></div>        
-				<div class="section-content">
-					<div class="container-wide" style="color:#ffffff">
-						<div class="row">
-							<div class="col-md-4">
-								<h2 class="mb-0"> <i class='fa fa-briefcase' style="color:#1E8DEE"></i> Experiences <i class="fa fa-angle-down"></i></h2>
-								<hr class="sep-line ml-0">					
-									<ul type="disc">
-										<h5>
-											<li>VMware, VitrualBox, Docker</li>
-											<li>Android, Centos, Ubuntu, Windows</li>
-											<li>Apache, NginX</li> 
-											<li>Mkdocs, Microsoft Project, Open Project, Trello</li>  
-											<li>Anaconda, Android Studio, Matlab, Visual Basic, Visual Studio Code</li>
-											<li>Bootstrap, CodeIgniter, Ghost, Laravel, NodeJS, Loopback, Wordpress</li> 
-											<li>MySQL, PostgreSQL, MongoDB, Redis, Elasticsearch</li> 
-											<li>GitLab, PuTTy, WinSCP</li> 
-											<li>Jenkins, Sonarqube,</li>
-										</h5>
-									</ul>   
-								</hr>
-							</div>
-							<div class="col-md-4">
-								<h2 class="mb-0"> <i class='fa fa-desktop' style="color:#1E8DEE"></i> Skills <i class="fa fa-angle-down"></i></h2>
-								<hr class="sep-line ml-0">												
-									<ul type="disc">
-										<h5>
-											<li>WEB</li><br>
-											<li>Data Science</li><br>
-											<li>Machine Learning</li><br>
-										</h5>
-									</ul>
-								</hr>
-							</div>							
-							<div class="col-md-4">
-								<h2 class="mb-0"><i class='fa fa-graduation-cap' style="color:#1E8DEE"></i> Education <i class="fa fa-angle-down"></i></h2>
-								<hr class="sep-line ml-0">					
-								<div class="resume-box">							
-									<ul type="disc">
-										<h5>
-											<li>Bachelor of Computer Science<br> 
-											Indonesia University Of Education</li>
-										</h5>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>       
-				</div>					
-			</section>
-			
-			<section id="section-contact" data-anchor="contact" class="section bg-primary-animated dark cover" data-scheme="light">
-				<div class="section-content pos-v-center">
-					<div class="container">
-						<div class="row section-contact-content pt-lg-5 pb-lg-5">
-							<div class="col-md-4">                        
-								<h3 class="text-muted mb-2">
-									<i class='fa fa-youtube-play'></i>
-									<a href="https://www.youtube.com/@irsamrahmatyusuf2660" style="color:white;"> YouTube</a>
-								</h3>
-							</div>
-							<div class="col-md-4">
-								<h3 class="text-muted mb-2">
-									<i class='fa fa-github'></i>
-									<a href="https://github.com/irsamrhmtysf" style="color:white;"> GitHub</a>
-								</h3>
-							</div>
-							<div class="col-md-4">
-								<h3 class="text-muted mb-2">
-									<i class='fa fa-suitcase'></i>
-									<a href="https://bit.ly/irsam-portfolio" style="color:white;"> Portfolio</a>
-								</h3>
-							</div>
-						</div>
-					</div>
-					<div class="container">
-						<div class="row section-contact-content pt-lg-5 pb-lg-5">
-							<div class="col-md-4">
-								<h2 class="text-muted mb-2"><i class='fa fa-linkedin'></i> LinkedIn</h2>
-								<address class="lead">irsamrahmatyusuf</address>
-							</div>
-							<div class="col-md-4">
-								<h2 class="text-muted mb-2"><i class='fa fa-envelope'></i> Email</h2>
-								<address class="lead">irsam.rhmtysf@gmail.com</address>
-							</div>
-							<div class="col-md-4">                        
-								<h2 class="text-muted mb-2"><i class='fa fa-whatsapp'></i> WhatsApp</h2>
-								<address class="lead">+62 85765238814</address>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-			
-		</div>
-
-		<!-- JS Plugins -->
-		<script src="assets/plugins/js/particles.min.js"></script>
-		<script src="assets/plugins/js/particles_1.js"></script>
-		<script src="assets/plugins/jquery/dist/jquery.min.js"></script>
-		<script src="assets/plugins/jquery.appear/jquery.appear.js"></script>
-		<script src="assets/plugins/tether/dist/js/tether.min.js"></script>
-		<script src="assets/plugins/bootstrap/dist/js/bootstrap.min.js"></script>
-		<script src="assets/plugins/jquery.scrollto/jquery.scrollTo.min.js"></script>
-		<script src="assets/plugins/jquery.localscroll/jquery.localScroll.min.js"></script>
-		<script src="assets/plugins/imagesloaded/imagesloaded.pkgd.min.js"></script>
-		<script src="assets/plugins/masonry-layout/dist/masonry.pkgd.min.js"></script>
-		<script src="assets/plugins/slick-carousel/slick/slick.min.js"></script>
-		<script src="assets/plugins/waypoints/lib/jquery.waypoints.min.js"></script>
-		<script src="assets/plugins/jquery-validation/dist/jquery.validate.min.js"></script>
-		<script src="assets/plugins/typed.js/dist/typed.min.js"></script>
-		<script src="assets/plugins/easy-pie-chart/dist/jquery.easypiechart.min.js"></script>
-		<script src="assets/plugins/snapsvg/dist/snap.svg-min.js"></script>
-		<script src="assets/plugins/isotope-layout/dist/isotope.pkgd.min.js"></script>
-		<script src="assets/plugins/moment/min/moment.min.js"></script>
-		<script src="assets/plugins/fullpage.js/vendors/scrolloverflow.min.js"></script>
-		<script src="assets/plugins/fullpage.js/dist/jquery.fullpage.min.js"></script>
-		<!-- JS Google Map -->
-		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRMEkSrFLFkLKHyLVwT0DLLTqcUhUUZdM"></script>
-		<!-- JS Core -->
-		<script src="assets/js/core.js"></script>
-	</body>
+  <footer class="py-8 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+      <p>© 2026 Irsam Rahmat Yusuf</p>
+      <p>Technopreneur · Master's IT Engineering</p>
+    </div>
+  </footer>
+</body>
 </html>
