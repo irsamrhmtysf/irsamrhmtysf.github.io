@@ -1,324 +1,1171 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LearnAI — Introduction to Artificial Intelligence</title>
-<meta name="description" content="A complete 10-topic intro to AI course. Every concept has a live demo powered by Transformers.js. 100% browser-based, no server, no API key."/>
-<link rel="stylesheet" href="css/main.css"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>LearnAI — Belajar Kecerdasan Buatan · Learn Artificial Intelligence</title>
+<meta name="description" content="10-topic AI course. Every concept runs live in your browser. Free forever."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   DESIGN TOKENS — dual theme
+══════════════════════════════════════════════════════════════ */
+:root {
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'Plus Jakarta Sans', sans-serif;
+  --font-mono:    'Space Mono', monospace;
+
+  /* Accent — electric indigo with teal secondary */
+  --brand:        #6C63FF;
+  --brand-light:  #8B85FF;
+  --brand-dim:    rgba(108,99,255,.12);
+  --brand-border: rgba(108,99,255,.28);
+  --teal:         #2DD4BF;
+  --teal-dim:     rgba(45,212,191,.1);
+  --amber:        #FBBF24;
+  --rose:         #FB7185;
+  --green:        #34D399;
+
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  22px;
+  --radius-xl:  32px;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.08);
+  --shadow-lift: 0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+  --glow-brand:  0 0 32px rgba(108,99,255,.22);
+}
+
+/* ── DARK theme (default) ── */
+[data-theme="dark"] {
+  --bg:          #0C0E1A;
+  --bg2:         #10132B;
+  --bg3:         #151830;
+  --surface:     #1A1E38;
+  --surface2:    #1F2440;
+  --border:      rgba(255,255,255,.07);
+  --border2:     rgba(255,255,255,.12);
+  --text-1:      #F0F2FF;
+  --text-2:      #9AA0C4;
+  --text-3:      #5C638A;
+  --code-bg:     #080A14;
+}
+
+/* ── LIGHT theme ── */
+[data-theme="light"] {
+  --bg:          #F5F6FF;
+  --bg2:         #EDEEFF;
+  --bg3:         #FFFFFF;
+  --surface:     #FFFFFF;
+  --surface2:    #F0F1FF;
+  --border:      rgba(0,0,0,.07);
+  --border2:     rgba(0,0,0,.13);
+  --text-1:      #0F1130;
+  --text-2:      #4A4E6B;
+  --text-3:      #8E93B4;
+  --code-bg:     #0C0E1A;
+  --shadow-card: 0 1px 3px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lift: 0 8px 32px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.05);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESET + BASE
+══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  line-height: 1.65;
+  transition: background .3s, color .3s;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+
+/* ══════════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════════ */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: 64px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  transition: background .3s, box-shadow .3s;
+}
+.nav.scrolled {
+  box-shadow: 0 4px 24px rgba(0,0,0,.15);
+  backdrop-filter: blur(20px);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+}
+.nav-inner {
+  max-width: 1280px; margin: 0 auto;
+  height: 64px; padding: 0 28px;
+  display: flex; align-items: center; gap: 0;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-size: 1.15rem; font-weight: 700;
+  color: var(--text-1); letter-spacing: -.02em; flex-shrink: 0;
+}
+.logo-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--brand), var(--teal));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; box-shadow: 0 2px 12px rgba(108,99,255,.4);
+}
+.nav-links {
+  display: flex; align-items: center; gap: 2px;
+  margin-left: 32px; flex: 1;
+}
+.nav-links a {
+  font-size: 13.5px; font-weight: 500; color: var(--text-2);
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  transition: color .15s, background .15s;
+  white-space: nowrap;
+}
+.nav-links a:hover { color: var(--text-1); background: var(--surface); }
+.nav-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* Language toggle */
+.lang-toggle {
+  display: flex; align-items: center; gap: 0;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 3px; overflow: hidden;
+}
+.lang-btn {
+  font-size: 12px; font-weight: 700; padding: 4px 10px;
+  border-radius: 16px; border: none; cursor: pointer;
+  background: transparent; color: var(--text-3);
+  font-family: var(--font-display); transition: all .2s; letter-spacing: .02em;
+}
+.lang-btn.active {
+  background: var(--brand); color: #fff;
+  box-shadow: 0 2px 8px rgba(108,99,255,.35);
+}
+
+/* Theme toggle */
+.theme-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--text-2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; transition: all .2s;
+}
+.theme-btn:hover { background: var(--surface2); color: var(--text-1); transform: rotate(20deg); }
+
+/* ══════════════════════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 100px 28px 80px;
+  position: relative; overflow: hidden;
+}
+
+/* Animated mesh gradient background */
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+}
+.hero-orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); opacity: .45;
+  animation: orb-drift 12s ease-in-out infinite alternate;
+}
+.hero-orb-1 { width: 600px; height: 600px; top: -200px; left: -100px; background: radial-gradient(circle, rgba(108,99,255,.5), transparent 70%); animation-duration: 14s; }
+.hero-orb-2 { width: 500px; height: 500px; top: 100px; right: -150px; background: radial-gradient(circle, rgba(45,212,191,.35), transparent 70%); animation-duration: 18s; animation-direction: alternate-reverse; }
+.hero-orb-3 { width: 400px; height: 400px; bottom: -100px; left: 40%; background: radial-gradient(circle, rgba(251,191,36,.2), transparent 70%); animation-duration: 22s; }
+@keyframes orb-drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px, 20px) scale(1.08); } }
+
+[data-theme="light"] .hero-orb { opacity: .25; }
+
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+.hero-content {
+  position: relative; z-index: 1;
+  max-width: 1280px; margin: 0 auto; width: 100%;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--brand-light); margin-bottom: 24px;
+}
+.hero-eyebrow-line {
+  width: 32px; height: 1.5px;
+  background: linear-gradient(90deg, var(--brand), transparent);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 6vw, 5.2rem);
+  font-weight: 700; line-height: 1.05; letter-spacing: -.035em;
+  color: var(--text-1); margin-bottom: 24px;
+  max-width: 14ch;
+}
+.hero-title .accent {
+  background: linear-gradient(120deg, var(--brand-light), var(--teal));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-title .underline-anim {
+  position: relative; display: inline-block;
+}
+.hero-title .underline-anim::after {
+  content: ''; position: absolute; bottom: 2px; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--brand), var(--teal));
+  border-radius: 2px; transform: scaleX(0); transform-origin: left;
+  animation: underline-in 1s .6s ease forwards;
+}
+@keyframes underline-in { to { transform: scaleX(1); } }
+
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--text-2); max-width: 520px; margin-bottom: 40px; line-height: 1.7;
+}
+
+.hero-cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 64px; }
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px; border-radius: var(--radius-sm);
+  background: var(--brand); color: #fff;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  border: none; cursor: pointer; transition: all .2s; white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(108,99,255,.35);
+}
+.btn-primary:hover { background: var(--brand-light); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,99,255,.45); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-1);
+  font-family: var(--font-display); font-size: 14px; font-weight: 600;
+  border: 1px solid var(--border2); cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.btn-ghost:hover { background: var(--surface); border-color: var(--brand-border); }
+
+/* Hero stat strip */
+.hero-stats {
+  display: flex; flex-wrap: wrap; gap: 0;
+  border: 1px solid var(--border2); border-radius: var(--radius-md);
+  background: var(--surface); max-width: 640px;
+  overflow: hidden; box-shadow: var(--shadow-card);
+}
+.hero-stat {
+  flex: 1; min-width: 120px; padding: 18px 22px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.hero-stat:last-child { border-right: none; }
+.hero-stat::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--brand), transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.hero-stat:hover::before { opacity: 1; }
+.stat-num {
+  font-family: var(--font-display); font-size: 1.9rem; font-weight: 700;
+  color: var(--text-1); line-height: 1;
+}
+.stat-num em { font-style: normal; color: var(--brand-light); }
+.stat-lbl { font-size: 11.5px; color: var(--text-3); margin-top: 4px; font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════════════
+   SECTION STRUCTURE
+══════════════════════════════════════════════════════════════ */
+.section { padding: 96px 28px; }
+.section-inner { max-width: 1280px; margin: 0 auto; }
+
+.section-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--brand-light); margin-bottom: 14px;
+}
+.section-label::before {
+  content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--brand-light);
+}
+.section-title {
+  font-family: var(--font-display); font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 700; letter-spacing: -.03em; color: var(--text-1);
+  margin-bottom: 14px; line-height: 1.15;
+}
+.section-sub { font-size: 1.05rem; color: var(--text-2); max-width: 580px; line-height: 1.7; }
+
+/* ══════════════════════════════════════════════════════════════
+   FEATURE PILLS (why section)
+══════════════════════════════════════════════════════════════ */
+.why-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+.feature-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+  gap: 16px; margin-top: 48px;
+}
+.feature-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 28px;
+  transition: all .25s; position: relative; overflow: hidden;
+}
+.feature-card::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--brand-dim), transparent);
+  opacity: 0; transition: opacity .25s;
+}
+.feature-card:hover { border-color: var(--brand-border); transform: translateY(-3px); box-shadow: var(--glow-brand); }
+.feature-card:hover::after { opacity: 1; }
+.feature-icon {
+  width: 46px; height: 46px; border-radius: 12px; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  position: relative; z-index: 1;
+}
+.feature-card h4 { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text-1); margin-bottom: 8px; position: relative; z-index: 1; }
+.feature-card p  { font-size: 13.5px; color: var(--text-2); line-height: 1.6; position: relative; z-index: 1; }
+
+/* ══════════════════════════════════════════════════════════════
+   SYLLABUS / TOPIC CARDS
+══════════════════════════════════════════════════════════════ */
+.syllabus-section { background: var(--bg); }
+
+.topic-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+  gap: 16px; margin-top: 48px;
+}
+
+.topic-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 24px;
+  display: flex; flex-direction: column; gap: 0;
+  text-decoration: none; transition: all .22s; position: relative; overflow: hidden;
+  cursor: pointer;
+}
+.topic-card-accent {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: linear-gradient(90deg, var(--brand), var(--teal));
+  transform: scaleX(0); transform-origin: left; transition: transform .3s;
+}
+.topic-card:hover .topic-card-accent { transform: scaleX(1); }
+.topic-card:hover { border-color: var(--brand-border); box-shadow: var(--shadow-lift); transform: translateY(-3px); }
+
+.topic-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.topic-num-badge {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--text-3); background: var(--bg2); border: 1px solid var(--border);
+  padding: 3px 9px; border-radius: 6px; letter-spacing: .05em; flex-shrink: 0;
+}
+.seq-badge {
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+  white-space: nowrap; letter-spacing: .04em;
+}
+.seq-locked  { background: rgba(108,99,255,.12); color: #9C96FF; border: 1px solid rgba(108,99,255,.2); }
+.seq-flex    { background: rgba(45,212,191,.1);  color: #2DD4BF; border: 1px solid rgba(45,212,191,.2); }
+
+.topic-week {
+  font-size: 11px; font-weight: 600; color: var(--text-3); margin-bottom: 8px;
+  font-family: var(--font-mono); letter-spacing: .04em;
+}
+.topic-title {
+  font-family: var(--font-display); font-size: 1.05rem; font-weight: 700;
+  color: var(--text-1); margin-bottom: 8px; line-height: 1.25;
+}
+.topic-desc { font-size: 13px; color: var(--text-2); line-height: 1.55; flex: 1; }
+.topic-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
+}
+.demo-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 600; color: var(--amber);
+  background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.18);
+  padding: 3px 9px; border-radius: 20px;
+}
+.topic-arrow {
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--text-3); transition: all .2s;
+}
+.topic-card:hover .topic-arrow { background: var(--brand); border-color: var(--brand); color: #fff; transform: translateX(3px); }
+
+/* ══════════════════════════════════════════════════════════════
+   LIVE DEMOS SECTION
+══════════════════════════════════════════════════════════════ */
+.demos-section { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+.demo-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
+  gap: 16px; margin-top: 48px;
+}
+
+.demo-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); overflow: hidden;
+  text-decoration: none; display: flex; flex-direction: column;
+  transition: all .22s;
+}
+.demo-card:hover { border-color: var(--brand-border); box-shadow: var(--shadow-lift); transform: translateY(-3px); }
+
+.demo-card-top {
+  padding: 24px 24px 18px;
+  display: flex; align-items: flex-start; gap: 14px; flex: 1;
+}
+.demo-icon-wrap {
+  width: 50px; height: 50px; border-radius: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+}
+.demo-card-info { flex: 1; }
+.demo-card-info h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text-1); margin-bottom: 6px; }
+.demo-card-info p  { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+
+.demo-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 24px 16px; }
+.demo-tag  { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+
+.demo-card-footer {
+  padding: 12px 20px; border-top: 1px solid var(--border);
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.live-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); font-weight: 600; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: live-pulse 2s ease-in-out infinite; }
+@keyframes live-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}50%{box-shadow:0 0 0 5px rgba(52,211,153,0)} }
+.open-link { font-size: 12px; font-weight: 700; color: var(--brand-light); display: flex; align-items: center; gap: 4px; }
+
+/* ══════════════════════════════════════════════════════════════
+   STACK SECTION
+══════════════════════════════════════════════════════════════ */
+.stack-section { background: var(--bg); }
+.stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 12px; margin-top: 40px; }
+.stack-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 22px;
+}
+.stack-name { font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; margin-bottom: 6px; }
+.stack-card p { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+
+/* ══════════════════════════════════════════════════════════════
+   CTA BANNER
+══════════════════════════════════════════════════════════════ */
+.cta-section { background: var(--bg2); border-top: 1px solid var(--border); }
+.cta-banner {
+  background: linear-gradient(135deg, var(--brand-dim), var(--teal-dim));
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius-xl); padding: 60px 48px;
+  text-align: center; position: relative; overflow: hidden;
+}
+.cta-banner::before {
+  content: ''; position: absolute;
+  width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(108,99,255,.15), transparent 70%);
+  top: -100px; left: -100px; pointer-events: none;
+}
+.cta-banner::after {
+  content: ''; position: absolute;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(45,212,191,.12), transparent 70%);
+  bottom: -80px; right: -80px; pointer-events: none;
+}
+.cta-banner h2 {
+  font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 700; color: var(--text-1); margin-bottom: 14px; letter-spacing: -.03em;
+  position: relative; z-index: 1;
+}
+.cta-banner p { font-size: 1.05rem; color: var(--text-2); margin-bottom: 32px; position: relative; z-index: 1; }
+.cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+
+/* ══════════════════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--border); padding: 32px 28px;
+  background: var(--bg);
+}
+.footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+footer p { font-size: 13px; color: var(--text-3); }
+footer a { color: var(--brand-light); }
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: .1s; }
+.reveal-delay-2 { transition-delay: .2s; }
+.reveal-delay-3 { transition-delay: .3s; }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .hero { padding: 88px 20px 60px; min-height: auto; }
+  .hero-title { font-size: 2.4rem; max-width: none; }
+  .section { padding: 64px 20px; }
+  .hero-stats { flex-direction: column; }
+  .hero-stat { border-right: none; border-bottom: 1px solid var(--border); }
+  .hero-stat:last-child { border-bottom: none; }
+  .cta-banner { padding: 40px 24px; }
+  .nav-inner { padding: 0 16px; }
+  .nav-controls { gap: 6px; }
+  .lang-btn { padding: 4px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .hero-orb { display: none; }
+  .reveal { opacity: 1; transform: none; }
+}
+</style>
 </head>
 <body>
 
-<nav class="nav">
+<!-- ══ NAV ══════════════════════════════════════════════════════════════════ -->
+<nav class="nav" id="mainNav">
   <div class="nav-inner">
-    <a href="index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">🧠</div>
+      LearnAI
+    </a>
     <div class="nav-links">
-      <a href="#topics">Syllabus</a>
-      <a href="#demos">Live Demos</a>
-      <a href="demos/nlp.html">NLP</a>
-      <a href="demos/vision.html">Vision</a>
-      <a href="demos/speech.html">Speech</a>
-      <a href="demos/chatbot.html">Chatbot</a>
+      <a href="#syllabus"  data-i18n="nav-syllabus">Syllabus</a>
+      <a href="#demos"     data-i18n="nav-demos">Live Demos</a>
+      <a href="#stack"     data-i18n="nav-stack">Tech Stack</a>
     </div>
-    <span class="nav-badge">Browser-AI · No server</span>
+    <div class="nav-controls">
+      <!-- Language toggle -->
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+        <button class="lang-btn"        id="btnID" onclick="setLang('id')">ID</button>
+      </div>
+      <!-- Theme toggle -->
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">
+        <i class="ti ti-moon-stars" id="themeIcon"></i>
+      </button>
+    </div>
   </div>
 </nav>
 
-<!-- HERO -->
+<!-- ══ HERO ══════════════════════════════════════════════════════════════════ -->
 <section class="hero">
-  <div class="hero-glow"></div>
-  <div class="container">
-    <div class="hero-tag">Powered by Transformers.js v4 · WebGPU</div>
-    <h1>Learn AI by <em>running AI</em><br/>right here.</h1>
-    <p>A complete 10-topic intro course where every concept has a live demo. Models run 100% in your browser — no API key, no server, no cost.</p>
-    <div class="hero-actions">
-      <a href="#topics" class="btn btn-primary"><i class="ti ti-book-2"></i> Start Learning</a>
-      <a href="#demos" class="btn btn-ghost"><i class="ti ti-player-play"></i> See Live Demos</a>
-    </div>
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
   </div>
-</section>
-
-<!-- STATS -->
-<div class="container">
-  <div class="stats-bar">
-    <div class="stat-item"><div class="stat-val">10<span>+</span></div><div class="stat-lbl">Topics covered</div></div>
-    <div class="stat-item"><div class="stat-val">11<span>+</span></div><div class="stat-lbl">Live AI demos</div></div>
-    <div class="stat-item"><div class="stat-val">0<span>$</span></div><div class="stat-lbl">Cost — forever free</div></div>
-    <div class="stat-item"><div class="stat-val">100<span>%</span></div><div class="stat-lbl">Runs in browser</div></div>
-    <div class="stat-item"><div class="stat-val">14<span>w</span></div><div class="stat-lbl">Full course</div></div>
-  </div>
-</div>
-
-<!-- WHY -->
-<section class="section" style="padding-top:0">
-  <div class="container">
-    <div class="section-label">Why LearnAI is different</div>
-    <h2 class="section-title">The tool IS the lesson</h2>
-    <div class="feature-strip">
-      <div class="feature-pill"><i class="ti ti-cpu"></i> WebGPU accelerated</div>
-      <div class="feature-pill"><i class="ti ti-wifi-off"></i> Works offline</div>
-      <div class="feature-pill"><i class="ti ti-shield-lock"></i> Your data stays local</div>
-      <div class="feature-pill"><i class="ti ti-activity"></i> Real models, not mocks</div>
-      <div class="feature-pill"><i class="ti ti-devices"></i> Any device</div>
-      <div class="feature-pill"><i class="ti ti-brand-open-source"></i> 100% open source</div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-line"></div>
+      <span data-i18n="hero-eyebrow">Powered by Transformers.js v4 · WebGPU · 100% Browser</span>
     </div>
-    <div class="grid-3">
-      <div class="card">
-        <i class="ti ti-eye" style="font-size:26px;color:var(--accent);margin-bottom:12px;display:block"></i>
-        <h4 style="margin-bottom:8px">See the model think</h4>
-        <p style="font-size:13px">Every demo shows model output live. Watch confidence scores, attention weights, and prediction probabilities update in real time.</p>
+    <h1 class="hero-title">
+      <span data-i18n="hero-title-1">Learn AI by</span><br/>
+      <span class="accent" data-i18n="hero-title-2">running AI</span><br/>
+      <span class="underline-anim" data-i18n="hero-title-3">right here.</span>
+    </h1>
+    <p class="hero-sub" data-i18n="hero-sub">
+      A complete 10-topic course where every concept has a live demo. Real models run in your browser — no API key, no server, no cost. Forever.
+    </p>
+    <div class="hero-cta-row">
+      <a href="#syllabus" class="btn-primary">
+        <i class="ti ti-book-2"></i>
+        <span data-i18n="btn-start">Start Learning</span>
+      </a>
+      <a href="#demos" class="btn-ghost">
+        <i class="ti ti-player-play"></i>
+        <span data-i18n="btn-demos">See Live Demos</span>
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="stat-num">10<em>+</em></div>
+        <div class="stat-lbl" data-i18n="stat-topics">AI Topics</div>
       </div>
-      <div class="card">
-        <i class="ti ti-bolt" style="font-size:26px;color:var(--teal);margin-bottom:12px;display:block"></i>
-        <h4 style="margin-bottom:8px">Predict before you run</h4>
-        <p style="font-size:13px">Each demo asks you to predict the output before running. The gap between expectation and result is where understanding forms.</p>
+      <div class="hero-stat">
+        <div class="stat-num">11<em>+</em></div>
+        <div class="stat-lbl" data-i18n="stat-demos">Live Demos</div>
       </div>
-      <div class="card">
-        <i class="ti ti-arrows-transfer-up" style="font-size:26px;color:var(--amber);margin-bottom:12px;display:block"></i>
-        <h4 style="margin-bottom:8px">Your data, your test</h4>
-        <p style="font-size:13px">Every demo accepts your own input — your text, your photo, your voice. Not a toy dataset. Real inference on real input.</p>
+      <div class="hero-stat">
+        <div class="stat-num">0<em>$</em></div>
+        <div class="stat-lbl" data-i18n="stat-cost">Forever Free</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-num">100<em>%</em></div>
+        <div class="stat-lbl" data-i18n="stat-browser">In Your Browser</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SYLLABUS -->
-<section class="section" id="topics" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-  <div class="container">
-    <div class="section-label">Full Syllabus · 10 Topics</div>
-    <h2 class="section-title">Foundation to Frontier</h2>
-    <p class="section-sub" style="margin-bottom:32px">
-      <span style="display:inline-flex;align-items:center;gap:6px;margin-right:16px"><span style="background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.2);font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700">LOCKED</span> Must follow this order</span>
-      <span style="display:inline-flex;align-items:center;gap:6px"><span style="background:rgba(20,184,166,.1);color:var(--teal);border:1px solid rgba(20,184,166,.2);font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700">FLEXIBLE</span> Can be reordered</span>
+<!-- ══ WHY ═══════════════════════════════════════════════════════════════════ -->
+<section class="section why-section">
+  <div class="section-inner">
+    <div class="section-label" data-i18n="why-label">What makes this different</div>
+    <h2 class="section-title reveal" data-i18n="why-title">The tool IS the lesson</h2>
+    <p class="section-sub reveal reveal-delay-1" data-i18n="why-sub">Most courses show you AI from the outside. Here, the demos run in your browser — the model is live while you learn about it.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon" style="background:rgba(108,99,255,.12)">🔒</div>
+        <h4 data-i18n="feat1-title">Private by design</h4>
+        <p data-i18n="feat1-desc">Your photos, voice recordings, and text never leave your device. All inference runs locally via WebGPU or WASM.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon" style="background:rgba(45,212,191,.1)">⚡</div>
+        <h4 data-i18n="feat2-title">Real models, not demos</h4>
+        <p data-i18n="feat2-desc">DETR, Whisper, DistilBERT, ViT, SmolLM2 — production models from Hugging Face, running at full fidelity in your browser.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon" style="background:rgba(251,191,36,.1)">📡</div>
+        <h4 data-i18n="feat3-title">Works offline</h4>
+        <p data-i18n="feat3-desc">Models download once and are cached permanently. Close the internet — everything still works. Great for classrooms.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon" style="background:rgba(251,113,133,.1)">🎯</div>
+        <h4 data-i18n="feat4-title">Predict, then run</h4>
+        <p data-i18n="feat4-desc">Every demo asks you to predict the result before running it. The gap between expectation and reality is where understanding forms.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon" style="background:rgba(52,211,153,.1)">💡</div>
+        <h4 data-i18n="feat5-title">Zero setup</h4>
+        <p data-i18n="feat5-desc">No Python install, no Jupyter, no npm. Open a file in a browser and start. Every single demo works this way.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon" style="background:rgba(108,99,255,.12)">📖</div>
+        <h4 data-i18n="feat6-title">Sequenced for humans</h4>
+        <p data-i18n="feat6-desc">The 10 topics follow the actual dependency graph of AI knowledge — no concept is introduced before its prerequisites.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SYLLABUS ═══════════════════════════════════════════════════════════════ -->
+<section class="section syllabus-section" id="syllabus">
+  <div class="section-inner">
+    <div class="section-label" data-i18n="syl-label">Full Course · 14 Weeks</div>
+    <h2 class="section-title reveal" data-i18n="syl-title">10 Topics · Foundation to Frontier</h2>
+    <p class="section-sub reveal reveal-delay-1">
+      <span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">
+        <span class="seq-badge seq-locked">LOCKED</span>
+        <span style="font-size:13px;color:var(--text-2)" data-i18n="syl-locked-desc">Must follow in order</span>
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:6px">
+        <span class="seq-badge seq-flex">FLEXIBLE</span>
+        <span style="font-size:13px;color:var(--text-2)" data-i18n="syl-flex-desc">Can be reordered</span>
+      </span>
     </p>
 
-    <div class="grid-2">
-      <a href="demos/history.html" class="topic-card">
-        <div class="topic-num">01 <span class="topic-badge badge-locked">LOCKED</span></div>
-        <div class="topic-title">What is AI &amp; History</div>
-        <div class="topic-desc">Turing test, symbolic AI, statistical ML, neural AI. Narrow vs AGI. Interactive timeline from 1950 to today.</div>
-        <div class="demo-tag"><i class="ti ti-timeline"></i> Interactive timeline</div>
-      </a>
-      <a href="demos/math.html" class="topic-card">
-        <div class="topic-num">02 <span class="topic-badge badge-locked">LOCKED</span></div>
-        <div class="topic-title">Math &amp; Stats Basics</div>
-        <div class="topic-desc">Vectors, matrix operations, derivatives, probability, Bayes theorem. Every concept has a live calculator.</div>
-        <div class="demo-tag"><i class="ti ti-math-function"></i> Live math playground</div>
-      </a>
-      <a href="demos/data.html" class="topic-card">
-        <div class="topic-num">03 <span class="topic-badge badge-flex">FLEXIBLE</span></div>
-        <div class="topic-title">Data &amp; Problem Framing</div>
-        <div class="topic-desc">EDA, data quality, class imbalance, leakage. Upload your own CSV and explore it live with statistics and charts.</div>
-        <div class="demo-tag"><i class="ti ti-chart-bar"></i> CSV explorer</div>
-      </a>
-      <a href="demos/ethics.html" class="topic-card">
-        <div class="topic-num">04 <span class="topic-badge badge-flex">FLEXIBLE</span></div>
-        <div class="topic-title">AI Ethics &amp; Fairness</div>
-        <div class="topic-desc">Algorithmic bias, fairness metrics, real case studies. Interactive bias simulator with loan approval scenario.</div>
-        <div class="demo-tag"><i class="ti ti-scale"></i> Bias simulator</div>
-      </a>
-      <a href="demos/supervised.html" class="topic-card">
-        <div class="topic-num">05 <span class="topic-badge badge-locked">LOCKED</span></div>
-        <div class="topic-title">Supervised Learning</div>
-        <div class="topic-desc">Logistic regression, decision trees, KNN, Naive Bayes. Click to place training points, watch decision boundaries form live.</div>
-        <div class="demo-tag"><i class="ti ti-brain"></i> Train a classifier live</div>
-      </a>
-      <a href="demos/evaluation.html" class="topic-card">
-        <div class="topic-num">06 <span class="topic-badge badge-locked">LOCKED</span></div>
-        <div class="topic-title">Model Evaluation</div>
-        <div class="topic-desc">Overfitting, cross-validation, confusion matrix, AUC-ROC. Interactive threshold slider shows precision-recall trade-off.</div>
-        <div class="demo-tag"><i class="ti ti-adjustments"></i> Evaluation playground</div>
-      </a>
-      <a href="demos/unsupervised.html" class="topic-card">
-        <div class="topic-num">07 <span class="topic-badge badge-flex">FLEXIBLE</span></div>
-        <div class="topic-title">Unsupervised Learning</div>
-        <div class="topic-desc">K-Means clustering, PCA, elbow method. Add points and watch the algorithm discover structure without labels.</div>
-        <div class="demo-tag"><i class="ti ti-atom"></i> Live K-Means clustering</div>
-      </a>
-      <a href="demos/neural.html" class="topic-card">
-        <div class="topic-num">08 <span class="topic-badge badge-locked">LOCKED</span></div>
-        <div class="topic-title">Neural Networks &amp; Backprop</div>
-        <div class="topic-desc">Neurons, layers, activations, backpropagation. Train a 2-layer MLP from scratch in pure JavaScript, no library.</div>
-        <div class="demo-tag"><i class="ti ti-network"></i> Train MLP live in browser</div>
-      </a>
-      <a href="demos/topic9.html" class="topic-card">
-        <div class="topic-num">09 <span class="topic-badge badge-flex">FLEXIBLE</span></div>
-        <div class="topic-title">CV · NLP · Reinforcement Learning</div>
-        <div class="topic-desc">CNNs for vision (DETR object detection), Transformers for NLP (DistilBERT), speech (Whisper). Three full demos.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
-          <a href="demos/vision.html" class="btn btn-sm btn-ghost" style="font-size:12px">Vision →</a>
-          <a href="demos/nlp.html" class="btn btn-sm btn-ghost" style="font-size:12px">NLP →</a>
-          <a href="demos/speech.html" class="btn btn-sm btn-ghost" style="font-size:12px">Speech →</a>
-        </div>
-      </a>
-      <a href="demos/llm.html" class="topic-card">
-        <div class="topic-num">10 <span class="topic-badge badge-locked">LOCKED</span></div>
-        <div class="topic-title">LLMs, Generative AI &amp; Safety</div>
-        <div class="topic-desc">Tokenisation, next-token prediction, temperature sampling, hallucination, prompt engineering. Run a local LLM.</div>
-        <div class="demo-tag"><i class="ti ti-stars"></i> LLM concepts + local chatbot</div>
-      </a>
+    <div class="topic-grid" id="topicGrid">
+      <!-- Topics injected by JS for i18n support -->
     </div>
   </div>
 </section>
 
-<!-- LIVE DEMOS -->
-<section class="section" id="demos">
-  <div class="container">
-    <div class="section-label">AI Feature Demos</div>
-    <h2 class="section-title">Real models · running right now</h2>
-    <p class="section-sub">Every demo uses a real pretrained model via Transformers.js. Models download and cache on first use — subsequent loads are instant.</p>
+<!-- ══ LIVE DEMOS ═════════════════════════════════════════════════════════════ -->
+<section class="section demos-section" id="demos">
+  <div class="section-inner">
+    <div class="section-label" data-i18n="demos-label">AI Feature Demos</div>
+    <h2 class="section-title reveal" data-i18n="demos-title">Real models · running right now</h2>
+    <p class="section-sub reveal reveal-delay-1" data-i18n="demos-sub">Every demo uses a real pretrained model. Click to open — model downloads once and caches permanently in your browser.</p>
 
-    <div class="grid-2">
-      <a href="demos/nlp.html" class="card" style="text-decoration:none;display:block">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-          <div style="width:44px;height:44px;border-radius:10px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="ti ti-message-2" style="font-size:22px;color:var(--accent)"></i>
-          </div>
-          <div>
-            <h3 style="font-size:1rem;color:var(--text)">NLP — Text Intelligence</h3>
-            <p style="font-size:12px;margin:0">DistilBERT · MiniLM · 67–90MB</p>
-          </div>
-          <span class="chip chip-green" style="margin-left:auto">Live</span>
-        </div>
-        <p style="font-size:13px;margin-bottom:14px">Sentiment analysis, zero-shot classification, named entity recognition, and semantic similarity. Your text, your model, your browser.</p>
-        <div style="display:flex;gap:7px;flex-wrap:wrap">
-          <span class="chip chip-blue">Sentiment</span><span class="chip chip-blue">NER</span>
-          <span class="chip chip-blue">Zero-shot</span><span class="chip chip-blue">Similarity</span>
-        </div>
-      </a>
-
-      <a href="demos/vision.html" class="card" style="text-decoration:none;display:block">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-          <div style="width:44px;height:44px;border-radius:10px;background:rgba(20,184,166,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="ti ti-camera" style="font-size:22px;color:var(--teal)"></i>
-          </div>
-          <div>
-            <h3 style="font-size:1rem;color:var(--text)">Computer Vision</h3>
-            <p style="font-size:12px;margin:0">DETR · MobileNetV4 · 14–170MB</p>
-          </div>
-          <span class="chip chip-green" style="margin-left:auto">Live</span>
-        </div>
-        <p style="font-size:13px;margin-bottom:14px">Object detection with bounding boxes, image classification top-5, and real-time webcam recognition with live object counting.</p>
-        <div style="display:flex;gap:7px;flex-wrap:wrap">
-          <span class="chip chip-teal">Detection</span><span class="chip chip-teal">Classify</span>
-          <span class="chip chip-teal">Count</span><span class="chip chip-teal">Webcam</span>
-        </div>
-      </a>
-
-      <a href="demos/speech.html" class="card" style="text-decoration:none;display:block">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-          <div style="width:44px;height:44px;border-radius:10px;background:rgba(245,158,11,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="ti ti-microphone" style="font-size:22px;color:var(--amber)"></i>
-          </div>
-          <div>
-            <h3 style="font-size:1rem;color:var(--text)">Speech — STT &amp; TTS</h3>
-            <p style="font-size:12px;margin:0">Whisper tiny · 39MB · Web Speech API</p>
-          </div>
-          <span class="chip chip-green" style="margin-left:auto">Live</span>
-        </div>
-        <p style="font-size:13px;margin-bottom:14px">Record your voice → transcribe with Whisper. Type text → hear it spoken. Full audio pipeline, waveform visualiser, multi-language.</p>
-        <div style="display:flex;gap:7px;flex-wrap:wrap">
-          <span class="chip chip-amber">Speech-to-Text</span><span class="chip chip-amber">Text-to-Speech</span>
-          <span class="chip chip-amber">Multi-lang</span>
-        </div>
-      </a>
-
-      <a href="demos/chatbot.html" class="card" style="text-decoration:none;display:block">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-          <div style="width:44px;height:44px;border-radius:10px;background:rgba(244,63,94,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="ti ti-robot" style="font-size:22px;color:var(--rose)"></i>
-          </div>
-          <div>
-            <h3 style="font-size:1rem;color:var(--text)">AI Chatbot (local LLM)</h3>
-            <p style="font-size:12px;margin:0">SmolLM2-360M · ONNX quantized</p>
-          </div>
-          <span class="chip chip-green" style="margin-left:auto">Live</span>
-        </div>
-        <p style="font-size:13px;margin-bottom:14px">Fully private AI tutor. SmolLM2 runs 100% in your browser. Streaming token output, system prompt customisation, topic starters.</p>
-        <div style="display:flex;gap:7px;flex-wrap:wrap">
-          <span class="chip chip-rose">Local LLM</span><span class="chip chip-rose">Streaming</span>
-          <span class="chip chip-rose">Private</span><span class="chip chip-rose">Offline</span>
-        </div>
-      </a>
-    </div>
-
-    <!-- Secondary demos strip -->
-    <h3 style="margin-top:48px;margin-bottom:20px;font-size:1.1rem">More interactive demos</h3>
-    <div class="grid-3">
-      <a href="demos/neural.html" class="card" style="text-decoration:none">
-        <i class="ti ti-network" style="font-size:24px;color:var(--accent2);margin-bottom:10px;display:block"></i>
-        <h4 style="color:var(--text);margin-bottom:6px">Neural Network Trainer</h4>
-        <p style="font-size:13px">Train a 2-layer MLP from scratch. XOR, spiral, circle datasets. Watch the decision boundary form in real time.</p>
-      </a>
-      <a href="demos/supervised.html" class="card" style="text-decoration:none">
-        <i class="ti ti-click" style="font-size:24px;color:var(--teal);margin-bottom:10px;display:block"></i>
-        <h4 style="color:var(--text);margin-bottom:6px">Classifier Playground</h4>
-        <p style="font-size:13px">Click to place training data. Compare KNN, Logistic Regression, Decision Trees, and Naive Bayes side by side.</p>
-      </a>
-      <a href="demos/unsupervised.html" class="card" style="text-decoration:none">
-        <i class="ti ti-atom" style="font-size:24px;color:var(--amber);margin-bottom:10px;display:block"></i>
-        <h4 style="color:var(--text);margin-bottom:6px">K-Means &amp; PCA</h4>
-        <p style="font-size:13px">Live K-Means with step-by-step animation. PCA visualisation. Elbow method to find optimal K.</p>
-      </a>
-      <a href="demos/llm.html" class="card" style="text-decoration:none">
-        <i class="ti ti-stars" style="font-size:24px;color:var(--rose);margin-bottom:10px;display:block"></i>
-        <h4 style="color:var(--text);margin-bottom:6px">LLM Explorer</h4>
-        <p style="font-size:13px">Tokeniser, next-token prediction, temperature visualiser, hallucination quiz, and prompt engineering guide.</p>
-      </a>
-      <a href="demos/evaluation.html" class="card" style="text-decoration:none">
-        <i class="ti ti-chart-dots" style="font-size:24px;color:var(--green);margin-bottom:10px;display:block"></i>
-        <h4 style="color:var(--text);margin-bottom:6px">Model Evaluation</h4>
-        <p style="font-size:13px">Confusion matrix builder, ROC curve, threshold slider, bias-variance explorer. All interactive.</p>
-      </a>
-      <a href="demos/ethics.html" class="card" style="text-decoration:none">
-        <i class="ti ti-scale" style="font-size:24px;color:var(--accent);margin-bottom:10px;display:block"></i>
-        <h4 style="color:var(--text);margin-bottom:6px">AI Ethics Simulator</h4>
-        <p style="font-size:13px">Loan bias simulator with fairness metrics. Real case studies: Amazon, COMPAS, healthcare algorithms.</p>
-      </a>
+    <div class="demo-grid" id="demoGrid">
+      <!-- Injected by JS -->
     </div>
   </div>
 </section>
 
-<!-- STACK -->
-<section class="section" style="background:var(--bg2);border-top:1px solid var(--border)">
-  <div class="container">
-    <div class="section-label">Technology Stack</div>
-    <h2 class="section-title">How it works</h2>
-    <div class="grid-3">
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--accent);margin-bottom:10px;font-weight:600">Transformers.js v4</div>
-        <p style="font-size:13px">Hugging Face's official JavaScript port. Runs ONNX-quantized models at 60 t/s in the browser via WebGPU. Powers NLP, vision, audio.</p>
-      </div>
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--teal);margin-bottom:10px;font-weight:600">WebGPU + WASM</div>
-        <p style="font-size:13px">WebGPU gives near-native GPU acceleration for model inference. WASM fallback ensures compatibility on older devices.</p>
-      </div>
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--amber);margin-bottom:10px;font-weight:600">Web APIs</div>
-        <p style="font-size:13px">Web Speech API for TTS. MediaRecorder + getUserMedia for audio capture. Canvas 2D for all visualisations.</p>
-      </div>
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--rose);margin-bottom:10px;font-weight:600">Zero server</div>
-        <p style="font-size:13px">Pure static files. Open from local disk or any static host (GitHub Pages, Netlify, Cloudflare). No backend ever needed.</p>
-      </div>
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--accent2);margin-bottom:10px;font-weight:600">Model cache</div>
-        <p style="font-size:13px">Models download once from Hugging Face CDN and are cached by the browser. Works fully offline after first load.</p>
-      </div>
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--green);margin-bottom:10px;font-weight:600">Pure JS math</div>
-        <p style="font-size:13px">Neural network, K-Means, PCA, and evaluation demos are implemented in pure JavaScript — no library dependency for core algorithms.</p>
+<!-- ══ STACK ══════════════════════════════════════════════════════════════════ -->
+<section class="section stack-section" id="stack">
+  <div class="section-inner">
+    <div class="section-label" data-i18n="stack-label">Technology Stack</div>
+    <h2 class="section-title reveal" data-i18n="stack-title">How it's built</h2>
+    <div class="stack-grid" id="stackGrid">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ═══════════════════════════════════════════════════════════════════ -->
+<section class="section cta-section">
+  <div class="section-inner">
+    <div class="cta-banner reveal">
+      <h2 data-i18n="cta-title">Ready to understand AI — not just use it?</h2>
+      <p data-i18n="cta-sub">Start with Topic 01 or jump straight into a live demo. Everything runs in your browser, right now.</p>
+      <div class="cta-buttons">
+        <a href="#syllabus" class="btn-primary">
+          <i class="ti ti-rocket"></i>
+          <span data-i18n="cta-btn1">Start from Topic 01</span>
+        </a>
+        <a href="demos/chatbot.html" class="btn-ghost">
+          <i class="ti ti-robot"></i>
+          <span data-i18n="cta-btn2">Chat with Local AI</span>
+        </a>
       </div>
     </div>
   </div>
 </section>
 
-<footer class="footer">
-  <div class="container">
-    <p>LearnAI · Built with <a href="https://huggingface.co/docs/transformers.js">Transformers.js v4</a> · Inspired by <a href="https://learnvector.ai">LearnVector</a> · All models run in your browser · No data leaves your device</p>
+<!-- ══ FOOTER ══════════════════════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="logo" style="font-size:1rem">
+      <div class="logo-icon" style="width:28px;height:28px;font-size:14px">🧠</div>
+      LearnAI
+    </div>
+    <p data-i18n="footer-text">Built with <a href="https://huggingface.co/docs/transformers.js">Transformers.js v4</a> · Inspired by <a href="https://learnvector.ai">LearnVector</a> · All models run locally</p>
+    <p style="color:var(--text-3);font-size:12px" data-i18n="footer-copy">© 2025 LearnAI · Open source · Free forever</p>
   </div>
 </footer>
 
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════════
+// i18n — English + Indonesian
+// ══════════════════════════════════════════════════════════════
+const STRINGS = {
+  en: {
+    'nav-syllabus': 'Syllabus',
+    'nav-demos':    'Live Demos',
+    'nav-stack':    'Tech Stack',
+    'hero-eyebrow': 'Powered by Transformers.js v4 · WebGPU · 100% Browser',
+    'hero-title-1': 'Learn AI by',
+    'hero-title-2': 'running AI',
+    'hero-title-3': 'right here.',
+    'hero-sub':     'A complete 10-topic course where every concept has a live demo. Real models run in your browser — no API key, no server, no cost. Forever.',
+    'btn-start':    'Start Learning',
+    'btn-demos':    'See Live Demos',
+    'stat-topics':  'AI Topics',
+    'stat-demos':   'Live Demos',
+    'stat-cost':    'Forever Free',
+    'stat-browser': 'In Your Browser',
+    'why-label':    'What makes this different',
+    'why-title':    'The tool IS the lesson',
+    'why-sub':      'Most courses show you AI from the outside. Here, the demos run in your browser — the model is live while you learn about it.',
+    'feat1-title':  'Private by design',
+    'feat1-desc':   'Your photos, voice recordings, and text never leave your device. All inference runs locally via WebGPU or WASM.',
+    'feat2-title':  'Real models, not mocks',
+    'feat2-desc':   'DETR, Whisper, DistilBERT, ViT, SmolLM2 — production models from Hugging Face, running at full fidelity in your browser.',
+    'feat3-title':  'Works offline',
+    'feat3-desc':   'Models download once and are cached permanently. Close the internet — everything still works. Great for classrooms.',
+    'feat4-title':  'Predict, then run',
+    'feat4-desc':   "Every demo asks you to predict the result before running it. The gap between expectation and reality is where understanding forms.",
+    'feat5-title':  'Zero setup',
+    'feat5-desc':   'No Python install, no Jupyter, no npm. Open a file in a browser and start. Every single demo works this way.',
+    'feat6-title':  'Sequenced for humans',
+    'feat6-desc':   'The 10 topics follow the actual dependency graph of AI knowledge — no concept is introduced before its prerequisites.',
+    'syl-label':    'Full Course · 14 Weeks',
+    'syl-title':    '10 Topics · Foundation to Frontier',
+    'syl-locked-desc': 'Must follow in order',
+    'syl-flex-desc':   'Can be reordered',
+    'demos-label':  'AI Feature Demos',
+    'demos-title':  'Real models · running right now',
+    'demos-sub':    'Every demo uses a real pretrained model. Click to open — model downloads once and caches permanently.',
+    'stack-label':  'Technology Stack',
+    'stack-title':  "How it's built",
+    'cta-title':    'Ready to understand AI — not just use it?',
+    'cta-sub':      'Start with Topic 01 or jump straight into a live demo. Everything runs in your browser, right now.',
+    'cta-btn1':     'Start from Topic 01',
+    'cta-btn2':     'Chat with Local AI',
+    'footer-text':  'Built with <a href="https://huggingface.co/docs/transformers.js">Transformers.js v4</a> · Inspired by <a href="https://learnvector.ai">LearnVector</a> · All models run locally',
+    'footer-copy':  '© 2025 LearnAI · Open source · Free forever',
+    'week':         'Week',
+    'open-demo':    'Open Demo',
+    'locked':       'LOCKED',
+    'flexible':     'FLEXIBLE',
+    'live-demo':    'Live demo',
+    'interactive':  'Interactive',
+  },
+  id: {
+    'nav-syllabus': 'Silabus',
+    'nav-demos':    'Demo Langsung',
+    'nav-stack':    'Teknologi',
+    'hero-eyebrow': 'Ditenagai Transformers.js v4 · WebGPU · 100% Browser',
+    'hero-title-1': 'Pelajari AI dengan',
+    'hero-title-2': 'menjalankan AI',
+    'hero-title-3': 'langsung di sini.',
+    'hero-sub':     'Kursus lengkap 10 topik di mana setiap konsep punya demo langsung. Model nyata berjalan di browsermu — tanpa API key, tanpa server, tanpa biaya. Selamanya.',
+    'btn-start':    'Mulai Belajar',
+    'btn-demos':    'Lihat Demo',
+    'stat-topics':  'Topik AI',
+    'stat-demos':   'Demo Langsung',
+    'stat-cost':    'Gratis Selamanya',
+    'stat-browser': 'Di Browsermu',
+    'why-label':    'Yang membuat ini berbeda',
+    'why-title':    'Alatnya ADALAH pelajarannya',
+    'why-sub':      'Kebanyakan kursus menunjukkan AI dari luar. Di sini, demo berjalan di browsermu — model aktif saat kamu mempelajarinya.',
+    'feat1-title':  'Privat sejak awal',
+    'feat1-desc':   'Foto, rekaman suara, dan teksmu tidak pernah meninggalkan perangkat. Semua inferensi berjalan lokal via WebGPU atau WASM.',
+    'feat2-title':  'Model nyata, bukan tiruan',
+    'feat2-desc':   'DETR, Whisper, DistilBERT, ViT, SmolLM2 — model produksi dari Hugging Face, berjalan penuh di browsermu.',
+    'feat3-title':  'Bisa offline',
+    'feat3-desc':   'Model diunduh sekali dan di-cache permanen. Putuskan internet — semuanya tetap berfungsi. Cocok untuk kelas.',
+    'feat4-title':  'Prediksi, lalu jalankan',
+    'feat4-desc':   'Setiap demo memintamu memprediksi hasilnya sebelum dijalankan. Jarak antara ekspektasi dan kenyataan adalah tempat pemahaman terbentuk.',
+    'feat5-title':  'Tanpa setup',
+    'feat5-desc':   'Tidak perlu install Python, Jupyter, atau npm. Buka file di browser dan mulai. Semua demo bekerja seperti ini.',
+    'feat6-title':  'Berurutan untuk manusia',
+    'feat6-desc':   '10 topik mengikuti grafik ketergantungan nyata pengetahuan AI — tidak ada konsep yang diperkenalkan sebelum prasyaratnya.',
+    'syl-label':    'Kursus Lengkap · 14 Minggu',
+    'syl-title':    '10 Topik · Fondasi hingga Frontier',
+    'syl-locked-desc': 'Harus diikuti berurutan',
+    'syl-flex-desc':   'Bisa diurutkan ulang',
+    'demos-label':  'Demo Fitur AI',
+    'demos-title':  'Model nyata · berjalan sekarang',
+    'demos-sub':    'Setiap demo menggunakan model pretrained nyata. Klik untuk membuka — model diunduh sekali dan di-cache permanen.',
+    'stack-label':  'Stack Teknologi',
+    'stack-title':  'Cara dibangun',
+    'cta-title':    'Siap memahami AI — bukan sekadar menggunakannya?',
+    'cta-sub':      'Mulai dari Topik 01 atau langsung ke demo langsung. Semuanya berjalan di browsermu, sekarang.',
+    'cta-btn1':     'Mulai dari Topik 01',
+    'cta-btn2':     'Chat dengan AI Lokal',
+    'footer-text':  'Dibangun dengan <a href="https://huggingface.co/docs/transformers.js">Transformers.js v4</a> · Terinspirasi dari <a href="https://learnvector.ai">LearnVector</a> · Semua model berjalan lokal',
+    'footer-copy':  '© 2025 LearnAI · Open source · Gratis selamanya',
+    'week':         'Minggu',
+    'open-demo':    'Buka Demo',
+    'locked':       'TERKUNCI',
+    'flexible':     'FLEKSIBEL',
+    'live-demo':    'Demo langsung',
+    'interactive':  'Interaktif',
+  }
+};
+
+let currentLang  = localStorage.getItem('lang')  || 'en';
+let currentTheme = localStorage.getItem('theme') || 'dark';
+
+// ── Apply theme ──────────────────────────────────────────────
+function applyTheme(t) {
+  currentTheme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  const icon = document.getElementById('themeIcon');
+  if (icon) icon.className = t === 'dark' ? 'ti ti-sun' : 'ti ti-moon-stars';
+}
+
+function toggleTheme() {
+  applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+}
+
+// ── Apply language ───────────────────────────────────────────
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  document.documentElement.setAttribute('data-lang', lang);
+  document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+  document.getElementById('btnID').classList.toggle('active', lang === 'id');
+  applyStrings();
+  renderTopics();
+  renderDemos();
+  renderStack();
+}
+
+function t(key) { return STRINGS[currentLang]?.[key] ?? STRINGS.en[key] ?? key; }
+
+function applyStrings() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (val.includes('<a ')) el.innerHTML = val;
+    else el.textContent = val;
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOPIC DATA
+// ══════════════════════════════════════════════════════════════
+const TOPICS = [
+  {
+    num:'01', seq:'locked', href:'demos/history.html',
+    week:{en:'Week 1',id:'Minggu 1'},
+    title:{en:'What is AI & History',id:'Apa itu AI & Sejarah'},
+    desc:{en:'Turing test, symbolic AI, neural AI. Narrow vs AGI. Interactive timeline from 1950 to today.',
+          id:'Turing test, AI simbolik, AI neural. Narrow vs AGI. Timeline interaktif 1950 hingga hari ini.'},
+    demo:{en:'Interactive timeline',id:'Timeline interaktif'}, icon:'🏛',
+    color:'var(--brand)',
+  },
+  {
+    num:'02', seq:'locked', href:'demos/math.html',
+    week:{en:'Week 2–3',id:'Minggu 2–3'},
+    title:{en:'Math & Stats Basics',id:'Dasar Matematika & Statistika'},
+    desc:{en:'Vectors, matrices, derivatives, probability, Bayes theorem. Every concept has a live calculator.',
+          id:'Vektor, matriks, turunan, probabilitas, teorema Bayes. Setiap konsep punya kalkulator langsung.'},
+    demo:{en:'Live math playground',id:'Playground matematika'}, icon:'∑',
+    color:'var(--teal)',
+  },
+  {
+    num:'03', seq:'flex', href:'demos/data.html',
+    week:{en:'Week 3–4',id:'Minggu 3–4'},
+    title:{en:'Data & Problem Framing',id:'Data & Perumusan Masalah'},
+    desc:{en:'EDA, data quality, class imbalance, leakage. Upload your own CSV and explore it live.',
+          id:'EDA, kualitas data, ketidakseimbangan kelas, kebocoran. Unggah CSV kamu dan eksplorasi langsung.'},
+    demo:{en:'CSV explorer',id:'Penjelajah CSV'}, icon:'📊',
+    color:'var(--amber)',
+  },
+  {
+    num:'04', seq:'flex', href:'demos/ethics.html',
+    week:{en:'Week 4',id:'Minggu 4'},
+    title:{en:'AI Ethics & Fairness',id:'Etika & Keadilan AI'},
+    desc:{en:'Algorithmic bias, fairness metrics, real case studies. Interactive bias simulator with loan approval scenario.',
+          id:'Bias algoritmik, metrik keadilan, studi kasus nyata. Simulator bias interaktif dengan skenario pinjaman.'},
+    demo:{en:'Bias simulator',id:'Simulator bias'}, icon:'⚖',
+    color:'var(--rose)',
+  },
+  {
+    num:'05', seq:'locked', href:'demos/supervised.html',
+    week:{en:'Week 5–6',id:'Minggu 5–6'},
+    title:{en:'Supervised Learning',id:'Pembelajaran Terpandu'},
+    desc:{en:'Logistic regression, decision trees, KNN, Naive Bayes. Click to place training points, watch decision boundaries form.',
+          id:'Regresi logistik, pohon keputusan, KNN, Naive Bayes. Klik untuk menempatkan titik latih, lihat batas keputusan terbentuk.'},
+    demo:{en:'Train a classifier live',id:'Latih pengklasifikasi langsung'}, icon:'🎯',
+    color:'var(--brand)',
+  },
+  {
+    num:'06', seq:'locked', href:'demos/evaluation.html',
+    week:{en:'Week 7',id:'Minggu 7'},
+    title:{en:'Model Evaluation',id:'Evaluasi Model'},
+    desc:{en:'Overfitting, cross-validation, confusion matrix, AUC-ROC. Interactive threshold slider showing precision-recall trade-off.',
+          id:'Overfitting, cross-validasi, matriks kebingungan, AUC-ROC. Slider threshold interaktif menunjukkan trade-off presisi-recall.'},
+    demo:{en:'Evaluation playground',id:'Playground evaluasi'}, icon:'📐',
+    color:'var(--teal)',
+  },
+  {
+    num:'07', seq:'flex', href:'demos/unsupervised.html',
+    week:{en:'Week 8',id:'Minggu 8'},
+    title:{en:'Unsupervised Learning',id:'Pembelajaran Tanpa Pengawasan'},
+    desc:{en:'K-Means clustering, PCA, elbow method. Add points and watch the algorithm discover structure without labels.',
+          id:'Klasterisasi K-Means, PCA, metode elbow. Tambah titik dan lihat algoritma menemukan struktur tanpa label.'},
+    demo:{en:'Live K-Means clustering',id:'K-Means langsung'}, icon:'⬡',
+    color:'var(--amber)',
+  },
+  {
+    num:'08', seq:'locked', href:'demos/neural.html',
+    week:{en:'Week 9–10',id:'Minggu 9–10'},
+    title:{en:'Neural Networks & Backprop',id:'Jaringan Saraf & Backprop'},
+    desc:{en:'Neurons, layers, activations, backpropagation. Train a 2-layer MLP from scratch in pure JavaScript, no library.',
+          id:'Neuron, lapisan, aktivasi, backpropagasi. Latih MLP 2 lapisan dari nol di pure JavaScript, tanpa library.'},
+    demo:{en:'Train MLP live',id:'Latih MLP langsung'}, icon:'🧠',
+    color:'var(--rose)',
+  },
+  {
+    num:'09', seq:'flex', href:'demos/topic9.html',
+    week:{en:'Week 11–12',id:'Minggu 11–12'},
+    title:{en:'CV · NLP · Reinforcement Learning',id:'CV · NLP · Pembelajaran Penguatan'},
+    desc:{en:'DETR object detection, DistilBERT NLP, Whisper speech, and a live RL agent — all in your browser.',
+          id:'DETR deteksi objek, DistilBERT NLP, Whisper ucapan, dan agen RL langsung — semua di browsermu.'},
+    demo:{en:'3 live demos',id:'3 demo langsung'}, icon:'🔬',
+    color:'var(--teal)',
+  },
+  {
+    num:'10', seq:'locked', href:'demos/llm.html',
+    week:{en:'Week 13–14',id:'Minggu 13–14'},
+    title:{en:'LLMs, Generative AI & Safety',id:'LLM, AI Generatif & Keamanan'},
+    desc:{en:'Tokenisation, next-token prediction, temperature, hallucination, prompt engineering. Chat with a local LLM.',
+          id:'Tokenisasi, prediksi token berikutnya, temperatur, halusinasi, rekayasa prompt. Chat dengan LLM lokal.'},
+    demo:{en:'LLM concepts + local chat',id:'Konsep LLM + chat lokal'}, icon:'✦',
+    color:'var(--brand)',
+  },
+];
+
+function renderTopics() {
+  const grid = document.getElementById('topicGrid');
+  grid.innerHTML = TOPICS.map((tp, i) => `
+    <a href="${tp.href}" class="topic-card reveal${i%3===1?' reveal-delay-1':i%3===2?' reveal-delay-2':''}">
+      <div class="topic-card-accent"></div>
+      <div class="topic-header">
+        <span class="topic-num-badge">${tp.num}</span>
+        <span class="seq-badge ${tp.seq==='locked'?'seq-locked':'seq-flex'}">
+          ${tp.seq==='locked' ? t('locked') : t('flexible')}
+        </span>
+      </div>
+      <div class="topic-week">${tp.week[currentLang] || tp.week.en}</div>
+      <div class="topic-title">${tp.icon} ${tp.title[currentLang] || tp.title.en}</div>
+      <div class="topic-desc">${tp.desc[currentLang] || tp.desc.en}</div>
+      <div class="topic-footer">
+        <span class="demo-pill"><i class="ti ti-bolt" style="font-size:11px"></i>${tp.demo[currentLang] || tp.demo.en}</span>
+        <div class="topic-arrow"><i class="ti ti-arrow-right"></i></div>
+      </div>
+    </a>
+  `).join('');
+  observeReveal();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DEMO DATA
+// ══════════════════════════════════════════════════════════════
+const DEMOS = [
+  {
+    href:'demos/nlp.html',
+    icon:'💬', iconBg:'rgba(108,99,255,.12)',
+    title:{en:'NLP — Text Intelligence',id:'NLP — Kecerdasan Teks'},
+    desc:{en:'Sentiment analysis, zero-shot classification, named entity recognition, and semantic similarity on your own text.',
+          id:'Analisis sentimen, klasifikasi zero-shot, pengenalan entitas bernama, dan kemiripan semantik pada teksmu.'},
+    model:'DistilBERT · MiniLM · ~90MB',
+    tags:[{en:'Sentiment',id:'Sentimen','color':'rgba(108,99,255,.12)','textColor':'#9C96FF'},
+          {en:'NER',id:'NER','color':'rgba(108,99,255,.12)','textColor':'#9C96FF'},
+          {en:'Zero-shot',id:'Zero-shot','color':'rgba(108,99,255,.12)','textColor':'#9C96FF'},
+          {en:'Similarity',id:'Kemiripan','color':'rgba(108,99,255,.12)','textColor':'#9C96FF'}],
+  },
+  {
+    href:'demos/vision.html',
+    icon:'📷', iconBg:'rgba(45,212,191,.1)',
+    title:{en:'Computer Vision',id:'Visi Komputer'},
+    desc:{en:'Object detection with bounding boxes, image classification top-5, real-time webcam with live counting.',
+          id:'Deteksi objek dengan kotak pembatas, klasifikasi gambar top-5, webcam real-time dengan penghitungan langsung.'},
+    model:'DETR · ViT-base · 14–346MB',
+    tags:[{en:'Detection',id:'Deteksi','color':'rgba(45,212,191,.1)','textColor':'#2DD4BF'},
+          {en:'Classify',id:'Klasifikasi','color':'rgba(45,212,191,.1)','textColor':'#2DD4BF'},
+          {en:'Count',id:'Hitung','color':'rgba(45,212,191,.1)','textColor':'#2DD4BF'},
+          {en:'Webcam',id:'Kamera','color':'rgba(45,212,191,.1)','textColor':'#2DD4BF'}],
+  },
+  {
+    href:'demos/speech.html',
+    icon:'🎙', iconBg:'rgba(251,191,36,.1)',
+    title:{en:'Speech — STT & TTS',id:'Ucapan — STT & TTS'},
+    desc:{en:'Record your voice → Whisper transcribes it locally. Type text → hear it spoken with full voice control.',
+          id:'Rekam suaramu → Whisper mentranskrip secara lokal. Ketik teks → dengar diucapkan dengan kontrol suara penuh.'},
+    model:'Whisper-tiny · 39MB · Web Speech API',
+    tags:[{en:'Speech-to-Text',id:'Suara ke Teks','color':'rgba(251,191,36,.1)','textColor':'#FBBF24'},
+          {en:'Text-to-Speech',id:'Teks ke Suara','color':'rgba(251,191,36,.1)','textColor':'#FBBF24'},
+          {en:'Multi-language',id:'Multi-bahasa','color':'rgba(251,191,36,.1)','textColor':'#FBBF24'}],
+  },
+  {
+    href:'demos/chatbot.html',
+    icon:'🤖', iconBg:'rgba(251,113,133,.1)',
+    title:{en:'AI Chatbot — Local LLM',id:'Chatbot AI — LLM Lokal'},
+    desc:{en:'SmolLM2-360M runs 100% in your browser. Private, streaming, no data sent anywhere. Your messages stay on your device.',
+          id:'SmolLM2-360M berjalan 100% di browsermu. Privat, streaming, tidak ada data yang dikirim ke mana pun.'},
+    model:'SmolLM2-360M · ONNX quantized',
+    tags:[{en:'Local LLM',id:'LLM Lokal','color':'rgba(251,113,133,.1)','textColor':'#FB7185'},
+          {en:'Streaming',id:'Streaming','color':'rgba(251,113,133,.1)','textColor':'#FB7185'},
+          {en:'Private',id:'Privat','color':'rgba(251,113,133,.1)','textColor':'#FB7185'},
+          {en:'Offline',id:'Offline','color':'rgba(251,113,133,.1)','textColor':'#FB7185'}],
+  },
+  {
+    href:'demos/neural.html',
+    icon:'🕸', iconBg:'rgba(52,211,153,.1)',
+    title:{en:'Neural Network Trainer',id:'Pelatih Jaringan Saraf'},
+    desc:{en:'Train a 2-layer MLP from scratch in pure JS. XOR, spiral, circle datasets. Watch the decision boundary evolve in real time.',
+          id:'Latih MLP 2 lapisan dari nol di JS murni. Dataset XOR, spiral, lingkaran. Lihat batas keputusan berkembang secara real time.'},
+    model:'Pure JS · No library · Zero download',
+    tags:[{en:'MLP',id:'MLP','color':'rgba(52,211,153,.1)','textColor':'#34D399'},
+          {en:'Backprop',id:'Backprop','color':'rgba(52,211,153,.1)','textColor':'#34D399'},
+          {en:'Live training',id:'Pelatihan langsung','color':'rgba(52,211,153,.1)','textColor':'#34D399'}],
+  },
+  {
+    href:'demos/supervised.html',
+    icon:'🎯', iconBg:'rgba(108,99,255,.12)',
+    title:{en:'Classifier Playground',id:'Playground Pengklasifikasi'},
+    desc:{en:'Click to place training data. Compare KNN, Logistic Regression, Decision Trees, and Naive Bayes side by side.',
+          id:'Klik untuk menempatkan data latih. Bandingkan KNN, Regresi Logistik, Pohon Keputusan, dan Naive Bayes berdampingan.'},
+    model:'Pure JS · Instant · No download',
+    tags:[{en:'KNN',id:'KNN','color':'rgba(108,99,255,.12)','textColor':'#9C96FF'},
+          {en:'Decision Tree',id:'Pohon Keputusan','color':'rgba(108,99,255,.12)','textColor':'#9C96FF'},
+          {en:'Naive Bayes',id:'Naive Bayes','color':'rgba(108,99,255,.12)','textColor':'#9C96FF'}],
+  },
+];
+
+function renderDemos() {
+  const grid = document.getElementById('demoGrid');
+  grid.innerHTML = DEMOS.map((d, i) => `
+    <a href="${d.href}" class="demo-card reveal${i%3===1?' reveal-delay-1':i%3===2?' reveal-delay-2':''}">
+      <div class="demo-card-top">
+        <div class="demo-icon-wrap" style="background:${d.iconBg}">${d.icon}</div>
+        <div class="demo-card-info">
+          <h3>${d.title[currentLang] || d.title.en}</h3>
+          <p>${d.desc[currentLang] || d.desc.en}</p>
+        </div>
+      </div>
+      <div class="demo-tags">
+        ${d.tags.map(tg => `<span class="demo-tag" style="background:${tg.color};color:${tg.textColor}">${tg[currentLang] || tg.en}</span>`).join('')}
+      </div>
+      <div class="demo-card-footer">
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          <span>${d.model}</span>
+        </div>
+        <span class="open-link">${t('open-demo')} <i class="ti ti-arrow-up-right" style="font-size:12px"></i></span>
+      </div>
+    </a>
+  `).join('');
+  observeReveal();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STACK DATA
+// ══════════════════════════════════════════════════════════════
+const STACK = [
+  { name:'Transformers.js v4', color:'var(--brand-light)',
+    en:'Hugging Face\'s JS port. Runs ONNX-quantized models at 60 t/s in the browser via WebGPU. Powers all NLP, vision, and audio demos.',
+    id:'Port JS dari Hugging Face. Menjalankan model ONNX-quantized di browser via WebGPU. Mendukung semua demo NLP, visi, dan audio.'},
+  { name:'WebGPU + WASM', color:'var(--teal)',
+    en:'WebGPU gives near-native GPU acceleration. WASM fallback ensures compatibility on older devices without GPU support.',
+    id:'WebGPU memberikan akselerasi GPU mendekati native. Fallback WASM memastikan kompatibilitas pada perangkat lama tanpa GPU.'},
+  { name:'Web Speech API', color:'var(--amber)',
+    en:'Built into every modern browser. Powers the text-to-speech demo with full voice, rate, and pitch control.',
+    id:'Sudah ada di setiap browser modern. Menggerakkan demo text-to-speech dengan kontrol suara, kecepatan, dan nada penuh.'},
+  { name:'Pure JS Algorithms', color:'var(--green)',
+    en:'Neural network, K-Means, PCA, and all supervised learning algorithms implemented from scratch. Zero library dependencies.',
+    id:'Jaringan saraf, K-Means, PCA, dan semua algoritma pembelajaran terpandu diimplementasikan dari nol. Tanpa dependensi library.'},
+  { name:'Zero Server', color:'var(--rose)',
+    en:'Pure static HTML files. Open from disk or deploy to any static host (GitHub Pages, Netlify). No backend, ever.',
+    id:'File HTML statis murni. Buka dari disk atau deploy ke host statis apapun. Tidak pernah ada backend.'},
+  { name:'Browser Cache', color:'var(--brand-light)',
+    en:'Models download once from Hugging Face CDN and are cached permanently by the browser. Fully offline after first load.',
+    id:'Model diunduh sekali dari Hugging Face CDN dan di-cache permanen oleh browser. Sepenuhnya offline setelah load pertama.'},
+];
+
+function renderStack() {
+  const grid = document.getElementById('stackGrid');
+  grid.innerHTML = STACK.map(s => `
+    <div class="stack-card reveal">
+      <div class="stack-name" style="color:${s.color}">${s.name}</div>
+      <p>${s[currentLang] || s.en}</p>
+    </div>
+  `).join('');
+  observeReveal();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCROLL REVEAL
+// ══════════════════════════════════════════════════════════════
+let observer;
+function observeReveal() {
+  if (observer) observer.disconnect();
+  observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
+// ══════════════════════════════════════════════════════════════
+// NAV scroll effect
+// ══════════════════════════════════════════════════════════════
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+applyTheme(currentTheme);
+setLang(currentLang);   // also calls applyStrings, renderTopics, renderDemos, renderStack
+observeReveal();
+</script>
 </body>
 </html>
