@@ -3,40 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CCTV</title>
+<title>Batam CCTV</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0a0f;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow-x:hidden;min-height:100vh}
-.header{padding:12px 16px;background:linear-gradient(90deg,#111,#1a1a2e);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222}
-.header h1{font-size:1.1rem;font-weight:600;color:#00d4ff}
-.badge{background:#e11;color:#fff;font-size:.7rem;padding:2px 8px;border-radius:4px;animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.main{display:flex;flex-direction:column;gap:12px;padding:12px;max-width:1200px;margin:0 auto}
-.video-wrap{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.header{padding:10px 14px;background:linear-gradient(90deg,#111,#1a1a2e);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;flex-wrap:wrap;gap:8px}
+.header h1{font-size:1rem;font-weight:600;color:#00d4ff}
+.badge{background:#e11;color:#fff;font-size:.65rem;padding:2px 7px;border-radius:4px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.main{display:flex;flex-direction:column;gap:10px;padding:10px;max-width:1100px;margin:0 auto}
+.video-wrap{position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 6px 24px rgba(0,0,0,.5)}
 video,canvas{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
 canvas{pointer-events:none}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
-.stat{background:#16161f;border:1px solid #2a2a3a;border-radius:10px;padding:12px;text-align:center}
-.stat .num{font-size:1.8rem;font-weight:700;color:#00d4ff}
-.stat .label{font-size:.75rem;color:#888;margin-top:2px}
-.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-button{background:#00d4ff;color:#000;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:.9rem}
-button:disabled{opacity:.4;cursor:not-allowed}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+@media(min-width:500px){.stats{grid-template-columns:repeat(6,1fr)}}
+.stat{background:#16161f;border:1px solid #2a2a3a;border-radius:8px;padding:8px 4px;text-align:center}
+.stat .num{font-size:1.5rem;font-weight:700;color:#00d4ff;line-height:1.1}
+.stat .label{font-size:.68rem;color:#888;margin-top:1px}
+.select-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+select,input[type=text]{background:#1a1a25;color:#eee;border:1px solid #333;border-radius:6px;padding:8px 10px;font-size:.85rem;flex:1;min-width:140px}
+button{background:#00d4ff;color:#000;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem;white-space:nowrap}
 button.secondary{background:#2a2a3a;color:#ccc}
-.status{font-size:.8rem;color:#888;flex:1}
-.log{background:#111;border-radius:8px;padding:10px;font-size:.75rem;max-height:100px;overflow-y:auto;color:#6a6;font-family:monospace}
-@media(min-width:768px){.main{padding:20px}.header h1{font-size:1.3rem}}
+.status{font-size:.75rem;color:#888}
+.log{background:#111;border-radius:6px;padding:8px;font-size:.7rem;max-height:90px;overflow-y:auto;color:#6a6;font-family:monospace}
 </style>
 </head>
 <body>
 <div class="header">
-  <h1>Computer Vision</h1>
+  <h1>Batam CCTV (Computer Vision)</h1>
   <span class="badge">LIVE</span>
 </div>
 <div class="main">
+  <div class="select-row">
+    <select id="camSelect" onchange="changeCam()">
+      <option value="https://matanya.batam.go.id/cctv/kejaksaanbi/stream.m3u8">Kejaksaan BI</option>
+      <option value="https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8">Simp. Kuda 1</option>
+      <option value="https://matanya.batam.go.id/cctv/atap/stream.m3u8">Atap Kantor Walikota</option>
+      <option value="https://matanya.batam.go.id/cctv/casablanca2/stream.m3u8">Simp. Casablanca</option>
+      <option value="https://matanya.batam.go.id/cctv/matakucing1/stream.m3u8">Mata Kucing 1</option>
+      <option value="https://matanya.batam.go.id/cctv/pasarjodoh2/stream.m3u8">Pasar Jodoh 2</option>
+      <option value="https://matanya.batam.go.id/cctv/madanipancuran/stream.m3u8">Bundaran Madani</option>
+      <option value="https://matanya.batam.go.id/cctv/madaniseipanas/stream.m3u8">Madani Arah S.Panas</option>
+      <option value="https://matanya.batam.go.id/cctv/batuaji/stream.m3u8">SP Batu Aji</option>
+      <option value="https://matanya.batam.go.id/cctv/gerutara/stream.m3u8">Gerb. Utara Engku Putri</option>
+      <option value="https://matanya.batam.go.id/cctv/southgate/stream.m3u8">Gerb. Selatan Engku Putri</option>
+      <option value="https://matanya.batam.go.id/cctv/punggur1/stream.m3u8">Pelabuhan Punggur</option>
+      <option value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">Pelabuhan Sekupang</option>
+      <option value="https://matanya.batam.go.id/cctv/delta2/stream.m3u8">Delta Villa 2</option>
+      <option value="https://matanya.batam.go.id/cctv/sambau2/stream.m3u8">Sambau 2</option>
+      <option value="https://matanya.batam.go.id/cctv/pura1/stream.m3u8">Pura Sei Ladi 1</option>
+      <option value="https://matanya.batam.go.id/cctv/cobaan/stream.m3u8">Pos DPRD</option>
+    </select>
+    <input type="text" id="customUrl" placeholder="Or paste any m3u8 URL...">
+    <button onclick="loadCustom()">Load</button>
+  </div>
   <div class="video-wrap">
     <video id="video" muted playsinline autoplay></video>
     <canvas id="canvas"></canvas>
@@ -44,162 +67,198 @@ button.secondary{background:#2a2a3a;color:#ccc}
   <div class="stats">
     <div class="stat"><div class="num" id="c-person">0</div><div class="label">People</div></div>
     <div class="stat"><div class="num" id="c-car">0</div><div class="label">Cars</div></div>
-    <div class="stat"><div class="num" id="c-motor">0</div><div class="label">Motorcycles</div></div>
+    <div class="stat"><div class="num" id="c-motor">0</div><div class="label">Motors</div></div>
     <div class="stat"><div class="num" id="c-bus">0</div><div class="label">Buses</div></div>
     <div class="stat"><div class="num" id="c-truck">0</div><div class="label">Trucks</div></div>
     <div class="stat"><div class="num" id="c-total">0</div><div class="label">Total</div></div>
   </div>
-  <div class="controls">
-    <button id="btnStart" onclick="startCV()">Start Detection</button>
-    <button class="secondary" onclick="stopCV()">Stop</button>
-    <span class="status" id="status">Ready - Model loading...</span>
-  </div>
+  <div class="status" id="status">Loading model...</div>
   <div class="log" id="log">System ready.</div>
 </div>
-<script>
-const STREAM = "https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8";
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-let model = null;
-let detecting = false;
-let animId = null;
 
-function log(msg) {
-  var el = document.getElementById("log");
-  el.textContent = new Date().toLocaleTimeString() + " | " + msg + "\n" + el.textContent.slice(0, 400);
-}
+	<script>
+		var STREAM = "https://matanya.batam.go.id/cctv/kejaksaanbi/stream.m3u8";
+		var video = document.getElementById("video");
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext("2d");
+		var model = null;
+		var detecting = false;
+		var animId = null;
+		var hls = null;
+		var frameSkip = 0;
+		var SKIP = 4;
 
-function initStream() {
-  if (Hls.isSupported()) {
-    var hls = new Hls({enableWorker: true, lowLatencyMode: true});
-    hls.loadSource(STREAM);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, function () {
-      video.play();
-      log("HLS stream connected");
-    });
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = STREAM;
-    video.play();
-  }
-}
+		function log(msg) {
+		  var el = document.getElementById("log");
+		  el.textContent = new Date().toLocaleTimeString() + " | " + msg + "\n" + el.textContent.slice(0, 350);
+		}
 
-async function loadModel() {
-  try {
-    model = await cocoSsd.load({base: "lite_mobilenet_v2"});
-    document.getElementById("status").textContent = "Model ready - Press Start";
-    log("COCO-SSD model loaded");
-  } catch (e) {
-    log("Model error: " + e.message);
-  }
-}
+		function destroyHls() {
+		  if (hls) {
+			hls.destroy();
+			hls = null;
+		  }
+		}
 
-function cluster(boxes, thresh) {
-  if (!thresh) thresh = 50;
-  if (!boxes.length) return [];
-  var used = new Array(boxes.length).fill(false);
-  var clusters = [];
-  for (var i = 0; i < boxes.length; i++) {
-    if (used[i]) continue;
-    var c = [boxes[i]];
-    used[i] = true;
-    for (var j = i + 1; j < boxes.length; j++) {
-      if (used[j]) continue;
-      var dx = (boxes[i][0] + boxes[i][2] / 2) - (boxes[j][0] + boxes[j][2] / 2);
-      var dy = (boxes[i][1] + boxes[i][3] / 2) - (boxes[j][1] + boxes[j][3] / 2);
-      if (Math.hypot(dx, dy) < thresh) {
-        c.push(boxes[j]);
-        used[j] = true;
-      }
-    }
-    clusters.push(c);
-  }
-  return clusters;
-}
+		function initStream(url) {
+		  STREAM = url;
+		  destroyHls();
+		  detecting = false;
+		  if (animId) cancelAnimationFrame(animId);
+		  ctx.clearRect(0, 0, canvas.width, canvas.height);
+		  if (Hls.isSupported()) {
+			hls = new Hls({enableWorker: true, lowLatencyMode: true, maxBufferLength: 10});
+			hls.loadSource(url);
+			hls.attachMedia(video);
+			hls.on(Hls.Events.MANIFEST_PARSED, function () {
+			  video.play().catch(function(){});
+			  log("Stream connected");
+			  tryAutoStart();
+			});
+			hls.on(Hls.Events.ERROR, function (e, data) {
+			  if (data.fatal) log("Stream error: " + data.type);
+			});
+		  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+			video.src = url;
+			video.play().catch(function(){});
+			tryAutoStart();
+		  }
+		}
 
-async function detect() {
-  if (!detecting || !model || video.readyState < 2) {
-    animId = requestAnimationFrame(detect);
-    return;
-  }
-  var w = video.videoWidth;
-  var h = video.videoHeight;
-  if (w === 0) {
-    animId = requestAnimationFrame(detect);
-    return;
-  }
-  canvas.width = w;
-  canvas.height = h;
-  var preds = await model.detect(video);
-  ctx.clearRect(0, 0, w, h);
-  var map = {person: 0, car: 0, motorcycle: 0, bus: 0, truck: 0};
-  var boxes = [];
-  preds.forEach(function (p) {
-    if (p.score < 0.45) return;
-    var cls = p.class;
-    if (!(cls in map)) return;
-    map[cls]++;
-    var x = p.bbox[0];
-    var y = p.bbox[1];
-    var bw = p.bbox[2];
-    var bh = p.bbox[3];
-    boxes.push(p.bbox);
-    ctx.strokeStyle = cls === "person" ? "#0f0" : "#00d4ff";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, bw, bh);
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.font = "14px sans-serif";
-    ctx.fillText(cls + " " + Math.round(p.score * 100) + "%", x, y > 15 ? y - 4 : y + 14);
-  });
-  var clusters = cluster(boxes);
-  clusters.forEach(function (c) {
-    if (c.length < 2) return;
-    var cx = 0;
-    var cy = 0;
-    c.forEach(function (b) {
-      cx += (b[0] + b[2] / 2);
-      cy += (b[1] + b[3] / 2);
-    });
-    cx /= c.length;
-    cy /= c.length;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 8, 0, 6.28);
-    ctx.fillStyle = "#f0f";
-    ctx.fill();
-  });
-  document.getElementById("c-person").textContent = map.person;
-  document.getElementById("c-car").textContent = map.car;
-  document.getElementById("c-motor").textContent = map.motorcycle;
-  document.getElementById("c-bus").textContent = map.bus;
-  document.getElementById("c-truck").textContent = map.truck;
-  document.getElementById("c-total").textContent = Object.values(map).reduce(function (a, b) { return a + b; }, 0);
-  document.getElementById("status").textContent = "Detecting - " + preds.length + " objects - " + clusters.length + " clusters";
-  animId = requestAnimationFrame(detect);
-}
+		function changeCam() {
+		  var url = document.getElementById("camSelect").value;
+		  document.getElementById("customUrl").value = "";
+		  initStream(url);
+		  log("Switched camera");
+		}
 
-function startCV() {
-  if (!model) {
-    log("Model not ready");
-    return;
-  }
-  detecting = true;
-  document.getElementById("btnStart").disabled = true;
-  log("Detection started");
-  detect();
-}
+		function loadCustom() {
+		  var url = document.getElementById("customUrl").value.trim();
+		  if (!url) return;
+		  initStream(url);
+		  log("Custom stream loaded");
+		}
 
-function stopCV() {
-  detecting = false;
-  if (animId) cancelAnimationFrame(animId);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  document.getElementById("btnStart").disabled = false;
-  document.getElementById("status").textContent = "Stopped";
-  log("Detection stopped");
-}
+		async function loadModel() {
+		  try {
+			model = await cocoSsd.load({base: "lite_mobilenet_v2"});
+			document.getElementById("status").textContent = "Model ready - auto starting...";
+			log("Model loaded");
+			tryAutoStart();
+		  } catch (e) {
+			log("Model error: " + e.message);
+			document.getElementById("status").textContent = "Model failed";
+		  }
+		}
 
-initStream();
-loadModel();
-</script>
-</body>
+		function tryAutoStart() {
+		  if (model && video.readyState >= 2 && !detecting) {
+			detecting = true;
+			document.getElementById("status").textContent = "Detecting...";
+			log("Auto detection started");
+			detect();
+		  }
+		}
+
+		function cluster(boxes, thresh) {
+		  if (!thresh) thresh = 60;
+		  if (!boxes.length) return [];
+		  var used = new Array(boxes.length).fill(false);
+		  var clusters = [];
+		  for (var i = 0; i < boxes.length; i++) {
+			if (used[i]) continue;
+			var c = [boxes[i]];
+			used[i] = true;
+			for (var j = i + 1; j < boxes.length; j++) {
+			  if (used[j]) continue;
+			  var dx = (boxes[i][0] + boxes[i][2] / 2) - (boxes[j][0] + boxes[j][2] / 2);
+			  var dy = (boxes[i][1] + boxes[i][3] / 2) - (boxes[j][1] + boxes[j][3] / 2);
+			  if (Math.hypot(dx, dy) < thresh) {
+				c.push(boxes[j]);
+				used[j] = true;
+			  }
+			}
+			clusters.push(c);
+		  }
+		  return clusters;
+		}
+
+		async function detect() {
+		  if (!detecting || !model) return;
+		  if (video.readyState < 2) {
+			animId = requestAnimationFrame(detect);
+			return;
+		  }
+		  frameSkip++;
+		  if (frameSkip < SKIP) {
+			animId = requestAnimationFrame(detect);
+			return;
+		  }
+		  frameSkip = 0;
+
+		  var w = video.videoWidth;
+		  var h = video.videoHeight;
+		  if (w === 0) {
+			animId = requestAnimationFrame(detect);
+			return;
+		  }
+		  canvas.width = w;
+		  canvas.height = h;
+
+		  var preds = await model.detect(video, 20);
+		  ctx.clearRect(0, 0, w, h);
+
+		  var map = {person: 0, car: 0, motorcycle: 0, bus: 0, truck: 0};
+		  var boxes = [];
+
+		  for (var i = 0; i < preds.length; i++) {
+			var p = preds[i];
+			if (p.score < 0.4) continue;
+			var cls = p.class;
+			if (!(cls in map)) continue;
+			map[cls]++;
+			boxes.push(p.bbox);
+			var x = p.bbox[0], y = p.bbox[1], bw = p.bbox[2], bh = p.bbox[3];
+			ctx.strokeStyle = cls === "person" ? "#0f0" : "#00d4ff";
+			ctx.lineWidth = 2;
+			ctx.strokeRect(x, y, bw, bh);
+			ctx.fillStyle = ctx.strokeStyle;
+			ctx.font = "13px sans-serif";
+			ctx.fillText(cls + " " + Math.round(p.score * 100) + "%", x, y > 14 ? y - 3 : y + 13);
+		  }
+
+		  var clusters = cluster(boxes);
+		  for (var k = 0; k < clusters.length; k++) {
+			var c = clusters[k];
+			if (c.length < 2) continue;
+			var cx = 0, cy = 0;
+			for (var m = 0; m < c.length; m++) {
+			  cx += c[m][0] + c[m][2] / 2;
+			  cy += c[m][1] + c[m][3] / 2;
+			}
+			cx /= c.length;
+			cy /= c.length;
+			ctx.beginPath();
+			ctx.arc(cx, cy, 7, 0, 6.28);
+			ctx.fillStyle = "#f0f";
+			ctx.fill();
+		  }
+
+		  document.getElementById("c-person").textContent = map.person;
+		  document.getElementById("c-car").textContent = map.car;
+		  document.getElementById("c-motor").textContent = map.motorcycle;
+		  document.getElementById("c-bus").textContent = map.bus;
+		  document.getElementById("c-truck").textContent = map.truck;
+		  var total = map.person + map.car + map.motorcycle + map.bus + map.truck;
+		  document.getElementById("c-total").textContent = total;
+		  document.getElementById("status").textContent = "Live • " + total + " objects • " + clusters.length + " clusters";
+
+		  animId = requestAnimationFrame(detect);
+		}
+
+		video.addEventListener("playing", tryAutoStart);
+		initStream(STREAM);
+		loadModel();
+	</script>
+	</body>
 </html>
