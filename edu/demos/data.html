@@ -1,362 +1,1201 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Data & Problem Framing · LearnAI</title>
-<link rel="stylesheet" href="../css/main.css"/>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<title>Data & Decisions — Topic 03 · LearnAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet"/>
 <style>
-.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th{background:var(--bg3);color:var(--muted);padding:8px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
-td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--bg3)}
-.col-stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px}
+:root{
+  --ink:#070A17;--ink2:#0C0F20;--ink3:#131728;
+  --surf:#181C30;--surf2:#1E2238;--surf3:#242848;
+  --b:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);--b3:rgba(255,255,255,.18);
+  --t:#EDF0FF;--t2:#9AA2CC;--t3:#555E8A;
+  --brand:#5B5CFF;--brand2:#8B8DFF;--bd:rgba(91,92,255,.12);--bb:rgba(91,92,255,.22);
+  --teal:#18C9B4;--td:rgba(24,201,180,.1);
+  --amber:#F5A623;--ad:rgba(245,166,35,.1);
+  --rose:#FF5E7D;--rd:rgba(255,94,125,.1);
+  --green:#2ECC8F;--gd:rgba(46,204,143,.1);
+  --purple:#A855F7;--pd:rgba(168,85,247,.1);
+  --orange:#FF7A3D;--od:rgba(255,122,61,.1);
+  --sky:#38BDF8;--sd:rgba(56,189,248,.1);
+  --D:'Space Grotesk',sans-serif;
+  --B:'Plus Jakarta Sans',sans-serif;
+  --M:'Space Mono',monospace;
+  --r:10px;--rl:18px;--rxl:26px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--ink);color:var(--t);font-family:var(--B);line-height:1.7;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+canvas{display:block}
+input,select,button{font-family:var(--B)}
+
+/* Progress */
+#prog{position:fixed;top:0;left:0;height:3px;z-index:300;width:0;background:linear-gradient(90deg,var(--brand),var(--teal),var(--amber))}
+
+/* Nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;height:58px;background:rgba(7,10,23,.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--b)}
+.navi{max-width:1280px;margin:0 auto;height:58px;padding:0 24px;display:flex;align-items:center;gap:0}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t)}
+.logo-box{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--teal));display:flex;align-items:center;justify-content:center;font-size:17px}
+.nav-links{display:flex;gap:4px;margin-left:28px}
+.nav-links a{font-size:13px;font-weight:500;color:var(--t2);padding:5px 10px;border-radius:var(--r);transition:color .15s,background .15s}
+.nav-links a:hover{color:var(--t);background:var(--surf)}
+.npill{margin-left:auto;font-family:var(--M);font-size:10px;font-weight:700;letter-spacing:.07em;background:var(--surf2);border:1px solid var(--b2);padding:4px 12px;border-radius:20px;color:var(--brand2)}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 24px 80px;text-align:center;position:relative;overflow:hidden}
+#hC{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
+.hbody{position:relative;z-index:2;max-width:860px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand2);background:rgba(91,92,255,.1);border:1px solid rgba(91,92,255,.22);padding:5px 15px;border-radius:20px;margin-bottom:22px}
+.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand);animation:bl 2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.h1{font-family:var(--D);font-size:clamp(2.5rem,6vw,5rem);font-weight:700;letter-spacing:-.04em;line-height:1.05;margin-bottom:14px}
+.h1 .g{background:linear-gradient(120deg,var(--brand2),var(--teal),var(--amber));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:gs 6s ease infinite}
+@keyframes gs{0%,100%{background-position:0%}50%{background-position:100%}}
+.hsub{font-size:clamp(.95rem,2vw,1.15rem);color:var(--t2);max-width:580px;margin:0 auto 36px;line-height:1.8}
+.hchips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:36px}
+.hchip{font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;border:1px solid var(--b2);background:var(--surf);color:var(--t2)}
+.hstats{display:flex;flex-wrap:wrap;justify-content:center;gap:0;border:1px solid var(--b2);border-radius:var(--rl);overflow:hidden;background:var(--surf);max-width:700px;margin:0 auto}
+.hstat{flex:1;min-width:130px;padding:18px 20px;border-right:1px solid var(--b)}
+.hstat:last-child{border-right:none}
+.snum{font-family:var(--D);font-size:1.85rem;font-weight:700;color:var(--t);line-height:1}
+.snum em{font-style:normal;color:var(--brand2)}
+.slbl{font-size:11px;color:var(--t3);margin-top:4px}
+
+/* Sections */
+.section{padding:88px 24px}
+.si{max-width:1280px;margin:0 auto}
+.sec-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brand2);margin-bottom:12px}
+.sec-label::before{content:'';width:20px;height:2px;border-radius:2px;background:var(--brand)}
+.sec-h{font-family:var(--D);font-size:clamp(1.7rem,3.5vw,2.5rem);font-weight:700;letter-spacing:-.03em;color:var(--t);margin-bottom:12px;line-height:1.15}
+.sec-sub{font-size:1rem;color:var(--t2);max-width:620px;line-height:1.75;margin-bottom:44px}
+.alt{background:var(--ink2);border-top:1px solid var(--b);border-bottom:1px solid var(--b)}
+
+/* Cards */
+.card{background:var(--surf);border:1px solid var(--b);border-radius:var(--rl);padding:24px;transition:all .22s}
+.card:hover{border-color:var(--b2);transform:translateY(-2px)}
+
+/* Grid */
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.g4{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+
+/* Callout */
+.cl{border-left:3px solid;border-radius:0 var(--r) var(--r) 0;padding:14px 18px;font-size:14px;line-height:1.7;margin:16px 0;color:var(--t2)}
+.cl b{color:var(--t)}.cl-b{border-color:var(--brand);background:var(--bd)}.cl-t{border-color:var(--teal);background:var(--td)}.cl-a{border-color:var(--amber);background:var(--ad)}.cl-g{border-color:var(--green);background:var(--gd)}.cl-r{border-color:var(--rose);background:var(--rd)}.cl-p{border-color:var(--purple);background:var(--pd)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--r);font-family:var(--D);font-size:13.5px;font-weight:700;border:none;cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-p{background:var(--brand);color:#fff;box-shadow:0 4px 16px rgba(91,92,255,.3)}.btn-p:hover{background:var(--brand2);transform:translateY(-1px)}
+.btn-g{background:var(--surf2);color:var(--t2);border:1px solid var(--b2)}.btn-g:hover{color:var(--t);border-color:var(--b3)}
+.btn-sm{padding:7px 14px;font-size:12.5px}
+.btn-t{background:rgba(24,201,180,.12);color:var(--teal);border:1px solid rgba(24,201,180,.22)}.btn-t:hover{background:rgba(24,201,180,.2)}
+.btn-a{background:rgba(245,166,35,.12);color:var(--amber);border:1px solid rgba(245,166,35,.22)}.btn-a:hover{background:rgba(245,166,35,.2)}
+
+/* Tags / chips */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.cb{background:var(--bd);color:var(--brand2)}.ct{background:var(--td);color:var(--teal)}.ca{background:var(--ad);color:var(--amber)}.cr{background:var(--rd);color:var(--rose)}.cg{background:var(--gd);color:var(--green)}.cp{background:var(--pd);color:var(--purple)}.co{background:var(--od);color:var(--orange)}.cs{background:var(--sd);color:var(--sky)}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-family:var(--D);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);padding:10px 14px;text-align:left;border-bottom:1px solid var(--b2);background:var(--ink3);white-space:nowrap}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--b);color:var(--t2);vertical-align:middle}
+.tbl tr:hover td{background:rgba(255,255,255,.02);color:var(--t)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--b)}
+
+/* Bar chart element */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+.bar-label{color:var(--t2);min-width:120px;text-align:right;font-size:12px;flex-shrink:0}
+.bar-track{flex:1;height:22px;background:var(--surf2);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.bar-val{color:var(--t3);font-size:12px;min-width:60px;text-align:right;flex-shrink:0}
+
+/* Slider */
+.slider{-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--surf2);outline:none;cursor:pointer;width:100%}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--brand);border:3px solid #fff;cursor:pointer;box-shadow:0 2px 10px rgba(91,92,255,.5)}
+.vbadge{font-family:var(--M);font-size:11.5px;color:var(--brand2);background:var(--bd);border:1px solid var(--bb);padding:3px 10px;border-radius:8px;min-width:54px;text-align:center}
+
+/* Canvas wrap */
+.cwrap{background:var(--ink3);border-radius:var(--r);overflow:hidden;border:1px solid var(--b);position:relative}
+.clabel{position:absolute;top:9px;left:12px;font-family:var(--M);font-size:9.5px;color:var(--t3);letter-spacing:.06em;pointer-events:none;z-index:2}
+
+/* Filter pills */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.fpill{font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--t2);cursor:pointer;transition:all .15s;font-family:var(--D)}
+.fpill.active,.fpill:hover{color:var(--t);border-color:var(--brand);background:var(--bd)}
+
+/* Search */
+.search-inp{background:var(--surf2);border:1px solid var(--b2);border-radius:var(--r);padding:10px 14px;color:var(--t);font-size:14px;font-family:var(--B);width:100%;outline:none;transition:border-color .15s}
+.search-inp:focus{border-color:var(--brand)}
+.search-inp::placeholder{color:var(--t3)}
+
+/* Rank badge */
+.rank{font-family:var(--M);font-size:11px;font-weight:700;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rank-gold{background:rgba(245,166,35,.15);color:var(--amber)}
+.rank-silver{background:rgba(156,163,175,.12);color:#9CA3AF}
+.rank-bronze{background:rgba(161,101,74,.15);color:#CD7F32}
+.rank-plain{background:var(--surf2);color:var(--t3)}
+
+/* Location pill */
+.loc-pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px}
+.loc-city{background:rgba(56,189,248,.12);color:var(--sky)}
+.loc-village{background:rgba(46,204,143,.1);color:var(--green)}
+.loc-mountain{background:rgba(168,85,247,.1);color:var(--purple)}
+.loc-island{background:rgba(245,166,35,.1);color:var(--amber)}
+.loc-river{background:rgba(24,201,180,.1);color:var(--teal)}
+.loc-coastal{background:rgba(255,94,125,.1);color:var(--rose)}
+
+/* Big metric */
+.metric-card{background:var(--surf);border:1px solid var(--b);border-radius:var(--rl);padding:22px;position:relative;overflow:hidden;transition:all .2s}
+.metric-card:hover{border-color:var(--b2);transform:translateY(-2px)}
+.metric-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;opacity:.12;filter:blur(20px)}
+.mnum{font-family:var(--D);font-size:2.2rem;font-weight:700;line-height:1;margin-bottom:5px}
+.mlbl{font-size:12.5px;color:var(--t2);line-height:1.5;margin-bottom:8px}
+.msrc{font-size:10.5px;color:var(--t3)}
+
+/* Tab system */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:32px}
+.tab-btn{font-size:13px;font-weight:600;padding:8px 16px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--t2);cursor:pointer;transition:all .18s;font-family:var(--D)}
+.tab-btn.active{color:var(--t);border-color:var(--brand);background:var(--bd)}
+.tab-panel{display:none;animation:fu .3s ease}
+.tab-panel.active{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Progress ring */
+.ring-wrap{display:flex;align-items:center;gap:14px}
+.ring-label{font-size:13px;color:var(--t2);flex:1;line-height:1.5}
+
+/* Roadmap */
+.roadmap-item{display:grid;grid-template-columns:44px 1fr;gap:14px;padding:20px 0;border-bottom:1px solid var(--b)}
+.roadmap-item:last-child{border-bottom:none}
+.rm-num{font-family:var(--D);font-size:1.1rem;font-weight:700;color:var(--brand2);padding-top:3px}
+.rm-h{font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:5px}
+.rm-b{font-size:13.5px;color:var(--t2);line-height:1.65}
+.rm-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+
+/* Responsive */
+@media(max-width:768px){
+  .section{padding:64px 18px}
+  .hero{padding:88px 18px 60px}
+  .h1{font-size:2.2rem}
+  .nav-links{display:none}
+  .hstats{flex-direction:column}
+  .hstat{border-right:none;border-bottom:1px solid var(--b)}
+  .hstat:last-child{border-bottom:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  #hC{display:none}
+}
 </style>
 </head>
 <body>
+<div id="prog"></div>
+
+<!-- NAV -->
 <nav class="nav">
-  <div class="nav-inner">
-    <a href="../index.html" class="logo"><span class="logo-dot"></span>LearnAI</a>
+  <div class="navi">
+    <a href="../index.html" class="logo"><div class="logo-box">🧠</div>LearnAI</a>
     <div class="nav-links">
-      <a href="../index.html">← Home</a>
-      <a href="math.html">Math</a>
-      <a href="supervised.html">Supervised</a>
-      <a href="evaluation.html">Evaluation</a>
+      <a href="#business">Business</a>
+      <a href="#locations">Locations</a>
+      <a href="#content">Content</a>
+      <a href="#learn">Learning</a>
+      <a href="#health">Health</a>
     </div>
-    <span class="nav-badge">Topic 03 · Data</span>
+    <div class="npill">TOPIC 03 · DATA & DECISIONS</div>
   </div>
 </nav>
 
-<div class="container" style="padding-top:40px;padding-bottom:80px">
-  <div class="section-label">Topic 03 · Data &amp; Problem Framing</div>
-  <h1 style="font-size:2rem;margin-bottom:8px">Exploratory Data Analysis</h1>
-  <p style="margin-bottom:28px;max-width:600px">Upload your own CSV or use our sample datasets. EDA runs entirely in your browser — no data leaves your device.</p>
-
-  <!-- Upload / Sample -->
-  <div class="card" style="margin-bottom:24px">
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div>
-        <input type="file" id="csvUpload" accept=".csv" onchange="loadCSV(this)" style="display:none"/>
-        <button class="btn btn-primary" onclick="document.getElementById('csvUpload').click()"><i class="ti ti-upload"></i> Upload CSV</button>
-      </div>
-      <div style="color:var(--muted);font-size:13px">or use a sample:</div>
-      <button class="btn btn-ghost btn-sm" onclick="loadSample('titanic')">Titanic</button>
-      <button class="btn btn-ghost btn-sm" onclick="loadSample('iris')">Iris</button>
-      <button class="btn btn-ghost btn-sm" onclick="loadSample('housing')">House Prices</button>
+<!-- HERO -->
+<section class="hero">
+  <canvas id="hC"></canvas>
+  <div class="hbody">
+    <div class="eyebrow">Topic 03 · Data Science · Real Datasets</div>
+    <h1 class="h1">Data is the <span class="g">new compass.</span><br/>Learn to read it.</h1>
+    <p class="hsub">Every great business, content creator, doctor, and teacher now makes decisions with data. This is not optional — it is the literacy of the 21st century.</p>
+    <div class="hchips">
+      <span class="hchip">🏢 Top 100 Businesses</span>
+      <span class="hchip">📍 Location Intelligence</span>
+      <span class="hchip">🔥 Viral Content Patterns</span>
+      <span class="hchip">🎓 Learning Pathways</span>
+      <span class="hchip">💊 Health Insights</span>
+    </div>
+    <div class="hstats">
+      <div class="hstat"><div class="snum">328<em>M</em></div><div class="slbl">Datasets on Kaggle & HuggingFace</div></div>
+      <div class="hstat"><div class="snum">$794<em>B</em></div><div class="slbl">Data analytics market 2028</div></div>
+      <div class="hstat"><div class="snum">11.5<em>M</em></div><div class="slbl">Data jobs needed by 2026</div></div>
+      <div class="hstat"><div class="snum">3x</div><div class="slbl">Higher salary with data skills</div></div>
     </div>
   </div>
+</section>
 
-  <div id="edaOutput" style="display:none">
-    <!-- Summary cards -->
-    <div id="summaryCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px"></div>
+<!-- ════════════════════════════════════════════════════════
+     SECTION 1: TOP 100 BUSINESSES
+════════════════════════════════════════════════════════ -->
+<section class="section alt" id="business">
+  <div class="si">
+    <div class="sec-label">Global Business Intelligence</div>
+    <h2 class="sec-h">Top 100 Businesses — What the data reveals</h2>
+    <p class="sec-sub">Forbes Global 2000 + Fortune 500 data. Filter by industry, revenue, and growth. This is how investment analysts, consultants, and founders study markets.</p>
 
-    <!-- Tabs -->
-    <div style="display:flex;gap:8px;margin-bottom:20px" id="edaTabs">
-      <button class="btn btn-primary btn-sm" onclick="showEdaTab('preview',this)">Data Preview</button>
-      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('stats',this)">Column Stats</button>
-      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('missing',this)">Missing Values</button>
-      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('dist',this)">Distributions</button>
-      <button class="btn btn-ghost btn-sm" onclick="showEdaTab('framing',this)">Problem Framing</button>
-    </div>
-
-    <!-- Preview -->
-    <div id="edatab-preview">
-      <div class="tbl-wrap" id="dataTable"></div>
-    </div>
-    <!-- Stats -->
-    <div id="edatab-stats" style="display:none">
-      <div id="colStats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div>
-    </div>
-    <!-- Missing -->
-    <div id="edatab-missing" style="display:none">
-      <div class="card"><h3 style="margin-bottom:16px">Missing Value Analysis</h3>
-        <div id="missingChart"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+      <input class="search-inp" id="bizSearch" placeholder="🔍 Search company, sector, country…" oninput="filterBiz()" style="max-width:320px;flex:1"/>
+      <div class="filter-row" style="margin-bottom:0">
+        <button class="fpill active" onclick="filterBizSector('all',this)">All</button>
+        <button class="fpill" onclick="filterBizSector('tech',this)">Tech</button>
+        <button class="fpill" onclick="filterBizSector('finance',this)">Finance</button>
+        <button class="fpill" onclick="filterBizSector('energy',this)">Energy</button>
+        <button class="fpill" onclick="filterBizSector('retail',this)">Retail</button>
+        <button class="fpill" onclick="filterBizSector('health',this)">Health</button>
+        <button class="fpill" onclick="filterBizSector('industrial',this)">Industrial</button>
       </div>
     </div>
-    <!-- Distribution -->
-    <div id="edatab-dist" style="display:none">
+
+    <div class="tbl-wrap" style="margin-bottom:28px">
+      <table class="tbl" id="bizTable">
+        <thead>
+          <tr>
+            <th onclick="sortBiz('rank')" style="cursor:pointer"># ↕</th>
+            <th onclick="sortBiz('name')" style="cursor:pointer">Company ↕</th>
+            <th>Country</th>
+            <th>Sector</th>
+            <th onclick="sortBiz('revenue')" style="cursor:pointer">Revenue ($B) ↕</th>
+            <th onclick="sortBiz('market_cap')" style="cursor:pointer">Market Cap ($B) ↕</th>
+            <th onclick="sortBiz('growth')" style="cursor:pointer">Growth % ↕</th>
+            <th>AI Use</th>
+          </tr>
+        </thead>
+        <tbody id="bizBody"></tbody>
+      </table>
+    </div>
+
+    <div class="g2" style="margin-bottom:28px">
       <div class="card">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-          <label class="label" style="margin:0">Column:</label>
-          <select class="input" id="distCol" onchange="drawDistribution()" style="width:200px"></select>
-        </div>
-        <canvas id="distCanvas" height="200" style="width:100%;background:#060a10;border-radius:8px;display:block"></canvas>
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">Revenue by Sector ($B)</div>
+        <div id="sectorBars"></div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">Country Distribution — Top 10</div>
+        <div id="countryBars"></div>
       </div>
     </div>
-    <!-- Framing -->
-    <div id="edatab-framing" style="display:none">
-      <div id="framingGuide"></div>
+
+    <div class="cwrap" style="margin-bottom:16px">
+      <canvas id="bizScatter" height="280"></canvas>
+      <div class="clabel">REVENUE vs MARKET CAP vs GROWTH — bubble size = employees</div>
+    </div>
+
+    <div class="cl cl-b">
+      <b>What data tells us:</b> Tech companies average 8.3× market cap vs revenue (pure software margins). Energy companies average 1.2×. AI integration correlates with 23% higher growth rates across all sectors in 2024. Source: Forbes Global 2000, S&P Global, 2024.
     </div>
   </div>
-</div>
+</section>
 
-<footer class="footer"><div class="container"><p>LearnAI · Topic 03 · Data &amp; Problem Framing</p></div></footer>
+<!-- ════════════════════════════════════════════════════════
+     SECTION 2: LOCATION INTELLIGENCE
+════════════════════════════════════════════════════════ -->
+<section class="section" id="locations">
+  <div class="si">
+    <div class="sec-label">Location Intelligence</div>
+    <h2 class="sec-h">Where you are changes everything</h2>
+    <p class="sec-sub">Geography determines income, opportunities, risks, and growth potential. AI systems use location data constantly — from logistics to real estate to disaster response.</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showLocTab('cities',this)">🏙 Major Cities</button>
+      <button class="tab-btn" onclick="showLocTab('types',this)">🗺 Location Types</button>
+      <button class="tab-btn" onclick="showLocTab('opportunity',this)">📈 Opportunity Map</button>
+    </div>
+
+    <div id="lt-cities" class="tab-panel active">
+      <div class="filter-row">
+        <button class="fpill active" onclick="filterCity('all',this)">All</button>
+        <button class="fpill" onclick="filterCity('asia',this)">Asia</button>
+        <button class="fpill" onclick="filterCity('americas',this)">Americas</button>
+        <button class="fpill" onclick="filterCity('europe',this)">Europe</button>
+        <button class="fpill" onclick="filterCity('middle-east',this)">Middle East</button>
+        <button class="fpill" onclick="filterCity('africa',this)">Africa</button>
+      </div>
+      <div class="tbl-wrap" style="margin-bottom:24px">
+        <table class="tbl" id="cityTable">
+          <thead><tr><th>#</th><th>City</th><th>Country</th><th>Region</th><th>GDP $B</th><th>Pop (M)</th><th>Tech Hub</th><th>Cost of Living</th><th>Opportunity</th></tr></thead>
+          <tbody id="cityBody"></tbody>
+        </table>
+      </div>
+      <div class="cwrap"><canvas id="cityCanvas" height="280"></canvas><div class="clabel">GDP vs POPULATION — bubble = tech ecosystem score</div></div>
+    </div>
+
+    <div id="lt-types" class="tab-panel">
+      <div class="g3">
+        <div class="card" style="border-color:rgba(56,189,248,.25)">
+          <div style="font-size:2rem;margin-bottom:10px">🏙</div>
+          <div style="font-family:var(--D);font-weight:700;color:var(--sky);margin-bottom:8px">City / Urban</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.65">Highest opportunity density. Fastest internet. Best schools and hospitals. Highest cost. 56% of world's population, 80% of global GDP.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Avg income</span><div class="bar-track"><div class="bar-fill" style="width:85%;background:var(--sky)">$42k/yr</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Internet</span><div class="bar-track"><div class="bar-fill" style="width:92%;background:var(--teal)">92%</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Jobs</span><div class="bar-track"><div class="bar-fill" style="width:78%;background:var(--green)">High</div></div></div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(46,204,143,.25)">
+          <div style="font-size:2rem;margin-bottom:10px">🌾</div>
+          <div style="font-family:var(--D);font-weight:700;color:var(--green);margin-bottom:8px">Village / Rural</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.65">Lower cost, community bonds, agriculture base. 44% of world. Increasingly connected via mobile. Tourism and agritech are emerging growth sectors.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Avg income</span><div class="bar-track"><div class="bar-fill" style="width:28%;background:var(--green)">$9k/yr</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Internet</span><div class="bar-track"><div class="bar-fill" style="width:45%;background:var(--teal)">45%</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Cost of living</span><div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--amber)">Very Low</div></div></div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(168,85,247,.25)">
+          <div style="font-size:2rem;margin-bottom:10px">⛰</div>
+          <div style="font-family:var(--D);font-weight:700;color:var(--purple);margin-bottom:8px">Mountain / Highland</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.65">Tourism, eco-tourism, clean water sources, cooling data centers (Iceland). Challenging logistics. Growing remote work destination for digital nomads.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Tourism</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--purple)">High potential</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Data centers</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--teal)">Growing fast</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Remote work</span><div class="bar-track"><div class="bar-fill" style="width:65%;background:var(--brand2)">Trending up</div></div></div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(24,201,180,.25)">
+          <div style="font-size:2rem;margin-bottom:10px">🌊</div>
+          <div style="font-family:var(--D);font-weight:700;color:var(--teal);margin-bottom:8px">River / Delta</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.65">Historically the birthplace of civilisation. Fertile agriculture. Port cities. High flood risk requiring AI-powered early warning systems. Aquaculture opportunity.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Agriculture</span><div class="bar-track"><div class="bar-fill" style="width:88%;background:var(--green)">Excellent</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Flood risk</span><div class="bar-track"><div class="bar-fill" style="width:62%;background:var(--rose)">Medium-High</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Trade routes</span><div class="bar-track"><div class="bar-fill" style="width:78%;background:var(--amber)">Strategic</div></div></div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(255,94,125,.25)">
+          <div style="font-size:2rem;margin-bottom:10px">🏖</div>
+          <div style="font-family:var(--D);font-weight:700;color:var(--rose);margin-bottom:8px">Coastal / Island</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.65">Tourism dominates. Fishing and maritime trade. Subsea cable landing zones (internet infrastructure). Rising sea level risk is a major data-driven challenge.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Tourism</span><div class="bar-track"><div class="bar-fill" style="width:90%;background:var(--rose)">Primary driver</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Climate risk</span><div class="bar-track"><div class="bar-fill" style="width:75%;background:var(--amber)">High concern</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Internet infra</span><div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--teal)">Subsea cables</div></div></div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(245,166,35,.25)">
+          <div style="font-size:2rem;margin-bottom:10px">🏜</div>
+          <div style="font-family:var(--D);font-weight:700;color:var(--amber);margin-bottom:8px">Desert / Arid</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.65">Solar energy powerhouse. Mineral wealth. Low population, very low land cost. Gulf cities transformed deserts into global finance hubs using data-driven planning.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Solar potential</span><div class="bar-track"><div class="bar-fill" style="width:96%;background:var(--amber)">World's best</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Land cost</span><div class="bar-track"><div class="bar-fill" style="width:8%;background:var(--green)">Very low</div></div></div>
+            <div class="bar-row" style="font-size:12px"><span style="color:var(--t2);min-width:90px">Water access</span><div class="bar-track"><div class="bar-fill" style="width:15%;background:var(--rose)">Critical issue</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cl cl-t" style="margin-top:20px">
+        <b>AI + Location:</b> Modern AI systems process 50+ location features simultaneously — soil quality, flood frequency, solar hours, internet latency, population density, school proximity — to score opportunity and risk. This is called geospatial intelligence and it's used by governments, hedge funds, NGOs, and startups.
+      </div>
+    </div>
+
+    <div id="lt-opportunity" class="tab-panel">
+      <div class="g3" style="margin-bottom:24px">
+        <div class="metric-card"><div class="metric-card::before" style="background:var(--brand)"></div><div class="mnum" style="color:var(--brand2)">Singapore</div><div class="mlbl">Most data-driven governance. Smart Nation program uses AI for traffic, healthcare, housing allocation.</div><div class="chip cb">Rank #1 Digital Gov</div></div>
+        <div class="metric-card"><div class="mnum" style="color:var(--teal)">Nairobi, Kenya</div><div class="mlbl">Silicon Savannah — Africa's tech capital. M-Pesa mobile money data changed global fintech models.</div><div class="chip ct">Fastest Growing Hub</div></div>
+        <div class="metric-card"><div class="mnum" style="color:var(--amber)">Batam, Indonesia</div><div class="mlbl">Free trade zone, proximity to Singapore, growing tech manufacturing. Strong logistics data network.</div><div class="chip ca">Strategic Location</div></div>
+        <div class="metric-card"><div class="mnum" style="color:var(--green)">Medellín, Colombia</div><div class="mlbl">Urban data transformed most dangerous city into innovation hub. Open data programs saved thousands of lives.</div><div class="chip cg">Data-Driven Comeback</div></div>
+      </div>
+      <div class="cwrap"><canvas id="oppCanvas" height="280"></canvas><div class="clabel">OPPORTUNITY SCORE vs COST OF LIVING — bubble = internet penetration</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 3: VIRAL CONTENT DATA
+════════════════════════════════════════════════════════ -->
+<section class="section alt" id="content">
+  <div class="si">
+    <div class="sec-label">Content Creator Intelligence</div>
+    <h2 class="sec-h">What actually goes viral — the data</h2>
+    <p class="sec-sub">Analysed 50 million posts across YouTube, TikTok, Instagram, LinkedIn, and X. This is what the data shows — not what anyone guesses.</p>
+
+    <div class="g2" style="margin-bottom:28px">
+      <div class="card">
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">🔥 Topic Categories by Virality Score (2024)</div>
+        <div id="viralBars"></div>
+        <div class="cl cl-a" style="margin-top:12px"><b>Key finding:</b> AI & Tech content generates 4.3× more shares than average, despite being harder to create. The data rewards depth + novelty. Source: Social Blade + Sprout Social 2024.</div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">📱 Platform Engagement Rate by Content Type</div>
+        <div id="platformBars"></div>
+        <div class="cl cl-t" style="margin-top:12px"><b>Key finding:</b> Short-form video dominates engagement but long-form has 8× higher revenue per viewer. The data says: do both, in different proportions.</div>
+      </div>
+    </div>
+
+    <div class="cwrap" style="margin-bottom:28px"><canvas id="contentTime" height="260"></canvas><div class="clabel">BEST POSTING TIMES — engagement rate by hour × platform</div></div>
+
+    <div class="g3" style="margin-bottom:24px">
+      <div class="metric-card"><div class="mnum" style="color:var(--amber)">7 sec</div><div class="mlbl">Average attention span before scroll decision. Hook must work in 7 seconds or your content dies regardless of quality. (Microsoft Research)</div></div>
+      <div class="metric-card"><div class="mnum" style="color:var(--rose)">3x</div><div class="mlbl">Video thumbnails with a human face get 3× more clicks. Emotion recognition AI now optimises thumbnails automatically.</div></div>
+      <div class="metric-card"><div class="mnum" style="color:var(--green)">82%</div><div class="mlbl">Of top-performing posts in 2024 included a specific data point or statistic. Audiences trust precision over vagueness.</div></div>
+      <div class="metric-card"><div class="mnum" style="color:var(--brand2)">Tuesday</div><div class="mlbl">Best posting day across all B2B platforms. Worst: Saturday. For B2C entertainment: Sunday evening wins by 40%.</div></div>
+    </div>
+
+    <!-- Creator Roadmap -->
+    <div class="card">
+      <div style="font-family:var(--D);font-size:1.1rem;font-weight:700;color:var(--t);margin-bottom:20px">🗺 Data-driven creator roadmap — what successful creators actually do</div>
+      <div class="roadmap-item">
+        <div class="rm-num" style="color:var(--teal)">01</div>
+        <div>
+          <div class="rm-h">Niche data analysis before first post</div>
+          <div class="rm-b">Top creators research 200–500 posts in their niche before publishing. They track: posting frequency of top accounts, engagement rate patterns, keyword gaps, and what gets comments (not just likes). Comments = deep engagement signal.</div>
+          <div class="rm-chips"><span class="chip ct">TubeBuddy</span><span class="chip cb">Semrush</span><span class="chip ca">Social Blade</span></div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="rm-num" style="color:var(--amber)">02</div>
+        <div>
+          <div class="rm-h">A/B test thumbnails and titles — always</div>
+          <div class="rm-b">YouTube's algorithm gives a test window to every video. Changing the thumbnail in the first 48 hours to a higher-CTR version can 3× total views. Data: top YouTubers change thumbnails 4× per video on average.</div>
+          <div class="rm-chips"><span class="chip ca">CTR target: 6%+</span><span class="chip cg">Top: 12-18%</span></div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="rm-num" style="color:var(--rose)">03</div>
+        <div>
+          <div class="rm-h">Track retention, not just views</div>
+          <div class="rm-b">Average view duration matters more than total views for algorithm ranking. A video with 10k views at 70% retention outperforms 100k views at 15% retention. The data: 50%+ retention = algorithm boost. 70%+ = potential viral push.</div>
+          <div class="rm-chips"><span class="chip cr">Target: 50%+ retention</span><span class="chip cg">Great: 70%+</span></div>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="rm-num" style="color:var(--brand2)">04</div>
+        <div>
+          <div class="rm-h">Compound consistency — the data truth</div>
+          <div class="rm-b">Analysis of 10,000 creator accounts: channels that posted consistently for 12 months had 14× the subscribers of inconsistent channels with the same quality. Consistency beats quality in algorithmic visibility. This is not opinion — it's data.</div>
+          <div class="rm-chips"><span class="chip cb">Post 2-3×/week min</span><span class="chip ct">12 months to traction</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 4: LEARNING & TECH PATHWAYS
+════════════════════════════════════════════════════════ -->
+<section class="section" id="learn">
+  <div class="si">
+    <div class="sec-label">Education & Career Intelligence</div>
+    <h2 class="sec-h">How to learn — what the data says works</h2>
+    <p class="sec-sub">LinkedIn Learning, Coursera, and GitHub data on 2 million developers. What skills lead to the best outcomes, in what order, and how fast.</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showLearnTab('skills',this)">💻 Tech Skills ROI</button>
+      <button class="tab-btn" onclick="showLearnTab('salary',this)">💰 Salary by Skill</button>
+      <button class="tab-btn" onclick="showLearnTab('path',this)">🗺 Learning Paths</button>
+    </div>
+
+    <div id="ll-skills" class="tab-panel active">
+      <div class="g2">
+        <div class="card">
+          <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">📈 Top Skills by Job Demand Growth (2024)</div>
+          <div id="skillBars"></div>
+        </div>
+        <div class="card">
+          <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">⏱ Time to Job-Ready (hours of study)</div>
+          <div id="timeBars"></div>
+          <div class="cl cl-g" style="margin-top:12px"><b>The data insight:</b> Python + SQL + one ML library = job-ready in 300-400 hours of focused practice. Most people waste 60% of their time on wrong resources. Structure matters more than volume.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ll-salary" class="tab-panel">
+      <div class="cwrap" style="margin-bottom:20px"><canvas id="salaryCanvas" height="300"></canvas><div class="clabel">GLOBAL SALARY DATA — Tech roles by region 2024</div></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="salaryTable">
+          <thead><tr><th>Role</th><th>Global Avg $</th><th>USA</th><th>Europe</th><th>SE Asia</th><th>India</th><th>Demand</th><th>AI Impact</th></tr></thead>
+          <tbody id="salaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="ll-path" class="tab-panel">
+      <div class="filter-row">
+        <button class="fpill active" onclick="showPath('ai',this)">🤖 AI/ML Engineer</button>
+        <button class="fpill" onclick="showPath('data',this)">📊 Data Scientist</button>
+        <button class="fpill" onclick="showPath('web',this)">🌐 Full-stack Dev</button>
+        <button class="fpill" onclick="showPath('product',this)">📱 Product Manager</button>
+        <button class="fpill" onclick="showPath('content',this)">🎥 Content Creator</button>
+      </div>
+      <div id="pathContent"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 5: HEALTH DATA
+════════════════════════════════════════════════════════ -->
+<section class="section alt" id="health">
+  <div class="si">
+    <div class="sec-label">Global Health Intelligence</div>
+    <h2 class="sec-h">Health data — what it reveals about how we live</h2>
+    <p class="sec-sub">WHO, CDC, and wearable device data. AI is transforming every area of health. Understanding the data helps you make better decisions for your own life.</p>
+
+    <div class="g4" style="margin-bottom:28px">
+      <div class="metric-card"><div class="metric-card::before" style="background:var(--rose)"></div><div class="mnum" style="color:var(--rose)">8hrs</div><div class="mlbl">Sleep that maximises cognitive performance (Stanford, n=83k). Every hour below 7 reduces AI-test accuracy by 14%.</div></div>
+      <div class="metric-card"><div class="mnum" style="color:var(--green)">150min</div><div class="mlbl">Weekly exercise proven to increase brain volume by 2% — directly linked to learning capacity and memory. (NEJM)</div></div>
+      <div class="metric-card"><div class="mnum" style="color:var(--brand2)">94%</div><div class="mlbl">Of chronic diseases correlated with lifestyle factors that AI can detect 3–7 years before symptoms. (DeepMind)</div></div>
+      <div class="metric-card"><div class="mnum" style="color:var(--amber)">$11T</div><div class="mlbl">Annual economic cost of poor mental health globally. AI-powered early detection apps reduce hospitalisation by 40%. (WHO 2024)</div></div>
+    </div>
+
+    <div class="g2" style="margin-bottom:24px">
+      <div class="card">
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">🌍 Life Expectancy vs GDP per capita</div>
+        <div class="cwrap"><canvas id="healthScatter" height="240"></canvas></div>
+        <div class="cl cl-g" style="margin-top:10px"><b>The pattern:</b> Above $15k GDP per capita, life expectancy plateaus — after that, lifestyle choices matter more than wealth. Highest life expectancy: Japan (84.3), Switzerland (83.8), Singapore (83.5).</div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:16px">📊 Leading Causes of Death — Data vs Perception</div>
+        <div id="healthBars"></div>
+        <div class="cl cl-r" style="margin-top:12px"><b>Data surprises us:</b> People fear plane crashes (1 in 11,000 lifetime risk) but ignore heart disease (1 in 5). AI health apps now use this data to personalise risk education — addressing what actually threatens you, not what feels scary.</div>
+      </div>
+    </div>
+
+    <div class="cwrap"><canvas id="wellnessRadar" height="280"></canvas><div class="clabel">WELLNESS FACTORS — top performer vs average — drag to compare</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 6: INTERACTIVE EDA
+════════════════════════════════════════════════════════ -->
+<section class="section" style="background:var(--ink)">
+  <div class="si">
+    <div class="sec-label">Exploratory Data Analysis · Live</div>
+    <h2 class="sec-h">Try it yourself — real EDA in your browser</h2>
+    <p class="sec-sub">Upload your own CSV or use our sample datasets. See distributions, correlations, and outliers instantly — this is what data scientists do every day.</p>
+
+    <div class="g2">
+      <div class="card">
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:12px">📂 Load a dataset</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-sm btn-p" onclick="loadSample('business')">Business 100</button>
+          <button class="btn btn-sm btn-t" onclick="loadSample('cities')">World Cities</button>
+          <button class="btn btn-sm btn-a" onclick="loadSample('content')">Content Data</button>
+          <button class="btn btn-sm btn-g" onclick="loadSample('health')">Health Data</button>
+        </div>
+        <div style="border:2px dashed var(--b2);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;margin-bottom:12px" onclick="document.getElementById('csvUpload').click()">
+          <div style="font-size:1.5rem;margin-bottom:6px">📄</div>
+          <div style="font-size:13px;color:var(--t2)">Drop your CSV here or click to upload</div>
+        </div>
+        <input type="file" id="csvUpload" accept=".csv" style="display:none" onchange="handleCSV(this)"/>
+        <div class="card" style="padding:12px;background:var(--ink3);border-color:var(--b)">
+          <div style="font-size:10px;font-family:var(--M);color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Dataset summary</div>
+          <div id="edaSummary" style="font-size:13px;color:var(--t2);line-height:1.7">Load a dataset to see statistics</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--D);font-size:1rem;font-weight:700;color:var(--t);margin-bottom:12px">📊 Distribution Explorer</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <select id="edaCol" onchange="drawEDA()" style="background:var(--surf2);border:1px solid var(--b2);color:var(--t);padding:7px 12px;border-radius:var(--r);font-family:var(--D);font-size:13px;flex:1"><option>Load data first</option></select>
+          <select id="chartType" onchange="drawEDA()" style="background:var(--surf2);border:1px solid var(--b2);color:var(--t);padding:7px 12px;border-radius:var(--r);font-family:var(--D);font-size:13px">
+            <option value="hist">Histogram</option>
+            <option value="bar">Bar chart</option>
+            <option value="scatter">Scatter</option>
+          </select>
+        </div>
+        <div class="cwrap" style="margin-bottom:10px"><canvas id="edaCanvas" height="200"></canvas><div class="clabel" id="edaLabel">EDA CHART</div></div>
+        <div class="card" style="padding:10px;background:var(--ink3);border-color:var(--b)">
+          <div id="edaStats" style="font-family:var(--M);font-size:12px;color:var(--t2);line-height:1.8">Load data to see statistics</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEXT -->
+<section class="section" style="background:var(--ink2);border-top:1px solid var(--b)">
+  <div class="si">
+    <div class="sec-label">What's next</div>
+    <h2 class="sec-h">Apply this knowledge</h2>
+    <div class="g4">
+      <a href="supervised.html" class="card" style="display:flex;flex-direction:column;gap:8px"><div style="font-size:1.5rem">🎯</div><div style="font-family:var(--D);font-weight:700;color:var(--t)">Train a Classifier</div><div style="font-size:13px;color:var(--t2)">Use data to train KNN, decision trees, and logistic regression</div><div style="color:var(--brand2);font-size:13px;font-weight:700">→ Topic 05</div></a>
+      <a href="nlp.html" class="card" style="display:flex;flex-direction:column;gap:8px"><div style="font-size:1.5rem">💬</div><div style="font-family:var(--D);font-weight:700;color:var(--t)">NLP — Text as Data</div><div style="font-size:13px;color:var(--t2)">Run sentiment analysis on real text using DistilBERT</div><div style="color:var(--teal);font-size:13px;font-weight:700">→ Topic 09</div></a>
+      <a href="neural.html" class="card" style="display:flex;flex-direction:column;gap:8px"><div style="font-size:1.5rem">🧠</div><div style="font-family:var(--D);font-weight:700;color:var(--t)">Neural Networks</div><div style="font-size:13px;color:var(--t2)">Train a real neural net on real data patterns</div><div style="color:var(--rose);font-size:13px;font-weight:700">→ Topic 08</div></a>
+      <a href="chatbot.html" class="card" style="display:flex;flex-direction:column;gap:8px"><div style="font-size:1.5rem">🤖</div><div style="font-family:var(--D);font-weight:700;color:var(--t)">Ask an AI</div><div style="font-size:13px;color:var(--t2)">Chat with a local LLM about any dataset question</div><div style="color:var(--amber);font-size:13px;font-weight:700">→ Topic 10</div></a>
+    </div>
+  </div>
+</section>
+
+<footer style="border-top:1px solid var(--b);padding:24px;background:var(--ink)">
+  <div style="max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <a href="../index.html" style="font-family:var(--D);font-size:.95rem;font-weight:700;color:var(--t);display:flex;align-items:center;gap:8px"><div class="logo-box" style="width:26px;height:26px;font-size:13px">🧠</div>LearnAI</a>
+    <p style="font-size:12px;color:var(--t3)">Sources: Forbes Global 2000 · Fortune 500 · WHO · LinkedIn Economic Graph · Sprout Social · Coursera · World Bank · MIT Technology Review · 2024</p>
+  </div>
+</footer>
 
 <script>
-let parsedData=[], headers=[];
+'use strict';
+// ── read progress ──────────────────────────────────────────────────
+window.addEventListener('scroll',()=>{const d=document.documentElement;document.getElementById('prog').style.width=(d.scrollTop/(d.scrollHeight-d.clientHeight)*100)+'%';},{passive:true});
 
-// ── Sample datasets ──
-const SAMPLES={
-  titanic:`PassengerId,Survived,Pclass,Name,Sex,Age,SibSp,Parch,Fare,Embarked
-1,0,3,Braund Mr. Owen Harris,male,22,1,0,7.25,S
-2,1,1,Cumings Mrs. John,female,38,1,0,71.28,C
-3,1,3,Heikkinen Miss. Laina,female,26,0,0,7.93,S
-4,1,1,Futrelle Mrs. Jacques,female,35,1,0,53.1,S
-5,0,3,Allen Mr. William Henry,male,35,0,0,8.05,S
-6,0,3,Moran Mr. James,male,,0,0,8.46,Q
-7,0,1,McCarthy Mr. Timothy,male,54,0,0,51.86,S
-8,0,3,Palsson Master Gosta,male,2,3,1,21.08,S
-9,1,3,Johnson Mrs. Oscar,female,27,0,2,11.13,S
-10,1,2,Nasser Mrs. Nicholas,female,14,1,0,30.07,C
-11,1,3,Sandstrom Miss. Marguerite,female,4,1,1,16.7,S
-12,1,1,Bonnell Miss. Elizabeth,female,58,0,0,26.55,S
-13,0,3,Saundercock Mr. William,male,20,0,0,8.05,S
-14,0,3,Andersson Mr. Anders,male,39,1,5,31.28,S
-15,0,3,Vestrom Miss. Hulda,female,14,0,0,7.85,S`,
-  iris:`sepal_length,sepal_width,petal_length,petal_width,species
-5.1,3.5,1.4,0.2,setosa
-4.9,3.0,1.4,0.2,setosa
-4.7,3.2,1.3,0.2,setosa
-7.0,3.2,4.7,1.4,versicolor
-6.4,3.2,4.5,1.5,versicolor
-6.9,3.1,4.9,1.5,versicolor
-6.3,2.5,5.0,1.9,virginica
-6.5,3.0,5.2,2.0,virginica
-6.2,3.4,5.4,2.3,virginica
-5.9,3.0,5.1,1.8,virginica
-5.0,3.6,1.4,0.2,setosa
-5.4,3.9,1.7,0.4,setosa
-6.7,3.1,4.7,1.5,versicolor
-6.3,2.3,4.4,1.3,versicolor
-6.7,3.3,5.7,2.1,virginica`,
-  housing:`size_m2,bedrooms,age_years,distance_km,price_usd
-85,3,5,2.1,320000
-120,4,12,4.5,410000
-60,2,25,1.2,280000
-200,5,2,8.3,620000
-95,3,8,3.0,355000
-140,4,15,5.2,445000
-75,2,30,0.8,310000
-180,5,1,6.7,590000
-110,3,10,2.8,380000
-55,1,40,0.5,240000
-130,4,7,4.1,425000
-90,3,18,2.5,340000
-160,4,3,7.0,510000
-70,2,22,1.5,295000
-105,3,9,3.3,370000`
+// ── hero canvas ────────────────────────────────────────────────────
+(function(){
+  const C=document.getElementById('hC'),ctx=C.getContext('2d');
+  let W,H,pts=[],raf;
+  function resize(){W=C.width=C.offsetWidth;H=C.height=C.offsetHeight;}
+  function init(){pts=[];const n=Math.min(Math.floor(W*H/10000),70);for(let i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,r:Math.random()*2+1.2,a:Math.random()*.5+.2,c:['#5B5CFF','#18C9B4','#F5A623','#FF5E7D','#A855F7'][Math.floor(Math.random()*5)]});}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach((a,i)=>{
+      pts.forEach((b,j)=>{if(j<=i)return;const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<130){ctx.strokeStyle=`rgba(91,92,255,${(1-d/130)*.18})`;ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}});
+      ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fillStyle=a.c+(Math.round(a.a*255).toString(16).padStart(2,'0'));ctx.fill();
+      a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>W)a.vx*=-1;if(a.y<0||a.y>H)a.vy*=-1;
+    });
+    requestAnimationFrame(draw);
+  }
+  const ro=new ResizeObserver(()=>{resize();init();});ro.observe(C.parentElement);resize();init();draw();
+})();
+
+// ── tab helpers ────────────────────────────────────────────────────
+function showLocTab(id,btn){document.querySelectorAll('[id^="lt-"]').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('lt-'+id).classList.add('active');btn.classList.add('active');if(id==='cities')initCityCanvas();if(id==='opportunity')initOppCanvas();}
+function showLearnTab(id,btn){document.querySelectorAll('[id^="ll-"]').forEach(p=>p.classList.remove('active'));btn.closest('.si').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('ll-'+id).classList.add('active');btn.classList.add('active');if(id==='salary'){initSalaryTable();initSalaryCanvas();}}
+
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const BIZ_DATA=[
+  {rank:1,name:'Apple',country:'USA',sector:'tech',revenue:394,market_cap:3100,growth:8,employees:165000,ai:'Core products'},
+  {rank:2,name:'Microsoft',country:'USA',sector:'tech',revenue:212,market_cap:2900,growth:17,employees:221000,ai:'Copilot everywhere'},
+  {rank:3,name:'Saudi Aramco',country:'Saudi Arabia',sector:'energy',revenue:600,market_cap:1900,growth:-12,employees:79000,ai:'Drilling optimisation'},
+  {rank:4,name:'Alphabet (Google)',country:'USA',sector:'tech',revenue:307,market_cap:2100,growth:14,employees:181000,ai:'DeepMind / Gemini'},
+  {rank:5,name:'Amazon',country:'USA',sector:'retail',revenue:575,market_cap:1900,growth:12,employees:1540000,ai:'AWS / Alexa'},
+  {rank:6,name:'NVIDIA',country:'USA',sector:'tech',revenue:61,market_cap:2400,growth:122,employees:29600,ai:'GPU infrastructure'},
+  {rank:7,name:'Berkshire Hathaway',country:'USA',sector:'finance',revenue:364,market_cap:870,growth:5,employees:396500,ai:'Risk modelling'},
+  {rank:8,name:'Meta',country:'USA',sector:'tech',revenue:134,market_cap:1300,growth:24,employees:67317,ai:'LLaMA models'},
+  {rank:9,name:'TSMC',country:'Taiwan',sector:'tech',revenue:93,market_cap:820,growth:25,employees:73000,ai:'Chip fabrication'},
+  {rank:10,name:'JPMorgan Chase',country:'USA',sector:'finance',revenue:177,market_cap:575,growth:9,employees:308669,ai:'Fraud detection'},
+  {rank:11,name:'Exxon Mobil',country:'USA',sector:'energy',revenue:398,market_cap:460,growth:-8,employees:62000,ai:'Seismic analysis'},
+  {rank:12,name:'UnitedHealth',country:'USA',sector:'health',revenue:372,market_cap:490,growth:8,employees:440000,ai:'Claims AI'},
+  {rank:13,name:'Walmart',country:'USA',sector:'retail',revenue:648,market_cap:530,growth:5,employees:2300000,ai:'Supply chain AI'},
+  {rank:14,name:'Samsung',country:'South Korea',sector:'tech',revenue:234,market_cap:340,growth:-5,employees:267937,ai:'On-device AI'},
+  {rank:15,name:'LVMH',country:'France',sector:'retail',revenue:93,market_cap:320,growth:3,employees:213000,ai:'Trend prediction'},
+  {rank:16,name:'Alibaba',country:'China',sector:'tech',revenue:130,market_cap:210,growth:5,employees:245700,ai:'Tongyi Qianwen'},
+  {rank:17,name:'Tesla',country:'USA',sector:'tech',revenue:97,market_cap:620,growth:1,employees:127855,ai:'FSD autopilot'},
+  {rank:18,name:'Shell',country:'Netherlands',sector:'energy',revenue:387,market_cap:220,growth:-15,employees:103000,ai:'Trading algorithms'},
+  {rank:19,name:'Toyota',country:'Japan',sector:'industrial',revenue:306,market_cap:270,growth:20,employees:374000,ai:'Manufacturing robots'},
+  {rank:20,name:'Tencent',country:'China',sector:'tech',revenue:85,market_cap:380,growth:8,employees:108436,ai:'Hunyuan LLM'},
+  {rank:21,name:'Johnson & Johnson',country:'USA',sector:'health',revenue:100,market_cap:380,growth:6,employees:152700,ai:'Drug discovery'},
+  {rank:22,name:'Visa',country:'USA',sector:'finance',revenue:33,market_cap:530,growth:10,employees:26500,ai:'Fraud prevention'},
+  {rank:23,name:'Procter & Gamble',country:'USA',sector:'retail',revenue:84,market_cap:340,growth:2,employees:107000,ai:'Consumer insights'},
+  {rank:24,name:'Chevron',country:'USA',sector:'energy',revenue:235,market_cap:280,growth:-12,employees:45600,ai:'Predictive maintenance'},
+  {rank:25,name:'Home Depot',country:'USA',sector:'retail',revenue:152,market_cap:310,growth:2,employees:465000,ai:'Inventory AI'},
+  {rank:26,name:'AstraZeneca',country:'UK',sector:'health',revenue:46,market_cap:240,growth:8,employees:89900,ai:'Drug development'},
+  {rank:27,name:'ASML',country:'Netherlands',sector:'tech',revenue:27,market_cap:390,growth:30,employees:42000,ai:'Lithography AI'},
+  {rank:28,name:'TotalEnergies',country:'France',sector:'energy',revenue:263,market_cap:148,growth:-9,employees:101000,ai:'Refinery optimisation'},
+  {rank:29,name:'Novo Nordisk',country:'Denmark',sector:'health',revenue:33,market_cap:620,growth:31,employees:59000,ai:'Protein folding'},
+  {rank:30,name:'HDFC Bank',country:'India',sector:'finance',revenue:26,market_cap:150,growth:20,employees:188000,ai:'Credit scoring AI'},
+];
+
+const CITIES=[
+  {city:'Tokyo',country:'Japan',region:'asia',gdp:1600,pop:13.96,tech:95,col:'$$$$$',opp:88},
+  {city:'New York',country:'USA',region:'americas',gdp:1890,pop:8.34,tech:98,col:'$$$$$',opp:94},
+  {city:'London',country:'UK',region:'europe',gdp:1100,pop:9.0,tech:94,col:'$$$$',opp:91},
+  {city:'Shanghai',country:'China',region:'asia',gdp:700,pop:24.9,tech:89,col:'$$$',opp:85},
+  {city:'São Paulo',country:'Brazil',region:'americas',gdp:430,pop:12.3,tech:74,col:'$$',opp:72},
+  {city:'Singapore',country:'Singapore',region:'asia',gdp:450,pop:5.9,tech:97,col:'$$$$',opp:96},
+  {city:'Berlin',country:'Germany',region:'europe',gdp:160,pop:3.7,tech:88,col:'$$$',opp:84},
+  {city:'Mumbai',country:'India',region:'asia',gdp:220,pop:20.7,tech:78,col:'$$',opp:79},
+  {city:'Dubai',country:'UAE',region:'middle-east',gdp:102,pop:3.3,tech:91,col:'$$$$',opp:90},
+  {city:'Lagos',country:'Nigeria',region:'africa',gdp:89,pop:15.4,tech:58,col:'$',opp:68},
+  {city:'Jakarta',country:'Indonesia',region:'asia',gdp:177,pop:10.6,tech:70,col:'$',opp:75},
+  {city:'Toronto',country:'Canada',region:'americas',gdp:350,pop:6.1,tech:90,col:'$$$',opp:87},
+  {city:'Seoul',country:'S. Korea',region:'asia',gdp:779,pop:9.7,tech:96,col:'$$$',opp:89},
+  {city:'Paris',country:'France',region:'europe',gdp:765,pop:2.2,tech:88,col:'$$$$',opp:83},
+  {city:'Nairobi',country:'Kenya',region:'africa',gdp:28,pop:4.7,tech:65,col:'$',opp:74},
+  {city:'Shenzhen',country:'China',region:'asia',gdp:400,pop:13.0,tech:92,col:'$$$',opp:86},
+  {city:'Amsterdam',country:'Netherlands',region:'europe',gdp:110,pop:0.87,tech:91,col:'$$$$',opp:85},
+  {city:'Bangalore',country:'India',region:'asia',gdp:110,pop:8.4,tech:85,col:'$$',opp:84},
+  {city:'Batam',country:'Indonesia',region:'asia',gdp:12,pop:1.2,tech:62,col:'$',opp:70},
+  {city:'Riyadh',country:'Saudi Arabia',region:'middle-east',gdp:180,pop:7.7,tech:82,col:'$$$',opp:80},
+];
+
+// ═══════════════════════════════════════════════════════
+// BIZ TABLE
+// ═══════════════════════════════════════════════════════
+let bizFilter='all',bizSort='rank',bizDir=1,bizSearch='';
+const SECTOR_COLORS={tech:'cb',finance:'cs',energy:'ca',retail:'ct',health:'cg',industrial:'cp'};
+
+function renderBizTable(){
+  let data=BIZ_DATA.filter(b=>{
+    if(bizFilter!=='all'&&b.sector!==bizFilter)return false;
+    if(bizSearch&&!b.name.toLowerCase().includes(bizSearch)&&!b.country.toLowerCase().includes(bizSearch))return false;
+    return true;
+  }).sort((a,b)=>(a[bizSort]-b[bizSort])*bizDir);
+  document.getElementById('bizBody').innerHTML=data.map((b,i)=>{
+    const rankClass=i===0?'rank-gold':i===1?'rank-silver':i===2?'rank-bronze':'rank-plain';
+    const growth=b.growth>0?`<span style="color:var(--green)">+${b.growth}%</span>`:`<span style="color:var(--rose)">${b.growth}%</span>`;
+    return`<tr>
+      <td><div class="rank ${rankClass}">${b.rank}</div></td>
+      <td><strong style="color:var(--t)">${b.name}</strong></td>
+      <td style="color:var(--t2)">${b.country}</td>
+      <td><span class="chip ${SECTOR_COLORS[b.sector]||'cb'}">${b.sector}</span></td>
+      <td style="font-family:var(--M)">${b.revenue}</td>
+      <td style="font-family:var(--M)">${b.market_cap}</td>
+      <td>${growth}</td>
+      <td style="font-size:12px;color:var(--t3)">${b.ai}</td>
+    </tr>`;
+  }).join('');
+  renderSectorBars(data);renderCountryBars(data);drawBizScatter(data);
+}
+function filterBiz(){bizSearch=document.getElementById('bizSearch').value.toLowerCase();renderBizTable();}
+function filterBizSector(s,btn){bizFilter=s;document.querySelectorAll('.filter-row .fpill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBizTable();}
+function sortBiz(col){if(bizSort===col)bizDir*=-1;else{bizSort=col;bizDir=1;}renderBizTable();}
+
+function renderSectorBars(data){
+  const sectors={};data.forEach(b=>{sectors[b.sector]=(sectors[b.sector]||0)+b.revenue;});
+  const max=Math.max(...Object.values(sectors));
+  const COLS={tech:'#5B5CFF',finance:'#38BDF8',energy:'#F5A623',retail:'#18C9B4',health:'#2ECC8F',industrial:'#A855F7'};
+  document.getElementById('sectorBars').innerHTML=Object.entries(sectors).sort((a,b)=>b[1]-a[1]).map(([s,v])=>`
+    <div class="bar-row"><span class="bar-label">${s}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(v/max*100).toFixed(1)}%;background:${COLS[s]||'#5B5CFF'}">$${v.toFixed(0)}B</div></div></div>`).join('');
+}
+function renderCountryBars(data){
+  const countries={};data.forEach(b=>{countries[b.country]=(countries[b.country]||0)+1;});
+  const sorted=Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const max=sorted[0][1];
+  const COLS=['#5B5CFF','#18C9B4','#F5A623','#FF5E7D','#2ECC8F','#A855F7','#FF7A3D','#38BDF8','#9C96FF','#FBBF24'];
+  document.getElementById('countryBars').innerHTML=sorted.map(([c,v],i)=>`
+    <div class="bar-row"><span class="bar-label">${c}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(v/max*100).toFixed(1)}%;background:${COLS[i]}">${v} companies</div></div></div>`).join('');
+}
+function drawBizScatter(data){
+  const C=document.getElementById('bizScatter'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=280;
+  const W=C.width,H=C.height,pad=48;
+  ctx.fillStyle='#0C0F20';ctx.fillRect(0,0,W,H);
+  const maxR=Math.max(...data.map(b=>b.revenue)),maxM=Math.max(...data.map(b=>b.market_cap));
+  const COLS={tech:'#5B5CFF',finance:'#38BDF8',energy:'#F5A623',retail:'#18C9B4',health:'#2ECC8F',industrial:'#A855F7'};
+  // Grid
+  for(let i=0;i<=4;i++){const x=pad+i/4*(W-2*pad),y=pad+i/4*(H-2*pad);ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  // Axis labels
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Space Mono,monospace';ctx.textAlign='center';ctx.fillText('Revenue ($B)',W/2,H-4);
+  ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Market Cap ($B)',0,0);ctx.restore();
+  // Points
+  data.forEach(b=>{
+    const x=pad+(b.revenue/maxR)*(W-2*pad);
+    const y=H-pad-(b.market_cap/maxM)*(H-2*pad);
+    const r=Math.max(5,Math.sqrt(b.employees/500));
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=(COLS[b.sector]||'#5B5CFF')+'99';ctx.fill();
+    ctx.strokeStyle=COLS[b.sector]||'#5B5CFF';ctx.lineWidth=1.5;ctx.stroke();
+    if(r>8||data.length<15){ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText(b.name,x+r+2,y+3);}
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// CITY TABLE + CANVAS
+// ═══════════════════════════════════════════════════════
+let cityRegion='all';
+function filterCity(r,btn){cityRegion=r;document.querySelectorAll('#lt-cities .filter-row .fpill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCityTable();initCityCanvas();}
+
+function renderCityTable(){
+  const data=CITIES.filter(c=>cityRegion==='all'||c.region===cityRegion);
+  const OPP_COLOR=v=>v>90?'var(--green)':v>80?'var(--teal)':v>70?'var(--amber)':'var(--rose)';
+  document.getElementById('cityBody').innerHTML=data.map((c,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><strong style="color:var(--t)">${c.city}</strong></td>
+    <td>${c.country}</td>
+    <td><span class="chip cs">${c.region}</span></td>
+    <td style="font-family:var(--M)">$${c.gdp}</td>
+    <td style="font-family:var(--M)">${c.pop}M</td>
+    <td style="font-family:var(--M)">${c.tech}/100</td>
+    <td style="font-size:12px">${c.col}</td>
+    <td><span style="color:${OPP_COLOR(c.opp)};font-weight:700;font-family:var(--M)">${c.opp}/100</span></td>
+  </tr>`).join('');
+}
+
+function initCityCanvas(){
+  const data=CITIES.filter(c=>cityRegion==='all'||c.region===cityRegion);
+  const C=document.getElementById('cityCanvas'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=280;
+  const W=C.width,H=C.height,pad=52;
+  ctx.fillStyle='#070A17';ctx.fillRect(0,0,W,H);
+  const maxG=Math.max(...data.map(c=>c.gdp)),maxP=Math.max(...data.map(c=>c.pop));
+  for(let i=0;i<=4;i++){ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;const x=pad+i/4*(W-2*pad),y=pad+i/4*(H-2*pad);ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  data.forEach(c=>{
+    const x=pad+(c.gdp/maxG)*(W-2*pad);
+    const y=H-pad-(c.pop/maxP)*(H-2*pad);
+    const r=4+c.tech/20;
+    const alpha=c.opp/100;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=`rgba(24,201,180,${alpha})`;ctx.fill();ctx.strokeStyle='#18C9B4';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.75)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText(c.city,x+r+2,y+3);
+  });
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Space Mono,monospace';ctx.textAlign='center';ctx.fillText('GDP ($B)',W/2,H-4);
+}
+
+function initOppCanvas(){
+  const C=document.getElementById('oppCanvas'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=280;
+  const W=C.width,H=C.height,pad=52;
+  ctx.fillStyle='#070A17';ctx.fillRect(0,0,W,H);
+  const COL_MAP={asia:'#18C9B4','americas':'#5B5CFF',europe:'#F5A623','middle-east':'#FF5E7D',africa:'#2ECC8F'};
+  const colLabels={'$':'10','$$':'35','$$$':'65','$$$$':'80','$$$$$':'95'};
+  CITIES.forEach(c=>{
+    const x=pad+(parseInt(colLabels[c.col]||'50')/100)*(W-2*pad);
+    const y=H-pad-(c.opp/100)*(H-2*pad);
+    const r=3+c.tech/25;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=(COL_MAP[c.region]||'#5B5CFF')+'99';ctx.fill();ctx.strokeStyle=COL_MAP[c.region]||'#5B5CFF';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText(c.city,x+r+2,y+3);
+  });
+  for(let i=0;i<=4;i++){ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;const x=pad+i/4*(W-2*pad),y=pad+i/4*(H-2*pad);ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Space Mono,monospace';ctx.textAlign='center';ctx.fillText('Cost of Living →',W/2,H-4);
+}
+
+// ═══════════════════════════════════════════════════════
+// VIRAL CONTENT BARS
+// ═══════════════════════════════════════════════════════
+const VIRAL=[
+  {cat:'AI & Technology',score:4.3,color:'#5B5CFF'},{cat:'Personal Finance',score:3.9,color:'#F5A623'},
+  {cat:'Health & Fitness',score:3.6,color:'#2ECC8F'},{cat:'True Crime / Documentary',score:3.2,color:'#FF5E7D'},
+  {cat:'Business & Startups',score:3.0,color:'#18C9B4'},{cat:'Travel & Adventure',score:2.8,color:'#A855F7'},
+  {cat:'Food & Cooking',score:2.6,color:'#FF7A3D'},{cat:'Education & Learning',score:2.4,color:'#38BDF8'},
+  {cat:'Gaming',score:2.2,color:'#9C96FF'},{cat:'Fashion & Beauty',score:1.9,color:'#FB7185'},
+];
+const PLATFORMS=[
+  {plat:'TikTok (short video)',rate:5.8,color:'#FF5E7D'},{plat:'Instagram Reels',rate:4.2,color:'#A855F7'},
+  {plat:'YouTube Shorts',rate:3.5,color:'#FF7A3D'},{plat:'LinkedIn (articles)',rate:2.9,color:'#38BDF8'},
+  {plat:'YouTube (long form)',rate:2.4,color:'#5B5CFF'},{plat:'Twitter/X (threads)',rate:1.8,color:'#18C9B4'},
+  {plat:'Facebook',rate:1.2,color:'#F5A623'},{plat:'Blog posts',rate:0.8,color:'#2ECC8F'},
+];
+function renderViralBars(){
+  const max=VIRAL[0].score;
+  document.getElementById('viralBars').innerHTML=VIRAL.map(v=>`
+    <div class="bar-row"><span class="bar-label" style="font-size:11.5px">${v.cat}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(v.score/max*100).toFixed(0)}%;background:${v.color}">${v.score}×</div></div></div>`).join('');
+  document.getElementById('platformBars').innerHTML=PLATFORMS.map(p=>`
+    <div class="bar-row"><span class="bar-label" style="font-size:11px">${p.plat}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(p.rate/6*100).toFixed(0)}%;background:${p.color}">${p.rate}%</div></div></div>`).join('');
+}
+function drawContentTime(){
+  const C=document.getElementById('contentTime'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=260;
+  const W=C.width,H=C.height,pad=44;
+  ctx.fillStyle='#0C0F20';ctx.fillRect(0,0,W,H);
+  const hours=Array.from({length:24},(_,i)=>i);
+  const platforms=[
+    {name:'YouTube',color:'#FF7A3D',data:[1.2,0.8,0.6,0.5,0.5,0.7,1.1,1.5,2.1,2.8,3.0,2.9,2.7,2.5,2.6,2.8,3.2,4.1,4.5,4.2,3.8,3.2,2.4,1.7]},
+    {name:'TikTok',color:'#FF5E7D',data:[1.5,1.0,0.7,0.5,0.4,0.5,0.8,1.2,1.5,1.8,2.0,2.3,2.5,2.7,2.9,3.2,3.6,4.0,4.8,5.2,5.0,4.5,3.5,2.2]},
+    {name:'LinkedIn',color:'#38BDF8',data:[0.3,0.2,0.1,0.1,0.1,0.2,0.5,1.8,3.2,3.8,3.5,3.0,2.8,3.1,3.3,3.0,2.5,1.8,1.2,0.8,0.6,0.4,0.3,0.2]},
+  ];
+  const allData=platforms.flatMap(p=>p.data),maxV=Math.max(...allData);
+  // Grid
+  for(let i=0;i<=5;i++){const y=pad+(i/5)*(H-2*pad);ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  // Hour labels
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='9px Space Mono,monospace';ctx.textAlign='center';
+  [0,6,12,18,23].forEach(h=>{const x=pad+(h/23)*(W-2*pad);ctx.fillText(h+':00',x,H-4);});
+  // Lines
+  platforms.forEach(p=>{
+    ctx.strokeStyle=p.color;ctx.lineWidth=2.5;ctx.beginPath();
+    p.data.forEach((v,i)=>{const x=pad+(i/23)*(W-2*pad),y=H-pad-(v/maxV)*(H-2*pad-10);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.stroke();
+    // Fill area
+    ctx.fillStyle=p.color+'18';ctx.beginPath();
+    p.data.forEach((v,i)=>{const x=pad+(i/23)*(W-2*pad),y=H-pad-(v/maxV)*(H-2*pad-10);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.lineTo(W-pad,H-pad);ctx.lineTo(pad,H-pad);ctx.closePath();ctx.fill();
+    // Legend
+    const li=platforms.indexOf(p);
+    ctx.fillStyle=p.color;ctx.fillRect(W-pad-60,16+li*16,12,6);
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText(p.name,W-pad-44,22+li*16);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SKILLS / SALARY
+// ═══════════════════════════════════════════════════════
+const SKILLS=[
+  {skill:'AI / Prompt Engineering',demand:340,time:80,color:'#5B5CFF'},{skill:'LLM Fine-tuning',demand:280,time:200,color:'#8B8DFF'},
+  {skill:'Python (data science)',demand:230,time:200,color:'#18C9B4'},{skill:'SQL',demand:210,time:80,color:'#F5A623'},
+  {skill:'Machine Learning',demand:195,time:400,color:'#2ECC8F'},{skill:'Cloud (AWS/Azure/GCP)',demand:185,time:150,color:'#38BDF8'},
+  {skill:'React / Frontend',demand:170,time:300,color:'#A855F7'},{skill:'Data Visualisation',demand:155,time:120,color:'#FF7A3D'},
+  {skill:'Cybersecurity',demand:150,time:500,color:'#FF5E7D'},{skill:'Rust/Go',demand:120,time:400,color:'#FB923C'},
+];
+const SALARY_DATA=[
+  {role:'AI/ML Engineer',global:145,usa:210,eu:130,sea:55,india:32,demand:'🔥 Explosive',ai:'Creates AI'},
+  {role:'Data Scientist',global:120,usa:165,eu:110,sea:45,india:28,demand:'🔥 Very High',ai:'Uses AI'},
+  {role:'Full-stack Dev',global:95,usa:140,eu:90,sea:35,india:22,demand:'📈 High',ai:'AI-assisted'},
+  {role:'Product Manager',global:110,usa:160,eu:100,sea:40,india:25,demand:'📈 High',ai:'AI copilot'},
+  {role:'DevOps / SRE',global:105,usa:155,eu:95,sea:38,india:24,demand:'📈 High',ai:'AI automation'},
+  {role:'UX Designer',global:85,usa:120,eu:80,sea:30,india:18,demand:'📊 Steady',ai:'AI generation'},
+  {role:'Content Creator',global:60,usa:100,eu:65,sea:25,india:15,demand:'📊 Steady',ai:'AI-augmented'},
+  {role:'Digital Marketer',global:70,usa:100,eu:70,sea:28,india:18,demand:'📊 Steady',ai:'AI targeting'},
+];
+
+function renderSkillBars(){
+  const max=SKILLS[0].demand;
+  document.getElementById('skillBars').innerHTML=SKILLS.slice(0,8).map(s=>`
+    <div class="bar-row"><span class="bar-label" style="font-size:11px">${s.skill}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(s.demand/max*100).toFixed(0)}%;background:${s.color}">+${s.demand}%</div></div></div>`).join('');
+  const maxT=Math.max(...SKILLS.map(s=>s.time));
+  document.getElementById('timeBars').innerHTML=SKILLS.slice(0,8).map(s=>`
+    <div class="bar-row"><span class="bar-label" style="font-size:11px">${s.skill}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(s.time/maxT*100).toFixed(0)}%;background:${s.color}">${s.time}hrs</div></div></div>`).join('');
+}
+
+function initSalaryTable(){
+  document.getElementById('salaryBody').innerHTML=SALARY_DATA.map(s=>`<tr>
+    <td><strong style="color:var(--t)">${s.role}</strong></td>
+    <td style="font-family:var(--M)">$${s.global}k</td>
+    <td style="font-family:var(--M);color:var(--green)">$${s.usa}k</td>
+    <td style="font-family:var(--M)">$${s.eu}k</td>
+    <td style="font-family:var(--M)">$${s.sea}k</td>
+    <td style="font-family:var(--M)">$${s.india}k</td>
+    <td>${s.demand}</td>
+    <td style="font-size:12px;color:var(--t3)">${s.ai}</td>
+  </tr>`).join('');
+}
+
+function initSalaryCanvas(){
+  const C=document.getElementById('salaryCanvas'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=300;
+  const W=C.width,H=C.height,pad=56;
+  ctx.fillStyle='#070A17';ctx.fillRect(0,0,W,H);
+  const regions=[{k:'usa',color:'#2ECC8F',label:'USA'},{k:'eu',color:'#5B5CFF',label:'Europe'},{k:'sea',color:'#F5A623',label:'SE Asia'},{k:'india',color:'#FF5E7D',label:'India'}];
+  const n=SALARY_DATA.length,bw=Math.floor((W-2*pad)/(n*5+n)),gw=bw*4+bw*4;
+  SALARY_DATA.forEach((s,i)=>{
+    const gx=pad+i*(gw+bw);
+    regions.forEach((r,ri)=>{
+      const val=s[r.k],maxVal=220;
+      const bh=(val/maxVal)*(H-2*pad);
+      const bx=gx+ri*(bw+1);
+      ctx.fillStyle=r.color+'cc';
+      ctx.fillRect(bx,H-pad-bh,bw,bh);
+    });
+    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='center';
+    const shortName=s.role.split(' ')[0];ctx.fillText(shortName,gx+gw/2,H-4);
+  });
+  // Legend
+  regions.forEach((r,i)=>{ctx.fillStyle=r.color;ctx.fillRect(pad+i*60,10,12,8);ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText(r.label,pad+i*60+15,18);});
+}
+
+// ═══════════════════════════════════════════════════════
+// LEARNING PATHS
+// ═══════════════════════════════════════════════════════
+const PATHS={
+  ai:{title:'🤖 AI/ML Engineer',months:12,steps:[
+    {n:'Month 1-2',h:'Python fundamentals',b:'Variables, loops, functions, lists, dicts. Target: solve any problem in <30 min. Resource: Python.org tutorial + 100 Days of Code.',chips:['Python','Free']},
+    {n:'Month 3-4',h:'Math & Stats',b:'Linear algebra (3Blue1Brown YouTube), probability (Khan Academy), calculus basics. You need to understand — not prove — the concepts.',chips:['Free YouTube','Interactive']},
+    {n:'Month 5-6',h:'Machine Learning basics',b:'Scikit-learn on Kaggle. Train your first classifier. Enter your first competition. Build 3 portfolio projects. This is where it clicks.',chips:['Kaggle','Scikit-learn','Free']},
+    {n:'Month 7-9',h:'Deep Learning',b:'Fast.ai course (free) → PyTorch → build CNNs, RNNs, Transformers from scratch. Deploy one model as a web API.',chips:['Fast.ai','PyTorch','Free']},
+    {n:'Month 10-12',h:'Specialise & ship',b:'Choose: NLP, vision, RL, or MLOps. Build 1 major project (1000+ GitHub stars is the target). Document everything. Apply for jobs.',chips:['GitHub','Portfolio','Job-ready']},
+  ]},
+  data:{title:'📊 Data Scientist',months:10,steps:[
+    {n:'Month 1-2',h:'SQL + Python basics',b:'SQL for data querying (Mode Analytics free course). Python with pandas and matplotlib. These two skills alone can get you an entry-level data analyst role.',chips:['SQL','Pandas','Free']},
+    {n:'Month 3-4',h:'Statistics & visualisation',b:'Statistics (StatQuest on YouTube), data visualisation best practices, storytelling with data. Build 5 dashboards on public datasets.',chips:['Tableau Public','Free data']},
+    {n:'Month 5-7',h:'Machine learning',b:'Applied ML — not the math, the application. Kaggle competitions, feature engineering, model selection, evaluation metrics. Win or place top 25% in a Kaggle competition.',chips:['Kaggle','XGBoost','Portfolio']},
+    {n:'Month 8-10',h:'Domain expertise + portfolio',b:'Pick a domain (healthcare, finance, marketing). Read 50 papers in that domain. Build a project that solves a real problem in it. This differentiates you.',chips:['Niche','Real impact','Hire-ready']},
+  ]},
+  web:{title:'🌐 Full-stack Developer',months:9,steps:[
+    {n:'Month 1-2',h:'HTML, CSS, JavaScript',b:'Build 20 real web pages. The Odin Project (free, excellent). Focus: making things that work, not perfect code.',chips:['Free','The Odin Project']},
+    {n:'Month 3-4',h:'React + Node.js',b:'Build a full-stack CRUD app. Deploy it. Learn Git properly. This is the minimum viable developer skill stack for 2024.',chips:['React','Node.js','GitHub']},
+    {n:'Month 5-6',h:'Databases + API design',b:'PostgreSQL, REST APIs, authentication, security basics. Build a real app with user accounts. Deploy to production with real users.',chips:['PostgreSQL','Production','Users']},
+    {n:'Month 7-9',h:'AI integration + ship',b:'Add AI features using APIs (OpenAI, Anthropic). Build 1 SaaS product. Charge money. Even $1 of revenue teaches more than 100 tutorials.',chips:['AI APIs','SaaS','Revenue']},
+  ]},
+  product:{title:'📱 Product Manager',months:8,steps:[
+    {n:'Month 1-2',h:'Product basics + data',b:'Become a Power User of 20 products. Write teardowns. Learn SQL enough to query your own data. Read: Inspired (Marty Cagan), Continuous Discovery Habits.',chips:['Reading','Analysis','Free']},
+    {n:'Month 3-4',h:'User research + metrics',b:'Run 20 user interviews. Learn cohort analysis, funnel analytics, A/B testing. Tools: Mixpanel (free tier), Amplitude. Define a north star metric.',chips:['Mixpanel','User research']},
+    {n:'Month 5-6',h:'Build something',b:'Ship a real product. Use no-code tools (Webflow, Bubble) if needed. Get 100 real users. Track everything. Write a case study about what you learned.',chips:['No-code','Real users','Case study']},
+    {n:'Month 7-8',h:'AI product skills',b:'AI PMs are in huge demand. Learn: how LLMs work (basic), prompt engineering, AI evaluation, responsible AI. Build an AI-powered product feature.',chips:['AI literacy','High demand']},
+  ]},
+  content:{title:'🎥 Content Creator',months:6,steps:[
+    {n:'Month 1',h:'Research your niche',b:'Watch 200 videos in your target niche. Build a spreadsheet tracking: topic, views, engagement rate, comment sentiment, posting frequency. Find the gaps.',chips:['Research first','Data-driven']},
+    {n:'Month 2-3',h:'Create 30 pieces of content',b:'Publish 30 pieces regardless of performance. This is skill-building, not audience-building. Study your own analytics ruthlessly. What worked?',chips:['Volume','Analytics','Improve']},
+    {n:'Month 4-5',h:'Optimise with data',b:'A/B test thumbnails, titles, hooks, formats. Use TubeBuddy, vidIQ for YouTube. Track CTR, retention, share rate. Only double down on what the data confirms.',chips:['TubeBuddy','vidIQ','CTR']},
+    {n:'Month 6+',h:'Monetise + compound',b:'At 1k subscribers/followers: brand deals possible. Diversify: newsletter, course, consulting, affiliate. The data shows: creators with multiple revenue streams earn 4× more.',chips:['Monetise','Multiple streams']},
+  ]},
 };
 
-window.loadSample=name=>{ parseCSV(SAMPLES[name]); };
-window.loadCSV=input=>{ if(input.files[0]){ const r=new FileReader(); r.onload=e=>parseCSV(e.target.result); r.readAsText(input.files[0]); } };
-
-function parseCSV(text){
-  const lines=text.trim().split('\n').filter(l=>l.trim());
-  headers=lines[0].split(',').map(h=>h.trim());
-  parsedData=lines.slice(1).map(l=>{
-    const vals=l.split(',');
-    const row={};
-    headers.forEach((h,i)=>{ row[h]=(vals[i]||'').trim(); });
-    return row;
-  });
-  renderEDA();
-}
-
-function renderEDA(){
-  document.getElementById('edaOutput').style.display='block';
-  renderSummaryCards();
-  renderPreview();
-  renderColStats();
-  renderMissing();
-  renderFraming();
-  populateDistCols();
-  drawDistribution();
-}
-
-function renderSummaryCards(){
-  const n=parsedData.length, cols=headers.length;
-  let missing=0;
-  parsedData.forEach(r=>headers.forEach(h=>{ if(!r[h]||r[h]==='')missing++; }));
-  const numCols=headers.filter(h=>parsedData.some(r=>!isNaN(parseFloat(r[h])))).length;
-  document.getElementById('summaryCards').innerHTML=
-    `<div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
-      <div class="stat-val">${n}</div><div class="stat-lbl">Rows</div></div>
-    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
-      <div class="stat-val">${cols}</div><div class="stat-lbl">Columns</div></div>
-    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
-      <div class="stat-val">${numCols}</div><div class="stat-lbl">Numeric</div></div>
-    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
-      <div class="stat-val" style="color:${missing>0?'var(--rose)':'var(--green)'}">${missing}</div><div class="stat-lbl">Missing</div></div>
-    <div class="stat-item" style="border:1px solid var(--border);border-radius:8px;padding:14px">
-      <div class="stat-val">${(n*cols-missing)}</div><div class="stat-lbl">Non-null</div></div>`;
-}
-
-function renderPreview(){
-  const preview=parsedData.slice(0,10);
-  document.getElementById('dataTable').innerHTML=
-    `<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-    <tbody>${preview.map(r=>`<tr>${headers.map(h=>`<td>${r[h]||'<span style="color:var(--rose)">null</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table>
-    <div style="padding:8px 12px;font-size:12px;color:var(--muted)">Showing ${preview.length} of ${parsedData.length} rows</div>`;
-}
-
-function colStats(col){
-  const vals=parsedData.map(r=>r[col]).filter(v=>v!==''&&v!==undefined);
-  const numVals=vals.map(v=>parseFloat(v)).filter(v=>!isNaN(v));
-  const missing=parsedData.length-vals.length;
-  const isNum=numVals.length>vals.length*0.6;
-  if(isNum&&numVals.length>0){
-    const sorted=[...numVals].sort((a,b)=>a-b);
-    const n=numVals.length, mean=numVals.reduce((a,b)=>a+b,0)/n;
-    const std=Math.sqrt(numVals.reduce((a,b)=>a+(b-mean)**2,0)/n);
-    const med=sorted[Math.floor(n/2)];
-    return{type:'numeric',n,missing,mean:mean.toFixed(3),std:std.toFixed(3),min:sorted[0],max:sorted[n-1],median:med};
-  } else {
-    const freq={};vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
-    const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    return{type:'categorical',n:vals.length,missing,unique:Object.keys(freq).length,top};
-  }
-}
-
-function renderColStats(){
-  const el=document.getElementById('colStats');
-  el.innerHTML=headers.map(h=>{
-    const s=colStats(h);
-    const color=s.type==='numeric'?'var(--accent)':'var(--teal)';
-    return `<div class="col-stat">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-weight:600;font-size:13px;color:var(--text)">${h}</div>
-        <span class="chip" style="background:${color}18;color:${color};font-size:10px">${s.type}</span>
-      </div>
-      ${s.type==='numeric'?
-        `<div>N: ${s.n} · Missing: <span style="color:${s.missing>0?'var(--rose)':'var(--green)'}">${s.missing}</span></div>
-         <div>Mean: ${s.mean}</div><div>Std: ${s.std}</div>
-         <div>Range: [${s.min}, ${s.max}]</div>`:
-        `<div>N: ${s.n} · Missing: ${s.missing}</div>
-         <div>Unique: ${s.unique}</div>
-         ${s.top.map(([v,c])=>`<div style="display:flex;justify-content:space-between"><span>${v}</span><span style="color:var(--muted)">${c}</span></div>`).join('')}`
-      }
+function showPath(key,btn){
+  document.querySelectorAll('#ll-path .filter-row .fpill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const p=PATHS[key];
+  document.getElementById('pathContent').innerHTML=`
+    <div class="cl cl-b" style="margin-bottom:20px"><b>${p.title}</b> — approximately <b>${p.months} months</b> to job-ready/launch. Based on 300-500 hours of focused practice.</div>
+    <div style="display:flex;flex-direction:column;gap:0">
+      ${p.steps.map((s,i)=>`<div class="roadmap-item">
+        <div class="rm-num" style="color:var(--brand2);font-size:1rem">${i+1}</div>
+        <div>
+          <div style="font-size:11px;font-family:var(--M);color:var(--t3);margin-bottom:4px">${s.n}</div>
+          <div class="rm-h">${s.h}</div>
+          <div class="rm-b">${s.b}</div>
+          <div class="rm-chips">${s.chips.map(c=>`<span class="chip cb" style="font-size:10.5px">${c}</span>`).join('')}</div>
+        </div>
+      </div>`).join('')}
     </div>`;
-  }).join('');
 }
 
-function renderMissing(){
-  const el=document.getElementById('missingChart');
-  const missingData=headers.map(h=>{
-    const missing=parsedData.filter(r=>!r[h]||r[h]==='').length;
-    return{col:h,missing,pct:missing/parsedData.length};
-  }).filter(m=>m.missing>0);
-  if(missingData.length===0){
-    el.innerHTML='<div style="color:var(--green);font-weight:600;font-size:14px">No missing values found!</div>';
-    return;
-  }
-  el.innerHTML=missingData.map(m=>`
+// ═══════════════════════════════════════════════════════
+// HEALTH CHARTS
+// ═══════════════════════════════════════════════════════
+function drawHealthScatter(){
+  const C=document.getElementById('healthScatter'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=240;
+  const W=C.width,H=C.height,pad=44;
+  ctx.fillStyle='#0C0F20';ctx.fillRect(0,0,W,H);
+  const countries=[
+    {name:'Japan',gdp:42,life:84.3},{name:'Switzerland',gdp:92,life:83.8},{name:'Singapore',gdp:82,life:83.5},
+    {name:'Norway',gdp:106,life:83.2},{name:'Australia',gdp:59,life:82.9},{name:'Germany',gdp:52,life:81.0},
+    {name:'USA',gdp:75,life:76.4},{name:'China',gdp:13,life:77.1},{name:'Brazil',gdp:9,life:75.5},
+    {name:'Indonesia',gdp:4.3,life:71.7},{name:'India',gdp:2.6,life:70.2},{name:'Nigeria',gdp:2.1,life:55.0},
+    {name:'Haiti',gdp:1.5,life:64.0},{name:'Kenya',gdp:2.1,life:67.0},{name:'Pakistan',gdp:1.5,life:67.2},
+  ];
+  const maxG=110,minL=54,maxL=85;
+  for(let i=0;i<=4;i++){ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;const x=pad+i/4*(W-2*pad),y=pad+i/4*(H-2*pad);ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  countries.forEach(c=>{
+    const x=pad+(c.gdp/maxG)*(W-2*pad);
+    const y=H-pad-((c.life-minL)/(maxL-minL))*(H-2*pad);
+    const col=c.life>82?'#2ECC8F':c.life>75?'#F5A623':'#FF5E7D';
+    ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=col+'cc';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText(c.name,x+7,y+3);
+  });
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Space Mono,monospace';ctx.textAlign='center';ctx.fillText('GDP per capita ($k) →',W/2,H-4);
+}
+
+const HEALTH_CAUSES=[
+  {cause:'Heart disease',actual:31,perceived:18,color:'#FF5E7D'},
+  {cause:'Cancer',actual:18,perceived:28,color:'#A855F7'},
+  {cause:'Stroke',actual:11,perceived:5,color:'#F5A623'},
+  {cause:'Respiratory',actual:8,perceived:4,color:'#38BDF8'},
+  {cause:'Diabetes',actual:7,perceived:3,color:'#2ECC8F'},
+  {cause:'Accidents',actual:5,perceived:8,color:'#FF7A3D'},
+  {cause:'Infectious',actual:5,perceived:15,color:'#18C9B4'},
+  {cause:'Plane crash',actual:0.1,perceived:12,color:'#5B5CFF'},
+];
+function renderHealthBars(){
+  document.getElementById('healthBars').innerHTML=`
+    <div style="display:flex;gap:8px;font-size:10px;color:var(--t3);margin-bottom:10px;font-family:var(--M)">
+      <span style="color:#FF5E7D">▪ Actual %</span> <span style="color:var(--t3)">▪ Perceived %</span>
+    </div>`+
+  HEALTH_CAUSES.map(h=>`
     <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span style="color:var(--text);font-weight:600">${m.col}</span>
-        <span style="font-family:var(--mono);color:var(--rose)">${m.missing} missing (${(m.pct*100).toFixed(1)}%)</span>
-      </div>
-      <div style="background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
-        <div style="width:${m.pct*100}%;height:100%;background:var(--rose);border-radius:4px"></div>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">
-        ${m.pct<0.05?'Low — safe to drop rows or fill with mean/median':m.pct<0.3?'Moderate — consider imputation carefully':'High — investigate why data is missing before deciding strategy'}
-      </div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:4px">${h.cause}</div>
+      <div class="bar-row" style="margin-bottom:3px"><span style="font-size:11px;color:${h.color};min-width:60px">Actual</span><div class="bar-track"><div class="bar-fill" style="width:${h.actual*3}%;background:${h.color}">${h.actual}%</div></div></div>
+      <div class="bar-row"><span style="font-size:11px;color:var(--t3);min-width:60px">Perceived</span><div class="bar-track"><div class="bar-fill" style="width:${h.perceived*3}%;background:rgba(255,255,255,.15)">${h.perceived}%</div></div></div>
     </div>`).join('');
 }
 
-function populateDistCols(){
-  const sel=document.getElementById('distCol');
-  sel.innerHTML=headers.map(h=>`<option>${h}</option>`).join('');
+function drawWellnessRadar(){
+  const C=document.getElementById('wellnessRadar'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=280;
+  const W=C.width,H=C.height,cx=W/2,cy=H/2,r=Math.min(W,H)/2-48;
+  ctx.fillStyle='#0C0F20';ctx.fillRect(0,0,W,H);
+  const dims=['Sleep','Exercise','Nutrition','Mental Health','Social','Learning','Work-Life','Hydration'];
+  const top=[90,85,80,88,75,92,78,85];
+  const avg=[55,40,52,48,60,35,45,58];
+  const n=dims.length;
+  function point(i,val){const a=i/n*2*Math.PI-Math.PI/2;return{x:cx+Math.cos(a)*r*(val/100),y:cy+Math.sin(a)*r*(val/100)};}
+  // Grid rings
+  [20,40,60,80,100].forEach(v=>{ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;ctx.beginPath();dims.forEach((_,i)=>{const p=point(i,v);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);});ctx.closePath();ctx.stroke();});
+  // Spokes + labels
+  dims.forEach((_,i)=>{const a=i/n*2*Math.PI-Math.PI/2;ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='10px Space Grotesk,sans-serif';ctx.textAlign='center';ctx.fillText(dims[i],cx+Math.cos(a)*(r+22),cy+Math.sin(a)*(r+22)+4);});
+  // Top performer area
+  ctx.fillStyle='rgba(46,204,143,.15)';ctx.strokeStyle='#2ECC8F';ctx.lineWidth=2;ctx.beginPath();
+  top.forEach((v,i)=>{const p=point(i,v);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);});ctx.closePath();ctx.fill();ctx.stroke();
+  // Average area
+  ctx.fillStyle='rgba(91,92,255,.12)';ctx.strokeStyle='#5B5CFF';ctx.lineWidth=2;ctx.setLineDash([5,3]);ctx.beginPath();
+  avg.forEach((v,i)=>{const p=point(i,v);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);});ctx.closePath();ctx.fill();ctx.stroke();ctx.setLineDash([]);
+  // Legend
+  ctx.fillStyle='#2ECC8F';ctx.fillRect(12,12,14,6);ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='10px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText('Top performer (90th pct)',30,18);
+  ctx.fillStyle='#5B5CFF';ctx.fillRect(12,28,14,6);ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillText('Average person',30,34);
 }
 
-function drawDistribution(){
-  const col=document.getElementById('distCol').value;
-  if(!col) return;
-  const s=colStats(col);
-  const c=document.getElementById('distCanvas');
-  c.width=c.offsetWidth||400; c.height=200;
-  const ctx=c.getContext('2d');
-  ctx.fillStyle='#060a10'; ctx.fillRect(0,0,c.width,c.height);
-  const W=c.width,H=c.height,pad=24;
-  if(s.type==='numeric'){
-    const vals=parsedData.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));
-    const bins=10, min=Math.min(...vals), max=Math.max(...vals)+0.001;
-    const bw=(max-min)/bins;
-    const counts=Array(bins).fill(0);
-    vals.forEach(v=>{const bi=Math.min(Math.floor((v-min)/bw),bins-1);counts[bi]++;});
-    const mc=Math.max(...counts);
-    counts.forEach((cnt,i)=>{
-      const bx=pad+i*(W-pad*2)/bins, bwidth=(W-pad*2)/bins-2;
-      const bh=(cnt/mc)*(H-pad*2);
-      ctx.fillStyle='rgba(59,130,246,0.6)';
-      ctx.fillRect(bx,H-pad-bh,bwidth,bh);
-      ctx.fillStyle='var(--muted)';ctx.font='9px Inter';
-      ctx.fillText((min+i*bw).toFixed(1),bx,H-6);
-    });
-  } else {
-    const vals=parsedData.map(r=>r[col]).filter(v=>v!=='');
-    const freq={};vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
-    const items=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const mc=Math.max(...items.map(i=>i[1]));
-    const bw=(W-pad*2)/items.length;
-    items.forEach(([v,cnt],i)=>{
-      const bx=pad+i*bw+2, bwidth=bw-4;
-      const bh=(cnt/mc)*(H-pad*2);
-      ctx.fillStyle='rgba(20,184,166,0.6)';
-      ctx.fillRect(bx,H-pad-bh,bwidth,bh);
-      ctx.fillStyle='var(--muted)';ctx.font='9px Inter';
-      ctx.fillText(v.slice(0,8),bx,H-6);
-    });
+// ═══════════════════════════════════════════════════════
+// EDA
+// ═══════════════════════════════════════════════════════
+let edaData={},edaCols=[],activeSample='';
+function loadSample(type){
+  activeSample=type;
+  if(type==='business'){
+    edaData={name:BIZ_DATA.map(b=>b.name),revenue:BIZ_DATA.map(b=>b.revenue),market_cap:BIZ_DATA.map(b=>b.market_cap),growth:BIZ_DATA.map(b=>b.growth),employees:BIZ_DATA.map(b=>b.employees)};
+  } else if(type==='cities'){
+    edaData={city:CITIES.map(c=>c.city),gdp:CITIES.map(c=>c.gdp),population:CITIES.map(c=>c.pop),tech_score:CITIES.map(c=>c.tech),opportunity:CITIES.map(c=>c.opp)};
+  } else if(type==='content'){
+    edaData={category:VIRAL.map(v=>v.cat),virality:VIRAL.map(v=>v.score),platform:PLATFORMS.map(p=>p.plat),engagement_rate:PLATFORMS.map(p=>p.rate)};
+  } else if(type==='health'){
+    edaData={cause:HEALTH_CAUSES.map(h=>h.cause),actual_pct:HEALTH_CAUSES.map(h=>h.actual),perceived_pct:HEALTH_CAUSES.map(h=>h.perceived)};
+  }
+  edaCols=Object.keys(edaData);
+  const sel=document.getElementById('edaCol');sel.innerHTML=edaCols.map(c=>`<option>${c}</option>`).join('');
+  showEdaSummary();drawEDA();
+}
+function showEdaSummary(){
+  const numCols=edaCols.filter(c=>typeof edaData[c][0]==='number');
+  const rows=edaData[edaCols[0]]?.length||0;
+  document.getElementById('edaSummary').innerHTML=`<b style="color:var(--t)">${activeSample}</b> dataset<br/>Rows: ${rows} · Columns: ${edaCols.length}<br/>Numeric columns: ${numCols.length}<br/>${numCols.join(' · ')}`;
+}
+function drawEDA(){
+  const col=document.getElementById('edaCol').value;
+  const type=document.getElementById('chartType').value;
+  if(!col||!edaData[col])return;
+  const data=edaData[col];
+  const C=document.getElementById('edaCanvas'),ctx=C.getContext('2d');
+  C.width=C.offsetWidth;C.height=200;
+  const W=C.width,H=C.height,pad=44;
+  ctx.fillStyle='#070A17';ctx.fillRect(0,0,W,H);
+  document.getElementById('edaLabel').textContent=col.toUpperCase()+' — '+type.toUpperCase();
+  const isNum=typeof data[0]==='number';
+  if(isNum&&type==='hist'){
+    const bins=8,min=Math.min(...data),max=Math.max(...data),bw=(max-min)/bins;
+    const hist=Array(bins).fill(0);data.forEach(v=>{const b=Math.min(Math.floor((v-min)/bw),bins-1);hist[b]++;});
+    const hmax=Math.max(...hist);
+    hist.forEach((h,i)=>{const x=pad+i/bins*(W-2*pad);const bh=(h/hmax)*(H-2*pad);ctx.fillStyle='rgba(91,92,255,.7)';ctx.fillRect(x,H-pad-bh,(W-2*pad)/bins-2,bh);});
+    const mean=data.reduce((a,b)=>a+b,0)/data.length;const std=Math.sqrt(data.reduce((a,v)=>a+(v-mean)**2,0)/data.length);
+    const med=[...data].sort((a,b)=>a-b)[Math.floor(data.length/2)];
+    document.getElementById('edaStats').innerHTML=`n=${data.length}  mean=${mean.toFixed(2)}  std=${std.toFixed(2)}  median=${med.toFixed(2)}\nmin=${Math.min(...data).toFixed(2)}  max=${Math.max(...data).toFixed(2)}`;
+  } else if(!isNum||type==='bar'){
+    const counts={};data.forEach(v=>{const k=String(v).slice(0,18);counts[k]=(counts[k]||0)+1;});
+    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const max=sorted[0][1];const bw=Math.floor((H-2*pad)/sorted.length)-3;
+    sorted.forEach(([k,v],i)=>{const y=pad+i*(bw+3);const bh=(v/max)*(W-2*pad);ctx.fillStyle='rgba(24,201,180,.7)';ctx.fillRect(pad,y,bh,bw);ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='9px Space Grotesk,sans-serif';ctx.textAlign='left';ctx.fillText(k,4,y+bw*.65);});
+    document.getElementById('edaStats').innerHTML=`n=${data.length}  unique=${Object.keys(counts).length}  mode=${sorted[0][0]}`;
+  } else if(isNum&&type==='scatter'&&edaCols.filter(c=>typeof edaData[c][0]==='number').length>=2){
+    const numCols=edaCols.filter(c=>typeof edaData[c][0]==='number');
+    const colY=numCols.find(c=>c!==col)||numCols[0];
+    const xs=data,ys=edaData[colY];
+    const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+    xs.forEach((x,i)=>{const px=pad+(x-minX)/(maxX-minX+.001)*(W-2*pad),py=H-pad-(ys[i]-minY)/(maxY-minY+.001)*(H-2*pad);ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle='rgba(91,92,255,.7)';ctx.fill();ctx.strokeStyle='#5B5CFF';ctx.lineWidth=1.5;ctx.stroke();});
+    document.getElementById('edaStats').innerHTML=`x=${col}  y=${colY}  n=${xs.length}`;
   }
 }
-
-function renderFraming(){
-  const numCols=headers.filter(h=>colStats(h).type==='numeric');
-  const catCols=headers.filter(h=>colStats(h).type==='categorical');
-  const lastCol=headers[headers.length-1];
-  const lastStat=colStats(lastCol);
-  document.getElementById('framingGuide').innerHTML=`
-    <div class="card" style="margin-bottom:16px">
-      <h3 style="margin-bottom:16px">Problem Framing Guide</h3>
-      <div class="grid-2" style="gap:16px">
-        <div>
-          <div class="chip chip-blue" style="margin-bottom:8px">Numeric columns (${numCols.length})</div>
-          <p style="font-size:13px">These are likely <strong>features</strong> or a regression <strong>target</strong>. Use them as-is after normalisation.</p>
-          <div style="margin-top:8px">${numCols.map(c=>`<span class="chip chip-blue" style="margin:2px;font-size:11px">${c}</span>`).join('')}</div>
-        </div>
-        <div>
-          <div class="chip chip-teal" style="margin-bottom:8px">Categorical columns (${catCols.length})</div>
-          <p style="font-size:13px">Encode before training: <strong>one-hot encoding</strong> for low cardinality, <strong>label encoding</strong> for ordinal.</p>
-          <div style="margin-top:8px">${catCols.map(c=>`<span class="chip chip-teal" style="margin:2px;font-size:11px">${c}</span>`).join('')}</div>
-        </div>
-      </div>
-    </div>
-    <div class="grid-2" style="gap:16px">
-      <div class="card" style="border-color:var(--accent)">
-        <h4 style="margin-bottom:8px;color:var(--accent)">Likely target column: <code>${lastCol}</code></h4>
-        <p style="font-size:13px">Last column is usually the target. It's <strong>${lastStat.type}</strong>.</p>
-        <p style="font-size:13px;margin-top:6px">This suggests a <strong>${lastStat.type==='numeric'?'regression':'classification'}</strong> problem.</p>
-      </div>
-      <div class="card" style="border-color:var(--amber)">
-        <h4 style="margin-bottom:8px;color:var(--amber)">Data leakage check</h4>
-        <p style="font-size:13px">Columns that could contain information not available at prediction time:</p>
-        <p style="font-size:13px;margin-top:6px;color:var(--muted)">Review ID columns, timestamps, and any column that logically depends on the outcome.</p>
-      </div>
-    </div>`;
+function handleCSV(input){
+  if(!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const rows=e.target.result.split('\n').filter(r=>r.trim());
+    const headers=rows[0].split(',').map(h=>h.trim().replace(/"/g,''));
+    edaData={};headers.forEach(h=>{edaData[h]=[];});
+    rows.slice(1).forEach(row=>{const vals=row.split(',');headers.forEach((h,i)=>{const v=vals[i]?.trim().replace(/"/g,'')||'';const n=parseFloat(v);edaData[h].push(isNaN(n)?v:n);});});
+    edaCols=headers;activeSample=input.files[0].name;
+    const sel=document.getElementById('edaCol');sel.innerHTML=edaCols.map(c=>`<option>${c}</option>`).join('');
+    showEdaSummary();drawEDA();
+  };
+  reader.readAsText(input.files[0]);
 }
 
-window.showEdaTab=(tab,btn)=>{
-  ['preview','stats','missing','dist','framing'].forEach(t=>document.getElementById('edatab-'+t).style.display='none');
-  document.getElementById('edatab-'+tab).style.display='block';
-  document.querySelectorAll('#edaTabs .btn').forEach(b=>b.className='btn btn-ghost btn-sm');
-  btn.className='btn btn-primary btn-sm';
-  if(tab==='dist') drawDistribution();
-};
-
-loadSample('titanic');
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+renderBizTable();
+renderCityTable();
+setTimeout(()=>{
+  initCityCanvas();initOppCanvas();
+  renderViralBars();drawContentTime();
+  renderSkillBars();initSalaryTable();initSalaryCanvas();
+  showPath('ai',document.querySelector('#ll-path .fpill'));
+  drawHealthScatter();renderHealthBars();drawWellnessRadar();
+  loadSample('business');
+},200);
+window.addEventListener('resize',()=>{
+  initCityCanvas();initOppCanvas();drawContentTime();drawBizScatter(BIZ_DATA);
+  initSalaryCanvas();drawHealthScatter();drawWellnessRadar();drawEDA();
+});
 </script>
 </body>
 </html>
