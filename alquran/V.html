@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Al Quran Tematik</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a1a;color:#e0e0ff;min-height:100vh;overflow-x:hidden}
+#sky{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at bottom,#1b2735 0%,#090a0f 100%)}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d) infinite ease-in-out}
+@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:1}}
+.container{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:1.5rem 1rem 4rem}
+h1{text-align:center;font-size:1.8rem;font-weight:800;margin:1rem 0 1.5rem;letter-spacing:1px}
+h2{text-align:center;font-size:1.25rem;font-weight:700;margin:1.2rem 0 .6rem}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:.9rem 1rem;margin:.5rem 0;cursor:pointer;transition:.2s;backdrop-filter:blur(4px)}
+.card:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45);transform:translateY(-1px)}
+.ayah{font-size:.95rem;padding:.55rem .8rem;margin:.3rem 0;background:rgba(0,0,0,.25);border-radius:8px;border-left:3px solid #7eb8ff;cursor:pointer}
+.ayah:hover{background:rgba(126,184,255,.15)}
+.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);align-items:center;justify-content:center;padding:1rem}
+.modal.show{display:flex}
+.modal-box{background:#12122a;border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:1.4rem;max-width:480px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-box h3{margin-bottom:.6rem;color:#7eb8ff}
+.ar{font-size:1.35rem;direction:rtl;line-height:1.9;margin:.8rem 0;text-align:right}
+.id{font-size:.95rem;line-height:1.5;opacity:.9;margin:.5rem 0 1rem}
+.btns{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+button{background:#1e3a5f;color:#fff;border:none;padding:.55rem 1rem;border-radius:8px;cursor:pointer;font-size:.9rem}
+button:hover{background:#2a5080}
+.close{float:right;background:transparent;color:#aaa;font-size:1.4rem;padding:0 .4rem}
+a.link{color:#7eb8ff;font-size:.85rem}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+<div class="container">
+  <h1>Al Quran Tematik</h1>
+  <div id="themes"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <button class="close" onclick="closeModal()">×</button>
+    <h3 id="m-title"></h3>
+    <div class="ar" id="m-ar"></div>
+    <div class="id" id="m-id">Memuat...</div>
+    <a class="link" id="m-link" target="_blank" rel="noopener">Buka di quran.com</a>
+    <div class="btns">
+      <button onclick="playAudio()">▶ Ngaji</button>
+      <button onclick="playTTS()">▶ Arti (ID)</button>
+      <button onclick="stopAll()">⏹ Stop</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SURAH = ["","Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa","Al-Ma'idah","Al-An'am","Al-A'raf","Al-Anfal","At-Taubah","Yunus","Hud","Yusuf","Ar-Ra'd","Ibrahim","Al-Hijr","An-Nahl","Al-Isra","Al-Kahf","Maryam","Ta-Ha","Al-Anbiya","Al-Hajj","Al-Mu'minun","An-Nur","Al-Furqan","Ash-Shu'ara","An-Naml","Al-Qasas","Al-'Ankabut","Ar-Rum","Luqman","As-Sajdah","Al-Ahzab","Saba","Fatir","Ya-Sin","As-Saffat","Sad","Az-Zumar","Ghafir","Fussilat","Ash-Shura","Az-Zukhruf","Ad-Dukhan","Al-Jathiyah","Al-Ahqaf","Muhammad","Al-Fath","Al-Hujurat","Qaf","Adh-Dhariyat","At-Tur","An-Najm","Al-Qamar","Ar-Rahman","Al-Waqi'ah","Al-Hadid","Al-Mujadilah","Al-Hashr","Al-Mumtahanah","As-Saff","Al-Jumu'ah","Al-Munafiqun","At-Taghabun","At-Talaq","At-Tahrim","Al-Mulk","Al-Qalam","Al-Haqqah","Al-Ma'arij","Nuh","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyamah","Al-Insan","Al-Mursalat","An-Naba","An-Nazi'at","'Abasa","At-Takwir","Al-Infitar","Al-Mutaffifin","Al-Inshiqaq","Al-Buruj","At-Tariq","Al-A'la","Al-Ghashiyah","Al-Fajr","Al-Balad","Ash-Shams","Al-Lail","Ad-Duha","Ash-Sharh","At-Tin","Al-'Alaq","Al-Qadr","Al-Bayyinah","Az-Zalzalah","Al-'Adiyat","Al-Qari'ah","At-Takathur","Al-'Asr","Al-Humazah","Al-Fil","Quraysh","Al-Ma'un","Al-Kawthar","Al-Kafirun","An-Nasr","Al-Masad","Al-Ikhlas","Al-Falaq","An-Nas"];
+
+const THEMES = {
+  "Alam Semesta": [[2,164],[3,190],[21,30],[21,33],[36,38],[36,40],[41,11],[51,47],[55,5],[55,7],[67,3],[88,17]],
+  "Tauhid": [[2,163],[2,255],[3,2],[3,18],[4,48],[6,102],[16,36],[17,42],[21,22],[37,35],[39,3],[112,1]],
+  "Iman kepada Allah": [[2,255],[3,2],[6,59],[6,103],[13,9],[20,8],[24,35],[59,22],[59,23],[59,24]],
+  "Hari Akhir": [[3,185],[6,31],[22,7],[36,51],[39,68],[50,20],[69,13],[75,6],[78,17],[81,1],[82,1],[99,1]],
+  "Akhlak Mulia": [[2,177],[3,134],[4,36],[16,90],[17,23],[25,63],[31,18],[49,11],[49,12],[68,4]],
+  "Sabar": [[2,153],[2,155],[3,200],[16,126],[18,28],[31,17],[39,10],[42,43],[70,5],[103,3]],
+  "Shalat": [[2,3],[2,43],[4,103],[11,114],[17,78],[20,14],[29,45],[70,34],[108,2]],
+  "Zakat & Infak": [[2,43],[2,110],[2,261],[2,267],[9,60],[9,103],[57,18],[64,16]],
+  "Kisah Nabi": [[2,124],[7,59],[7,65],[7,73],[7,85],[11,25],[19,16],[21,51],[21,83],[27,15],[37,102]],
+  "Surga": [[2,25],[3,133],[9,72],[13,23],[18,31],[36,55],[47,15],[55,46],[56,12],[76,5]],
+  "Neraka": [[2,24],[3,131],[4,56],[14,16],[18,29],[22,19],[39,16],[67,6],[74,26],[104,4]],
+  "Ilmu": [[2,31],[2,269],[3,18],[16,78],[20,114],[35,28],[39,9],[58,11],[96,1],[96,5]]
+};
+
+let current = null, audio = null;
+
+function makeStars(){
+  const sky = document.getElementById('sky');
+  for(let i=0;i<120;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.width = s.style.height = (Math.random()*2+1)+'px';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    s.style.setProperty('--d', (Math.random()*4+2)+'s');
+    sky.appendChild(s);
+  }
+}
+
+function render(){
+  const el = document.getElementById('themes');
+  Object.keys(THEMES).forEach(tema=>{
+    const h2 = document.createElement('h2');
+    h2.textContent = tema;
+    el.appendChild(h2);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<div class="list" id="list-${tema.replace(/\s/g,'')}"></div>`;
+    el.appendChild(card);
+    const list = card.querySelector('.list');
+    THEMES[tema].forEach(([s,a])=>{
+      const d = document.createElement('div');
+      d.className = 'ayah';
+      d.textContent = `${SURAH[s]} (${s}. ${a})`;
+      d.onclick = () => openAyah(s,a);
+      list.appendChild(d);
+    });
+  });
+}
+
+async function openAyah(s,a){
+  current = {s,a};
+  document.getElementById('m-title').textContent = `${SURAH[s]} ${s}:${a}`;
+  document.getElementById('m-ar').textContent = '...';
+  document.getElementById('m-id').textContent = 'Memuat arti...';
+  document.getElementById('m-link').href = `https://quran.com/${s}/${a}`;
+  document.getElementById('modal').classList.add('show');
+  try{
+    const [ar,id] = await Promise.all([
+      fetch(`https://api.alquran.cloud/v1/ayah/${s}:${a}/quran-uthmani`).then(r=>r.json()),
+      fetch(`https://api.alquran.cloud/v1/ayah/${s}:${a}/id.indonesian`).then(r=>r.json())
+    ]);
+    document.getElementById('m-ar').textContent = ar.data.text;
+    document.getElementById('m-id').textContent = id.data.text;
+  }catch(e){
+    document.getElementById('m-id').textContent = 'Gagal memuat. Cek koneksi.';
+  }
+}
+
+function playAudio(){
+  if(!current) return;
+  stopAll();
+  const pad = n => String(n).padStart(3,'0');
+  audio = new Audio(`https://everyayah.com/data/Alafasy_128kbps/${pad(current.s)}${pad(current.a)}.mp3`);
+  audio.play().catch(()=>{});
+}
+
+function playTTS(){
+  if(!current) return;
+  stopAll();
+  const t = document.getElementById('m-id').textContent;
+  if(!t || t.startsWith('Memuat') || t.startsWith('Gagal')) return;
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang = 'id-ID';
+  u.rate = 0.9;
+  speechSynthesis.speak(u);
+}
+
+function stopAll(){
+  if(audio){audio.pause();audio=null}
+  speechSynthesis.cancel();
+}
+
+function closeModal(){
+  stopAll();
+  document.getElementById('modal').classList.remove('show');
+}
+
+makeStars();
+render();
+</script>
+</body>
+</html>
