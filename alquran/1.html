@@ -1,0 +1,582 @@
+  <!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Al Quran Tematik</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020617;--card:rgba(15,23,42,.82);--accent:#38bdf8;--yellow:#facc15}
+.light{--bg:#f1f5f9;--card:rgba(255,255,255,.94);--accent:#0284c7;--yellow:#ca8a04}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:#e2e8f0;margin:0;overflow:hidden;height:100dvh}
+.light body{color:#0f172a}
+#sky{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at bottom,#0f172a 0%,#020617 85%)}
+.light #sky{opacity:.08}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d) infinite ease-in-out}
+@keyframes twinkle{0%,100%{opacity:.12}50%{opacity:.9}}
+.glass{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(148,163,184,.14)}
+.font-ar{font-family:Amiri,serif}
+.feed{height:100dvh;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.feed::-webkit-scrollbar{display:none}
+.card{height:100dvh;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;padding:1rem 1.1rem;position:relative}
+.word{display:inline;transition:color .15s,background .15s;border-radius:3px;padding:0 1px}
+.word.active{color:var(--yellow);background:rgba(250,204,21,.18)}
+.progress-wrap{position:relative;height:28px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.progress-track{height:4px;width:100%;background:rgba(148,163,184,.25);border-radius:99px;overflow:visible;position:relative}
+.progress-fill{height:100%;background:var(--accent);width:0%;border-radius:99px;pointer-events:none}
+.progress-thumb{position:absolute;top:50%;width:14px;height:14px;background:#fff;border:2px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(0,0,0,.35);pointer-events:none;left:0%;transition:none}
+.btn{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:transform .12s}
+.btn:active{transform:scale(.9)}
+.mode-btn{padding:.38rem .9rem;border-radius:999px;font-size:.72rem;font-weight:600;transition:all .2s}
+.mode-active{background:var(--accent);color:#fff}
+.reciter-btn{padding:.55rem .85rem;border-radius:12px;font-size:.8rem;text-align:left;transition:all .15s}
+.quick-reciter{padding:.32rem .7rem;border-radius:999px;font-size:.68rem;font-weight:500;background:rgba(56,189,248,.14);color:#7dd3fc;border:1px solid rgba(56,189,248,.28)}
+.loader{width:22px;height:22px;border:2.5px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .65s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{font-size:.7rem;opacity:.55;text-align:center;min-height:1rem}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<!-- HOME -->
+<div id="home" class="relative z-10 h-full flex flex-col max-w-lg mx-auto">
+  <header class="flex items-center justify-between px-4 pt-5 pb-3">
+    <div>
+      <h1 class="text-xl font-bold tracking-tight">Al Quran Tematik</h1>
+      <p class="text-xs opacity-50">Shorts • Belajar</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="toggleAmbient()" id="ambBtn" class="w-9 h-9 rounded-full glass text-sm" title="Ambient">♪</button>
+      <button onclick="openSettings()" class="w-9 h-9 rounded-full glass text-sm" title="Settings">⚙</button>
+    </div>
+  </header>
+  <div class="px-4 mb-3">
+    <input id="search" type="search" placeholder="Cari tema..." class="w-full glass rounded-2xl px-4 py-2.5 text-sm outline-none" autocomplete="off">
+  </div>
+  <div id="themes" class="flex-1 overflow-y-auto px-4 pb-10 space-y-2"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSettings()"></div>
+  <div class="relative glass w-full max-w-sm rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
+    <h3 class="font-bold text-lg mb-1">Pengaturan</h3>
+    <p class="text-xs opacity-50 mb-4">Hanya 3 qori stabil (CDN 200 OK)</p>
+    <p class="text-xs opacity-60 mb-2">Qari</p>
+    <div class="grid grid-cols-1 gap-1.5 mb-5" id="reciterList"></div>
+    <p class="text-xs opacity-60 mb-2">Bahasa Arti (TTS)</p>
+    <div class="flex gap-2 mb-5">
+      <button onclick="setLang('id')" id="lang-id" class="mode-btn flex-1 glass mode-active">Indonesia</button>
+      <button onclick="setLang('en')" id="lang-en" class="mode-btn flex-1 glass">English</button>
+    </div>
+    <p class="text-xs opacity-60 mb-2">Tema</p>
+    <div class="flex gap-2 mb-6">
+      <button onclick="setTheme('dark')" class="mode-btn flex-1 glass">Night</button>
+      <button onclick="setTheme('light')" class="mode-btn flex-1 glass">Day</button>
+    </div>
+    <button onclick="closeSettings()" class="w-full py-3 rounded-2xl bg-sky-500 text-white font-medium text-sm">Selesai</button>
+  </div>
+</div>
+
+<!-- QUICK RECITER -->
+<div id="quickReciter" class="fixed inset-0 z-50 hidden flex items-end justify-center">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeQuickReciter()"></div>
+  <div class="relative glass w-full max-w-md rounded-t-3xl p-5 pb-8">
+    <div class="w-10 h-1 bg-slate-500/40 rounded-full mx-auto mb-4"></div>
+    <p class="text-sm font-semibold mb-3 text-center">Pilih Qari</p>
+    <div class="grid grid-cols-1 gap-1.5" id="quickReciterList"></div>
+  </div>
+</div>
+
+<!-- FEED -->
+<div id="feedWrap" class="fixed inset-0 z-30 hidden">
+  <div id="feed" class="feed relative z-10"></div>
+  <button onclick="closeFeed()" class="absolute top-4 left-4 z-50 w-10 h-10 rounded-full glass flex items-center justify-center text-lg">←</button>
+</div>
+
+<audio id="ambient" loop preload="none" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8b5f1e4e0c.mp3?filename=soft-ambient-112191.mp3"></audio>
+
+<script>
+/* ========== DATA ========== */
+const SURAH=["","Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa","Al-Ma'idah","Al-An'am","Al-A'raf","Al-Anfal","At-Taubah","Yunus","Hud","Yusuf","Ar-Ra'd","Ibrahim","Al-Hijr","An-Nahl","Al-Isra","Al-Kahf","Maryam","Ta-Ha","Al-Anbiya","Al-Hajj","Al-Mu'minun","An-Nur","Al-Furqan","Ash-Shu'ara","An-Naml","Al-Qasas","Al-'Ankabut","Ar-Rum","Luqman","As-Sajdah","Al-Ahzab","Saba","Fatir","Ya-Sin","As-Saffat","Sad","Az-Zumar","Ghafir","Fussilat","Ash-Shura","Az-Zukhruf","Ad-Dukhan","Al-Jathiyah","Al-Ahqaf","Muhammad","Al-Fath","Al-Hujurat","Qaf","Adh-Dhariyat","At-Tur","An-Najm","Al-Qamar","Ar-Rahman","Al-Waqi'ah","Al-Hadid","Al-Mujadilah","Al-Hashr","Al-Mumtahanah","As-Saff","Al-Jumu'ah","Al-Munafiqun","At-Taghabun","At-Talaq","At-Tahrim","Al-Mulk","Al-Qalam","Al-Haqqah","Al-Ma'arij","Nuh","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyamah","Al-Insan","Al-Mursalat","An-Naba","An-Nazi'at","'Abasa","At-Takwir","Al-Infitar","Al-Mutaffifin","Al-Inshiqaq","Al-Buruj","At-Tariq","Al-A'la","Al-Ghashiyah","Al-Fajr","Al-Balad","Ash-Shams","Al-Lail","Ad-Duha","Ash-Sharh","At-Tin","Al-'Alaq","Al-Qadr","Al-Bayyinah","Az-Zalzalah","Al-'Adiyat","Al-Qari'ah","At-Takathur","Al-'Asr","Al-Humazah","Al-Fil","Quraysh","Al-Ma'un","Al-Kawthar","Al-Kafirun","An-Nasr","Al-Masad","Al-Ikhlas","Al-Falaq","An-Nas"];
+
+const THEMES={
+"Al Quran":[[2,2],[2,23],[3,3],[3,7],[3,50],[3,108],[4,82],[5,64],[6,91],[6,92],[6,106],[6,155],[6,157],[7,2],[7,3],[7,196],[10,15],[10,37],[12,3],[15,9],[17,88],[17,105],[17,107],[18,1],[18,27],[20,4],[25,6],[26,192],[26,192],[26,193],[26,194],[26,210],[26,211],[28,3],[28,44],[28,45],[28,53],[28,85],[28,86],[29,48],[29,51],[32,2],[35,31],[36,5],[37,37],[38,8],[38,29],[38,88],[39,1],[39,23],[39,41],[39,55],[40,2],[41,2]],
+"Keutamaan Kalam Allah":[[2,2],[3,3],[3,138],[4,59],[4,82],[5,15],[5,16],[5,47],[5,49],[5,50],[6,66],[6,92],[6,155],[6,157],[7,52],[7,203],[8,24],[9,33],[10,1],[10,37],[10,57],[10,58],[11,1],[11,17],[12,1],[12,3],[12,104],[12,111],[13,31],[14,1],[15,1],[15,87],[16,44],[16,64],[16,89],[16,102],[17,9],[17,41],[17,78],[17,82],[17,89],[17,105],[18,1],[20,99],[21,50],[24,46],[25,1],[26,2],[26,210],[26,211],[27,1],[27,2],[27,6],[27,76],[27,77],[28,2],[28,49],[28,53],[28,86],[29,49],[29,51],[31,32],[31,3],[34,50],[35,31],[36,2],[36,4],[36,69],[37,37],[38,1],[38,29],[38,67],[38,87],[38,88],[39,23],[39,27],[39,28],[39,33],[41,3],[41,41],[41,44],[41,53],[42,17],[42,52],[43,2],[43,4],[43,43],[44,2],[45,6],[45,20],[46,30],[47,2],[50,1],[52,2],[56,76],[56,77],[56,78],[56,79],[59,21],[61,9],[62,2],[64,8],[65,11],[68,52],[69,40],[69,48],[60,51],[72,2],[72,13],[74,54],[76,29],[77,50],[8011,],[80,12],[81,25],[81,27],[85,21],[85,22],[86,13],[98,2],[98,3]],
+"Keutamaan berpegang teguh pada Al Quran":[[2,2],[2,121],[6,155],[10,58],[11,17],[14,1],[16,89],[27,2],[27,77],[31,3],[39,23],[42,52],[43,43],[45,20],[46,30],[81,28]],
+"Berpegang teguh pada Kitab Dan Sunnah":[[2,44],[3,32],[3,101],[3,132],[4,13],[4,59],[4,65],[4,69],[6,155],[8,1],[8,24],[8,46],[9,71],[18,110],[24,48],[24,51],[24,52],[24,54],[24,56],[32,2],[33,36],[43,43],[47,33],[58,13],[64,12],[81,28]],
+"Perintah untuk berpikir dan menghayati":[[2,44],[2,118],[2,219],[2,266],[3,65],[3,118],[4,82],[6,32],[6,50],[6,80],[6,151],[7,3],[7,26],[7,169],[7,176],[7,179],[7,184],[7,185],[8,57],[10,3],[10,5],[10,16],[10,101],[11,24],[11,30],[11,51],[12,2],[12,109],[13,19],[14,5],[16,17],[16,44],[16,48],[16,69],[16,79],[16,90],[21,10],[21,30],[21,67],[26,68],[23,85],[24,43],[26,7],[27,60],[27,61],[27,62],[27,63],[27,64],[27,86],[28,60],[28,71],[28,72],[29,19],[30,8],[30,21],[30,28],[30,42],[30,50],[31,29],[32,26],[32,27],[33,9],[34,9],[35,3],[35,27],[35,44],[36,62],[36,68],[36,73],[36,77],[37,73],[37,138],[37,155],[39,21],[43,3],[45,4],[45,20],[45,23],[47,24],[51,21],[52,36],[54,15],[54,17],[54,22],[54,40],[56,58],[56,62],[56,68],[59,2],[59,21],[63,7],[67,3],[67,19],[80,24],[86,5],[88,17]],
+"Ilmu dan keutamaan":[[2,247],[2,269],[3,7],[4,162],[12,68],[17,107],[22,54],[27,15],[27,40],[27,52],[28,14],[28,80],[29,41],[29,43],[29,49],[29,64],[30,56],[34,6],[39,9],[55,4],[58,11],[96,4]],
+"Menuntut ilmu dan mengamalkannya":[[2,151],[3,137],[5,63],[7,175],[7,176],[9,122],[17,12],[18,66],[20,114],[62,5]],
+"Akhlak Ihsan":[[2,83],[2,112],[2,195],[2,229],[3,134],[3,148],[3,172],[4,125],[4,128],[5,85],[5,93],[7,56],[7,161],[9,91],[9,100],[9,120],[10,26],[11,115],[12,22],[12,78],[12,90],[16,30],[16,90],[16,128],[17,7],[22,37],[28,14],[28,77],[29,69],[31,3],[31,22],[37,80],[37,105],[37,110],[37,121],[37,131],[39,10],[39,34],[46,15],[51,16],[53,31],[55,60],[77,44]],
+"Amanat":[[2,283],[3,75],[4,2],[4,58],[8,27],[23,8],[70,32]],
+"Etika terhadap Allah":[[2,32],[7,143],[11,45],[11,47],[18,24],[20,12],[20,84],[26,51],[27,19]],
+"Istiqomah (teguh pendirian)":[[10,89],[11,112],[41,6],[42,15],[45,18],[46,13]],
+"Taubat":[[11,75],[11,88],[13,27],[30,31],[30,33],[31,15],[34,9],[38,34],[39,8],[39,17],[39,54],[40,13],[42,10],[42,13],[50,8],[50,33]],
+"Silahturahmi":[[4,1],[8,75],[13,21],[13,25],[30,38],[33,6],[60,8]],
+"Berbuat Baik":[[2,224],[3,92],[3,134]],
+"Taqwa":[[2,103],[2,189],[2,197],[2,203],[2,224],[3,15],[3,76],[3,120],[3,123],[3,133],[3,172],[3,179],[3,186],[3,198],[3,200],[4,77],[4,128],[4,129],[5,35],[5,65],[5,93],[5,100],[6,155],[7,26],[7,35],[7,96],[7,156],[7,169],[7,201],[8,29],[9,4],[9,7],[9,36],[9,108],[12,57],[12,90],[12,109],[16,31],[16,128],[19,63],[24,52],[27,53],[36,45],[39,61],[39,73],[43,67],[49,13],[65,2],[65,3],[65,4],[65,5],[92,5]],
+"Menyeru pada ketakwaan":[[2,48],[2,194],[2,196],[2,197],[2,203],[2,223],[2,231],[2,233],[2,241],[2,278],[2,281],[2,282],[2,283],[3,50],[3,102],[3,123],[3,125],[3,130],[3,200],[4,1],[4,9],[4,128],[4,129],[4,131],[5,2],[5,4],[5,7],[5,8],[5,11],[5,35],[5,57],[5,88],[5,93],[5,96],[5,100],[5,108],[5,112],[6,51],[6,69],[6,72],[6,153],[6,155],[7,128],[8,69],[9,119],[22,1],[30,31],[33,55],[33,70],[36,45],[37,124],[39,10],[39,16],[49,12],[57,28],[58,9],[59,7],[59,18],[60,11],[64,16],[65,1],[65,10],[71,3]],
+"Jalan Taqwa":[[2,21],[2,63],[2,177],[2,179],[2,183],[2,187],[7,171]],
+"Tawakal":[[3,122],[3,159],[3,160],[3,173],[4,81],[5,11],[5,23],[7,89],[8,2],[8,49],[8,61],[9,51],[9,59],[9,129],[10,71],[10,85],[11,56],[11,88],[11,123],[12,67],[13,30],[14,11],[14,12],[16,42],[16,99],[25,58],[26,217],[27,79],[29,59],[33,3],[33,48],[39,38],[42,10],[42,36],[58,10],[60,4],[64,13],[65,3],[67,29],[73,9]],
+"Alam Semesta":[[2,164],[3,190],[21,30],[21,33],[36,38],[36,40],[41,11],[51,47],[55,5],[55,7],[67,3],[88,17]],
+"Tauhid":[[2,163],[2,255],[3,2],[3,18],[4,48],[6,102],[16,36],[17,42],[21,22],[37,35],[39,3],[112,1]],
+"Iman kepada Allah":[[2,255],[3,2],[6,59],[6,103],[13,9],[20,8],[24,35],[59,22],[59,23],[59,24]],
+"Hari Akhir":[[3,185],[6,31],[22,7],[36,51],[39,68],[50,20],[69,13],[75,6],[78,17],[81,1],[82,1],[99,1]],
+"Akhlak Mulia":[[2,177],[3,134],[4,36],[16,90],[17,23],[25,63],[31,18],[49,11],[49,12],[68,4]],
+"Sabar":[[2,153],[2,155],[3,200],[16,126],[18,28],[31,17],[39,10],[42,43],[70,5],[103,3]],
+"Shalat":[[2,3],[2,43],[4,103],[11,114],[17,78],[20,14],[29,45],[70,34],[108,2]],
+"Zakat & Infak":[[2,43],[2,110],[2,261],[2,267],[9,60],[9,103],[57,18],[64,16]],
+"Kisah Nabi":[[2,124],[7,59],[7,65],[7,73],[7,85],[11,25],[19,16],[21,51],[21,83],[27,15],[37,102]],
+"Surga":[[2,25],[3,133],[9,72],[13,23],[18,31],[36,55],[47,15],[55,46],[56,12],[76,5]],
+"Neraka":[[2,24],[3,131],[4,56],[14,16],[18,29],[22,19],[39,16],[67,6],[74,26],[104,4]],
+"Ilmu":[[2,31],[2,269],[3,18],[16,78],[20,114],[35,28],[39,9],[58,11],[96,1],[96,5]]
+};
+
+/* Only 3 reciters confirmed 200 OK on cdn.islamic.network */
+const RECITERS=[
+  {id:'ar.alafasy', name:'Mishary Alafasy'},
+  {id:'ar.husary', name:'Mahmoud Al-Husary'},
+  {id:'ar.shaatree', name:'Abu Bakr Ash-Shaatree'}
+];
+
+const AYAH_LEN=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+
+function globalAyah(s,a){let n=0;for(let i=1;i<s;i++)n+=AYAH_LEN[i-1];return n+a}
+function getReciterName(){return RECITERS.find(r=>r.id===reciter)?.name||'Alafasy'}
+function fmt(s){if(!isFinite(s))return'0:00';const m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec}
+
+/* ========== STATE ========== */
+let list=[], idx=0, audio=null, isPlaying=false, mode='ngaji', lang='id', reciter='ar.alafasy';
+let observer=null, seeking=false, autoSequence=true; // ngaji then arti
+
+/* ========== UI HELPERS ========== */
+function stars(){
+  const s=document.getElementById('sky');
+  for(let i=0;i<50;i++){
+    const d=document.createElement('div');d.className='star';
+    const sz=.5+Math.random()*1.4;
+    d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s`;
+    s.appendChild(d);
+  }
+}
+
+function render(q=''){
+  const el=document.getElementById('themes');el.innerHTML='';
+  const f=q.toLowerCase().trim();
+  Object.entries(THEMES).forEach(([tema,ayahs])=>{
+    if(f && !tema.toLowerCase().includes(f)) return;
+    const b=document.createElement('button');
+    b.className='glass w-full rounded-2xl px-4 py-3.5 text-left flex justify-between items-center active:scale-[.98] transition';
+    b.innerHTML=`<span class="font-medium text-sm">${tema}</span><span class="text-xs opacity-40">${ayahs.length} ayat</span>`;
+    b.onclick=()=>openFeed(tema,ayahs);
+    el.appendChild(b);
+  });
+}
+
+function renderReciters(){
+  const el=document.getElementById('reciterList');el.innerHTML='';
+  RECITERS.forEach(r=>{
+    const b=document.createElement('button');
+    b.className=`reciter-btn glass w-full ${reciter===r.id?'mode-active':''}`;
+    b.textContent=r.name;
+    b.onclick=()=>setReciter(r.id);
+    el.appendChild(b);
+  });
+}
+
+function renderQuickReciters(){
+  const el=document.getElementById('quickReciterList');el.innerHTML='';
+  RECITERS.forEach(r=>{
+    const b=document.createElement('button');
+    b.className=`reciter-btn glass w-full ${reciter===r.id?'mode-active':''}`;
+    b.textContent=r.name;
+    b.onclick=()=>{setReciter(r.id);closeQuickReciter();if(list.length)play(idx)};
+    el.appendChild(b);
+  });
+}
+
+/* ========== FEED ========== */
+async function openFeed(tema,ayahs){
+  list=ayahs; idx=0; stopAll(); mode='ngaji'; autoSequence=true;
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('feedWrap').classList.remove('hidden');
+  const feed=document.getElementById('feed'); feed.innerHTML='';
+
+  list.forEach(([s,a],i)=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.dataset.i=i;
+    card.innerHTML=`
+<div class="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+  <p class="text-xs uppercase tracking-widest opacity-50 mb-1 text-center">${tema}</p>
+  <p class="text-sm font-semibold text-center mb-1.5 opacity-80">${SURAH[s]} • ${s}:${a}</p>
+  <div class="flex justify-center mb-3">
+    <button class="quick-reciter" onclick="openQuickReciter()">${getReciterName()} ▾</button>
+  </div>
+  <div class="font-ar text-[1.35rem] leading-[2.1] text-right mb-3 min-h-[4.2rem]" id="ar-${i}"><div class="loader"></div></div>
+  <div class="text-sm leading-relaxed opacity-85 mb-4 min-h-[3.2rem]" id="tr-${i}"><div class="loader"></div></div>
+  <div class="status" id="st-${i}"></div>
+
+  <div class="progress-wrap mt-2 mb-1" id="pw-${i}" data-i="${i}">
+    <div class="progress-track">
+      <div class="progress-fill" id="pf-${i}"></div>
+      <div class="progress-thumb" id="pt-${i}"></div>
+    </div>
+  </div>
+  <div class="flex justify-between text-xs opacity-40 mb-3 px-0.5">
+    <span id="tc-${i}">0:00</span><span id="tt-${i}">—</span>
+  </div>
+
+  <div class="flex justify-center gap-2 mb-4">
+    <button class="mode-btn glass mode-active" id="m-ngaji-${i}" onclick="setMode('ngaji',${i})">Ngaji</button>
+    <button class="mode-btn glass" id="m-arti-${i}" onclick="setMode('arti',${i})">Arti</button>
+  </div>
+  <div class="flex justify-center gap-4">
+    <button class="btn glass" onclick="restart(${i})" title="Restart">↺</button>
+    <button class="btn bg-sky-500 text-white shadow-lg shadow-sky-500/25" id="play-${i}" onclick="toggle(${i})">▶</button>
+    <button class="btn glass" onclick="next()" title="Next">⏭</button>
+  </div>
+</div>`;
+    feed.appendChild(card);
+    loadText(i,s,a);
+    bindSeek(i);
+  });
+
+  setupObserver();
+  // Auto start first card after short delay
+  setTimeout(()=>{ if(list.length) play(0); }, 450);
+}
+
+async function loadText(i,s,a){
+  const arEl=document.getElementById(`ar-${i}`);
+  const trEl=document.getElementById(`tr-${i}`);
+  const stEl=document.getElementById(`st-${i}`);
+  arEl.innerHTML='<div class="loader"></div>';
+  trEl.innerHTML='<div class="loader"></div>';
+  stEl.textContent='';
+
+  const edition = lang==='id' ? 'id.indonesian' : 'en.sahih';
+  let arText='', trText='';
+  let tries=0;
+
+  async function fetchOnce(){
+    const [arRes, trRes] = await Promise.all([
+      fetch(`https://api.alquran.cloud/v1/ayah/${s}:${a}/quran-uthmani`),
+      fetch(`https://api.alquran.cloud/v1/ayah/${s}:${a}/${edition}`)
+    ]);
+    if(!arRes.ok || !trRes.ok) throw new Error('API '+arRes.status);
+    const arJ = await arRes.json();
+    const trJ = await trRes.json();
+    if(!arJ.data?.text || !trJ.data?.text) throw new Error('Empty data');
+    return {ar: arJ.data.text, tr: trJ.data.text};
+  }
+
+  while(tries<2){
+    try{
+      const data = await fetchOnce();
+      arText=data.ar; trText=data.tr;
+      break;
+    }catch(e){
+      tries++;
+      if(tries>=2){
+        arEl.textContent='';
+        trEl.textContent='Gagal memuat. Periksa koneksi lalu buka ulang tema.';
+        stEl.textContent='Error: API / jaringan';
+        return;
+      }
+      await new Promise(r=>setTimeout(r,600));
+    }
+  }
+
+  // Render Arabic as words for progressive highlight
+  const words = arText.split(/\s+/).filter(Boolean);
+  arEl.innerHTML = words.map((w,wi)=>`<span class="word" data-w="${wi}">${w}</span>`).join(' ');
+  arEl.dataset.wordCount = words.length;
+
+  trEl.textContent = trText;
+  trEl.dataset.text = trText;
+  stEl.textContent = '';
+}
+
+/* ========== SEEK ========== */
+function bindSeek(i){
+  const wrap=document.getElementById(`pw-${i}`);
+  if(!wrap) return;
+
+  const onStart = (e)=>{
+    if(i!==idx || mode!=='ngaji' || !audio) return;
+    seeking=true;
+    seekTo(e,i);
+  };
+  const onMove = (e)=>{
+    if(!seeking || i!==idx) return;
+    seekTo(e,i);
+  };
+  const onEnd = ()=>{ seeking=false; };
+
+  wrap.addEventListener('pointerdown', onStart);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onEnd);
+  window.addEventListener('pointercancel', onEnd);
+}
+
+function seekTo(e,i){
+  if(!audio || !audio.duration) return;
+  const wrap=document.getElementById(`pw-${i}`);
+  const rect=wrap.getBoundingClientRect();
+  const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX);
+  if(clientX==null) return;
+  let pct = (clientX - rect.left) / rect.width;
+  pct = Math.max(0, Math.min(1, pct));
+  audio.currentTime = pct * audio.duration;
+  updateProgressUI(i, pct, audio.currentTime);
+}
+
+function updateProgressUI(i, pct, curTime){
+  const fill=document.getElementById(`pf-${i}`);
+  const thumb=document.getElementById(`pt-${i}`);
+  const tc=document.getElementById(`tc-${i}`);
+  if(fill) fill.style.width = (pct*100)+'%';
+  if(thumb) thumb.style.left = (pct*100)+'%';
+  if(tc) tc.textContent = fmt(curTime);
+}
+
+/* ========== PLAYBACK ========== */
+function setMode(m,i){
+  mode=m;
+  document.querySelectorAll('[id^=m-ngaji-]').forEach(b=>b.classList.toggle('mode-active', m==='ngaji'));
+  document.querySelectorAll('[id^=m-arti-]').forEach(b=>b.classList.toggle('mode-active', m==='arti'));
+  if(i===idx) play(i);
+}
+
+function play(i){
+  stopAll();
+  idx=i;
+  const [s,a]=list[i];
+  const arEl=document.getElementById(`ar-${i}`);
+  const trEl=document.getElementById(`tr-${i}`);
+  const stEl=document.getElementById(`st-${i}`);
+
+  // Wait until content ready
+  if(!arEl || arEl.querySelector('.loader') || !trEl?.dataset?.text){
+    stEl.textContent='Menunggu konten...';
+    setTimeout(()=>play(i), 400);
+    return;
+  }
+
+  if(mode==='ngaji'){
+    stEl.textContent='Ngaji...';
+    const num=globalAyah(s,a);
+    const url=`https://cdn.islamic.network/quran/audio/128/${reciter}/${num}.mp3`;
+    audio=new Audio(url);
+    audio.preload='auto';
+
+    audio.addEventListener('loadedmetadata',()=>{
+      document.getElementById(`tt-${i}`).textContent=fmt(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate',()=>{
+      if(seeking || !audio.duration) return;
+      const pct=audio.currentTime/audio.duration;
+      updateProgressUI(i, pct, audio.currentTime);
+      // Progressive word highlight (approximate sync)
+      const wc=+arEl.dataset.wordCount || 1;
+      const activeIdx=Math.min(wc-1, Math.floor(pct * wc));
+      arEl.querySelectorAll('.word').forEach((w,wi)=>{
+        w.classList.toggle('active', wi<=activeIdx);
+      });
+    });
+
+    audio.addEventListener('ended',()=>{
+      isPlaying=false;
+      updateBtn(i);
+      arEl.querySelectorAll('.word').forEach(w=>w.classList.remove('active'));
+      // Default: after ngaji → play arti
+      if(autoSequence){
+        mode='arti';
+        document.querySelectorAll('[id^=m-ngaji-]').forEach(b=>b.classList.remove('mode-active'));
+        document.querySelectorAll('[id^=m-arti-]').forEach(b=>b.classList.add('mode-active'));
+        setTimeout(()=>play(i), 500);
+      } else {
+        setTimeout(next, 600);
+      }
+    });
+
+    audio.addEventListener('error',()=>{
+      stEl.textContent='Audio gagal (CDN). Coba qori lain.';
+      isPlaying=false;
+      updateBtn(i);
+    });
+
+    audio.play().then(()=>{
+      isPlaying=true;
+      updateBtn(i);
+      stEl.textContent='';
+    }).catch(err=>{
+      stEl.textContent='Tap Play untuk memulai (browser policy)';
+      isPlaying=false;
+      updateBtn(i);
+    });
+
+  } else {
+    // ARTI (TTS)
+    stEl.textContent='Arti...';
+    const text=trEl.dataset.text || trEl.textContent;
+    if(!text || text.includes('Gagal') || text.includes('Memuat')){
+      stEl.textContent='Arti belum siap';
+      return;
+    }
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang = lang==='id' ? 'id-ID' : 'en-US';
+    u.rate = 0.92;
+    u.onstart=()=>{
+      isPlaying=true;
+      updateBtn(i);
+      trEl.classList.add('highlight');
+      stEl.textContent='';
+      // Fake progress for TTS (no exact duration)
+      let t=0;
+      const est=Math.max(4, text.length/12);
+      const iv=setInterval(()=>{
+        if(!isPlaying){clearInterval(iv);return}
+        t+=0.2;
+        const pct=Math.min(0.98, t/est);
+        updateProgressUI(i, pct, t);
+        if(t>=est) clearInterval(iv);
+      },200);
+      u._iv=iv;
+    };
+    u.onend=()=>{
+      isPlaying=false;
+      updateBtn(i);
+      trEl.classList.remove('highlight');
+      if(u._iv) clearInterval(u._iv);
+      updateProgressUI(i,1,0);
+      // After arti → next ayah
+      setTimeout(next, 700);
+    };
+    u.onerror=()=>{
+      isPlaying=false;
+      updateBtn(i);
+      stEl.textContent='TTS gagal / tidak didukung browser';
+    };
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+}
+
+function toggle(i){
+  if(i!==idx){ play(i); return; }
+  if(mode==='ngaji'){
+    if(!audio){ play(i); return; }
+    if(isPlaying){ audio.pause(); isPlaying=false; }
+    else { audio.play(); isPlaying=true; }
+    updateBtn(i);
+  } else {
+    if(isPlaying){ speechSynthesis.cancel(); isPlaying=false; updateBtn(i); }
+    else play(i);
+  }
+}
+
+function restart(i){ stopAll(); mode='ngaji'; autoSequence=true;
+  document.querySelectorAll('[id^=m-ngaji-]').forEach(b=>b.classList.add('mode-active'));
+  document.querySelectorAll('[id^=m-arti-]').forEach(b=>b.classList.remove('mode-active'));
+  play(i);
+}
+
+function next(){
+  if(idx < list.length-1){
+    const nextCard=document.querySelectorAll('.card')[idx+1];
+    if(nextCard) nextCard.scrollIntoView({behavior:'smooth'});
+  } else {
+    closeFeed();
+  }
+}
+
+function stopAll(){
+  if(audio){ audio.pause(); audio.src=''; audio=null; }
+  speechSynthesis.cancel();
+  isPlaying=false;
+  document.querySelectorAll('[id^=play-]').forEach(b=>b.textContent='▶');
+  document.querySelectorAll('.word.active').forEach(w=>w.classList.remove('active'));
+  document.querySelectorAll('.highlight').forEach(el=>el.classList.remove('highlight'));
+}
+
+function updateBtn(i){
+  const b=document.getElementById(`play-${i}`);
+  if(b) b.textContent = isPlaying ? '⏸' : '▶';
+}
+
+/* ========== OBSERVER ========== */
+function setupObserver(){
+  if(observer) observer.disconnect();
+  observer=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting && e.intersectionRatio > 0.65){
+        const i = +e.target.dataset.i;
+        if(i !== idx){
+          idx=i;
+          mode='ngaji';
+          autoSequence=true;
+          document.querySelectorAll('[id^=m-ngaji-]').forEach(b=>b.classList.add('mode-active'));
+          document.querySelectorAll('[id^=m-arti-]').forEach(b=>b.classList.remove('mode-active'));
+          play(i);
+        }
+      }
+    });
+  },{threshold:0.65});
+  document.querySelectorAll('.card').forEach(c=>observer.observe(c));
+}
+
+/* ========== SETTINGS / THEME ========== */
+function openSettings(){ renderReciters(); document.getElementById('settings').classList.remove('hidden'); }
+function closeSettings(){ document.getElementById('settings').classList.add('hidden'); }
+function openQuickReciter(){ renderQuickReciters(); document.getElementById('quickReciter').classList.remove('hidden'); }
+function closeQuickReciter(){ document.getElementById('quickReciter').classList.add('hidden'); }
+
+function setReciter(id){
+  reciter=id;
+  renderReciters();
+  document.querySelectorAll('.quick-reciter').forEach(el=>el.textContent=getReciterName()+' ▾');
+}
+
+function setLang(l){
+  lang=l;
+  document.getElementById('lang-id').classList.toggle('mode-active', l==='id');
+  document.getElementById('lang-en').classList.toggle('mode-active', l==='en');
+  if(list.length) list.forEach((_,i)=>{ const [s,a]=list[i]; loadText(i,s,a); });
+}
+
+function setTheme(t){
+  document.documentElement.classList.toggle('dark', t==='dark');
+  document.documentElement.classList.toggle('light', t==='light');
+}
+
+function toggleAmbient(){
+  const a=document.getElementById('ambient');
+  if(a.paused){ a.volume=0.15; a.play().catch(()=>{}); document.getElementById('ambBtn').classList.add('text-sky-400'); }
+  else { a.pause(); document.getElementById('ambBtn').classList.remove('text-sky-400'); }
+}
+
+function closeFeed(){
+  stopAll();
+  document.getElementById('feedWrap').classList.add('hidden');
+  document.getElementById('home').classList.remove('hidden');
+}
+
+/* ========== INIT ========== */
+document.getElementById('search').oninput = e => render(e.target.value);
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ closeFeed(); closeSettings(); closeQuickReciter(); }
+  if(e.key===' ' && list.length){ e.preventDefault(); toggle(idx); }
+});
+stars();
+render();
+</script>
+</body>
+</html>
