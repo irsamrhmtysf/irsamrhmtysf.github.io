@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Al Qur'an Tematik</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f172a;--card:rgba(15,23,42,.94);--accent:#38bdf8;--yellow:#facc15;
+  --safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);
+  --ar-size:1.38rem;--tr-size:0.9rem;
+}
+.light{--bg:#f1f5f9;--card:rgba(255,255,255,.97);--accent:#0284c7;--yellow:#ca8a04}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:#e2e8f0}
+.light body{color:#0f172a}
+#sky{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at bottom,#1e293b 0%,#0f172a 90%)}
+.light #sky{opacity:.04}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d) infinite ease-in-out}
+@keyframes twinkle{0%,100%{opacity:.08}50%{opacity:.75}}
+.glass{background:var(--card);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid rgba(148,163,184,.1)}
+.font-ar{font-family:Amiri,serif;font-size:var(--ar-size);line-height:2.05;word-break:break-word;text-align:center}
+.tr-text{font-size:var(--tr-size);line-height:1.55;word-break:break-word;text-align:center}
+.screen{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .4s ease}
+.screen.active{opacity:1;pointer-events:auto}
+.feed{flex:1;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.feed::-webkit-scrollbar{display:none}
+.card{
+  min-height:100%;height:100%;scroll-snap-align:start;scroll-snap-stop:always;
+  display:flex;flex-direction:column;
+  padding:calc(2.9rem + var(--safe-top)) 1rem calc(5.8rem + var(--safe-bot));
+  position:relative;
+}
+.card-body{
+  flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  overflow-y:auto;scrollbar-width:none;width:100%;max-width:36rem;margin:0 auto;
+}
+.card-body::-webkit-scrollbar{display:none}
+.word{display:inline;transition:color .12s,background .12s;border-radius:3px;padding:0 1px}
+.word.active{color:var(--yellow);background:rgba(250,204,21,.16)}
+
+.yt-bar{
+  position:absolute;left:0;right:0;bottom:0;z-index:25;
+  padding:0 6px calc(7px + var(--safe-bot));
+  background:linear-gradient(transparent,rgba(0,0,0,.88) 28%);
+}
+.yt-progress{position:relative;height:22px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.yt-track{height:3px;width:100%;background:rgba(255,255,255,.22);border-radius:99px;position:relative}
+.yt-fill{height:100%;background:var(--accent);width:0%;border-radius:99px;pointer-events:none}
+.yt-thumb{position:absolute;top:50%;width:11px;height:11px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0%;box-shadow:0 1px 4px rgba(0,0,0,.45);pointer-events:none}
+.yt-row{display:flex;align-items:center;justify-content:space-between;gap:1px;padding-top:1px}
+.yt-btn{
+  width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;color:#fff !important;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);
+  flex-shrink:0;transition:transform .12s;-webkit-appearance:none;appearance:none;
+}
+.yt-btn:active{transform:scale(.9)}
+.yt-play{
+  width:44px;height:44px;font-size:1.2rem;
+  background:rgba(255,255,255,.18) !important;border-color:rgba(255,255,255,.25);
+  color:#fff !important;
+}
+.yt-label{font-size:9px;font-weight:700;color:#fff !important;letter-spacing:.02em}
+
+.mode-on{background:var(--accent)!important;color:#fff!important}
+.loader{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logo-glow{text-shadow:0 0 36px rgba(56,189,248,.45)}
+.fade-up{animation:fadeUp .65s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.fade-out{animation:fadeOut .5s ease forwards}
+@keyframes fadeOut{to{opacity:0;transform:scale(.97)}}
+.op-text{transition:opacity .4s ease}
+.drawer-panel{transform:translateX(-105%);transition:transform .26s cubic-bezier(.4,0,.2,1)}
+.drawer-panel.open{transform:translateX(0)}
+.sheet{transform:translateY(110%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.sheet.open{transform:translateY(0)}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<div id="splash" class="screen active items-center justify-center">
+  <div id="splashInner" class="text-center fade-up">
+    <div class="text-6xl mb-3 logo-glow">📖</div>
+    <h1 class="text-2xl font-extrabold tracking-tight logo-glow">Al Qur'an</h1>
+    <p class="text-sm opacity-45 mt-2">Tematik</p>
+  </div>
+</div>
+
+<div id="opening" class="screen items-center justify-center px-6">
+  <div class="w-full max-w-md text-center op-text" id="opBox">
+    <p id="opLabel" class="text-xs uppercase tracking-[0.18em] opacity-50 mb-4"></p>
+    <div id="opAr" class="font-ar mb-4" style="font-size:1.55rem"></div>
+    <div id="opTr" class="tr-text opacity-80"></div>
+  </div>
+</div>
+
+<div id="main" class="screen">
+  <header class="relative z-30 flex items-center justify-center px-3 pt-[calc(0.4rem+var(--safe-top))] pb-0.5">
+    <h1 id="topTheme" class="text-[13px] font-extrabold tracking-tight truncate max-w-[85%]">Al Qur'an</h1>
+  </header>
+  <div id="feed" class="feed relative z-10"></div>
+</div>
+
+<div id="drawer" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/55 backdrop-blur-sm" onclick="closeDrawer()"></div>
+  <div id="drawerPanel" class="drawer-panel absolute top-0 left-0 bottom-0 w-[84%] max-w-xs glass overflow-y-auto flex flex-col">
+    <div class="flex items-center justify-between px-4 pt-[calc(0.85rem+var(--safe-top))] pb-3 border-b border-white/10">
+      <p class="text-sm font-bold">Menu Tema</p>
+      <button onclick="closeDrawer()" class="w-8 h-8 rounded-full flex items-center justify-center text-lg opacity-70">✕</button>
+    </div>
+    <div id="drawerList" class="flex-1 px-2 py-2 pb-[calc(1.2rem+var(--safe-bot))] space-y-0.5 overflow-y-auto"></div>
+  </div>
+</div>
+
+<div id="quickReciter" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-black/50" onclick="closeQuickReciter()"></div>
+  <div id="qoriSheet" class="sheet absolute bottom-0 left-0 right-0 glass rounded-t-3xl p-5 pb-[calc(1.4rem+var(--safe-bot))] max-w-lg mx-auto">
+    <div class="w-10 h-1 bg-slate-500/40 rounded-full mx-auto mb-4"></div>
+    <p class="text-sm font-semibold mb-3 text-center">Pilih Qari</p>
+    <div id="quickReciterList" class="space-y-1.5"></div>
+  </div>
+</div>
+
+<audio id="mainAudio" preload="auto"></audio>
+
+<script>
+const SURAH=["","Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa","Al-Ma'idah","Al-An'am","Al-A'raf","Al-Anfal","At-Taubah","Yunus","Hud","Yusuf","Ar-Ra'd","Ibrahim","Al-Hijr","An-Nahl","Al-Isra","Al-Kahf","Maryam","Ta-Ha","Al-Anbiya","Al-Hajj","Al-Mu'minun","An-Nur","Al-Furqan","Ash-Shu'ara","An-Naml","Al-Qasas","Al-'Ankabut","Ar-Rum","Luqman","As-Sajdah","Al-Ahzab","Saba","Fatir","Ya-Sin","As-Saffat","Sad","Az-Zumar","Ghafir","Fussilat","Ash-Shura","Az-Zukhruf","Ad-Dukhan","Al-Jathiyah","Al-Ahqaf","Muhammad","Al-Fath","Al-Hujurat","Qaf","Adh-Dhariyat","At-Tur","An-Najm","Al-Qamar","Ar-Rahman","Al-Waqi'ah","Al-Hadid","Al-Mujadilah","Al-Hashr","Al-Mumtahanah","As-Saff","Al-Jumu'ah","Al-Munafiqun","At-Taghabun","At-Talaq","At-Tahrim","Al-Mulk","Al-Qalam","Al-Haqqah","Al-Ma'arij","Nuh","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyamah","Al-Insan","Al-Mursalat","An-Naba","An-Nazi'at","'Abasa","At-Takwir","Al-Infitar","Al-Mutaffifin","Al-Inshiqaq","Al-Buruj","At-Tariq","Al-A'la","Al-Ghashiyah","Al-Fajr","Al-Balad","Ash-Shams","Al-Lail","Ad-Duha","Ash-Sharh","At-Tin","Al-'Alaq","Al-Qadr","Al-Bayyinah","Az-Zalzalah","Al-'Adiyat","Al-Qari'ah","At-Takathur","Al-'Asr","Al-Humazah","Al-Fil","Quraysh","Al-Ma'un","Al-Kawthar","Al-Kafirun","An-Nasr","Al-Masad","Al-Ikhlas","Al-Falaq","An-Nas"];
+const THEMES={"Alam Semesta":[[2,164],[3,190],[21,30],[21,33],[36,38],[36,40],[41,11],[51,47],[55,5],[55,7],[67,3],[88,17]],"Tauhid":[[2,163],[2,255],[3,2],[3,18],[4,48],[6,102],[16,36],[17,42],[21,22],[37,35],[39,3],[112,1]],"Iman kepada Allah":[[2,255],[3,2],[6,59],[6,103],[13,9],[20,8],[24,35],[59,22],[59,23],[59,24]],"Hari Akhir":[[3,185],[6,31],[22,7],[36,51],[39,68],[50,20],[69,13],[75,6],[78,17],[81,1],[82,1],[99,1]],"Akhlak Mulia":[[2,177],[3,134],[4,36],[16,90],[17,23],[25,63],[31,18],[49,11],[49,12],[68,4]],"Sabar":[[2,153],[2,155],[3,200],[16,126],[18,28],[31,17],[39,10],[42,43],[70,5],[103,3]],"Shalat":[[2,3],[2,43],[4,103],[11,114],[17,78],[20,14],[29,45],[70,34],[108,2]],"Zakat & Infak":[[2,43],[2,110],[2,261],[2,267],[9,60],[9,103],[57,18],[64,16]],"Kisah Nabi":[[2,124],[7,59],[7,65],[7,73],[7,85],[11,25],[19,16],[21,51],[21,83],[27,15],[37,102]],"Surga":[[2,25],[3,133],[9,72],[13,23],[18,31],[36,55],[47,15],[55,46],[56,12],[76,5]],"Neraka":[[2,24],[3,131],[4,56],[14,16],[18,29],[22,19],[39,16],[67,6],[74,26],[104,4]],"Ilmu":[[2,31],[2,269],[3,18],[16,78],[20,114],[35,28],[39,9],[58,11],[96,1],[96,5]]};
+const RECITERS=[{id:'ar.alafasy',name:'Mishary Alafasy'},{id:'ar.husary',name:'Mahmoud Al-Husary'},{id:'ar.shaatree',name:'Abu Bakr Ash-Shaatree'}];
+const AYAH_LEN=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+function globalAyah(s,a){let n=0;for(let i=1;i<s;i++)n+=AYAH_LEN[i-1];return n+a}
+
+/* Real audio sources for opening */
+const OPENING=[
+  {
+    label:"Ta'awudz",
+    ar:"أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+    id:"Aku berlindung kepada Allah dari setan yang terkutuk.",
+    en:"I seek refuge in Allah from the accursed Satan.",
+    // Real voice sources (try in order)
+    audios:[
+      "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/001.mp3",
+      "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3",
+      "https://verses.quran.com/Alafasy/mp3/001001.mp3"
+    ]
+  },
+  {
+    label:"Basmalah",
+    ar:"بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    id:"Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.",
+    en:"In the name of Allah, the Most Gracious, the Most Merciful.",
+    audios:[
+      "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3",
+      "https://verses.quran.com/Alafasy/mp3/001001.mp3"
+    ]
+  }
+];
+
+let list=[],idx=0,mode='ngaji',lang='id',reciter='ar.alafasy',currentTema='';
+let isPlaying=false,seeking=false,observer=null,opStep=0,fontPct=40;
+const audioEl=document.getElementById('mainAudio');
+const themeKeys=Object.keys(THEMES);
+
+(function(){const s=document.getElementById('sky');for(let i=0;i<32;i++){const d=document.createElement('div');d.className='star';const sz=.5+Math.random()*1.1;d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s`;s.appendChild(d)}})();
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function applyFont(){
+  const ar=1.05+(fontPct/100)*0.95;
+  const tr=0.78+(fontPct/100)*0.55;
+  document.documentElement.style.setProperty('--ar-size',ar+'rem');
+  document.documentElement.style.setProperty('--tr-size',tr+'rem');
+}
+function fontPlus(){if(fontPct<100){fontPct=Math.min(100,fontPct+8);applyFont()}}
+function fontMinus(){if(fontPct>0){fontPct=Math.max(0,fontPct-8);applyFont()}}
+
+/* ========== OPENING – real audio first ========== */
+function runOpening(){opStep=0;showScreen('opening');playOpeningStep()}
+
+function playOpeningStep(){
+  const o=OPENING[opStep];
+  const box=document.getElementById('opBox');
+  box.style.opacity='0';
+  setTimeout(()=>{
+    document.getElementById('opLabel').textContent=o.label;
+    document.getElementById('opAr').textContent=o.ar;
+    document.getElementById('opTr').textContent=lang==='id'?o.id:o.en;
+    box.style.opacity='1';
+    playRealThenMeaning(o);
+  },260);
+}
+
+function playRealThenMeaning(o){
+  stopAll();
+  let i=0;
+  function tryAudio(){
+    if(i>=o.audios.length){
+      // fallback TTS Arabic then meaning
+      const u1=new SpeechSynthesisUtterance(o.ar);
+      u1.lang='ar-SA';u1.rate=.78;
+      u1.onend=()=>speakMeaning(o);
+      u1.onerror=()=>speakMeaning(o);
+      speechSynthesis.speak(u1);
+      return;
+    }
+    const url=o.audios[i++];
+    audioEl.src=url;
+    let started=false;
+    const ready=()=>{
+      if(started)return;
+      started=true;
+      audioEl.play().then(()=>{}).catch(()=>tryAudio());
+    };
+    audioEl.oncanplay=ready;
+    audioEl.onloadeddata=ready;
+    audioEl.onended=()=>speakMeaning(o);
+    audioEl.onerror=()=>tryAudio();
+    setTimeout(()=>{if(!started)tryAudio()},2200);
+  }
+  tryAudio();
+}
+
+function speakMeaning(o){
+  const text=lang==='id'?o.id:o.en;
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=lang==='id'?'id-ID':'en-US';
+  u.rate=.92;
+  u.onend=()=>finishOpeningStep();
+  u.onerror=()=>finishOpeningStep();
+  speechSynthesis.speak(u);
+}
+
+function finishOpeningStep(){
+  document.getElementById('opBox').style.opacity='0';
+  setTimeout(()=>{
+    if(opStep<OPENING.length-1){
+      opStep++;
+      playOpeningStep();
+    } else {
+      startMainWithTheme('Neraka');
+    }
+  },360);
+}
+
+/* ========== MAIN ========== */
+function startMainWithTheme(tema){
+  showScreen('main');
+  renderDrawer();
+  openFeed(tema,THEMES[tema]||THEMES['Neraka']);
+}
+function renderDrawer(){
+  const el=document.getElementById('drawerList');el.innerHTML='';
+  themeKeys.forEach(tema=>{
+    const b=document.createElement('button');
+    b.className='w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-white/5 transition';
+    b.textContent=tema;
+    b.onclick=()=>{closeDrawer();openFeed(tema,THEMES[tema])};
+    el.appendChild(b);
+  });
+}
+function openDrawer(){
+  document.getElementById('drawer').classList.remove('hidden');
+  requestAnimationFrame(()=>document.getElementById('drawerPanel').classList.add('open'));
+}
+function closeDrawer(){
+  document.getElementById('drawerPanel').classList.remove('open');
+  setTimeout(()=>document.getElementById('drawer').classList.add('hidden'),260);
+}
+
+async function openFeed(tema,ayahs){
+  list=ayahs;idx=0;mode='ngaji';currentTema=tema;stopAll();
+  document.getElementById('topTheme').textContent=tema;
+  const feed=document.getElementById('feed');feed.innerHTML='';
+  list.forEach(([s,a],i)=>{
+    const card=document.createElement('div');
+    card.className='card';card.dataset.i=i;
+    card.innerHTML=`
+<div class="card-body">
+  <p class="text-[11px] opacity-50 mb-1.5 font-medium">${SURAH[s]} • ${s}:${a}</p>
+  <div class="font-ar mb-3 min-h-[3rem] w-full" id="ar-${i}"><div class="loader"></div></div>
+  <div class="tr-text opacity-85 min-h-[2.2rem] w-full" id="tr-${i}"><div class="loader"></div></div>
+  <p class="text-[10px] opacity-35 mt-1.5" id="st-${i}"></p>
+</div>
+<div class="yt-bar">
+  <div class="yt-progress" id="pw-${i}" data-i="${i}">
+    <div class="yt-track"><div class="yt-fill" id="pf-${i}"></div><div class="yt-thumb" id="pt-${i}"></div></div>
+  </div>
+  <div class="yt-row">
+    <button class="yt-btn" onclick="openDrawer()" title="Menu">☰</button>
+    <button class="yt-btn" onclick="toggleTheme()" title="Day/Night">◐</button>
+    <button class="yt-btn" onclick="toggleLang()" title="Bahasa"><span class="yt-label" id="langLabel">ID</span></button>
+    <button class="yt-btn" onclick="openQuickReciter()" title="Qori">🎤</button>
+    <button class="yt-btn yt-play" id="play-${i}" onclick="toggle(${i})">▶</button>
+    <button class="yt-btn" id="m-mode-${i}" onclick="toggleMode(${i})"><span class="yt-label" id="m-label-${i}">Ngaji</span></button>
+    <button class="yt-btn" onclick="fontMinus()" title="Font −">−</button>
+    <button class="yt-btn" onclick="fontPlus()" title="Font +">+</button>
+  </div>
+</div>`;
+    feed.appendChild(card);
+    loadText(i,s,a);
+    bindSeek(i);
+  });
+  setupObserver();
+  setTimeout(()=>play(0),320);
+}
+
+async function loadText(i,s,a){
+  const arEl=document.getElementById(`ar-${i}`),trEl=document.getElementById(`tr-${i}`),stEl=document.getElementById(`st-${i}`);
+  arEl.innerHTML='<div class="loader"></div>';trEl.innerHTML='<div class="loader"></div>';
+  const edition=lang==='id'?'id.indonesian':'en.sahih';
+  let tries=0;
+  while(tries<2){
+    try{
+      const [arR,trR]=await Promise.all([
+        fetch(`https://api.alquran.cloud/v1/ayah/${s}:${a}/quran-uthmani`),
+        fetch(`https://api.alquran.cloud/v1/ayah/${s}:${a}/${edition}`)
+      ]);
+      if(!arR.ok||!trR.ok)throw 0;
+      const arJ=await arR.json(),trJ=await trR.json();
+      if(!arJ.data?.text||!trJ.data?.text)throw 0;
+      const words=arJ.data.text.split(/\s+/).filter(Boolean);
+      arEl.innerHTML=words.map((w,wi)=>`<span class="word" data-w="${wi}">${w}</span>`).join(' ');
+      arEl.dataset.wc=words.length;
+      trEl.textContent=trJ.data.text;trEl.dataset.text=trJ.data.text;stEl.textContent='';
+      return;
+    }catch(e){tries++;if(tries>=2){arEl.textContent='';trEl.textContent='Gagal memuat.';stEl.textContent='Error';return}
+    await new Promise(r=>setTimeout(r,400))}
+  }
+}
+
+function bindSeek(i){
+  const wrap=document.getElementById(`pw-${i}`);if(!wrap)return;
+  const start=e=>{if(i!==idx||mode!=='ngaji'||!audioEl.duration)return;seeking=true;doSeek(e,i)};
+  const move=e=>{if(!seeking||i!==idx)return;doSeek(e,i)};
+  const end=()=>seeking=false;
+  wrap.addEventListener('pointerdown',start);
+  window.addEventListener('pointermove',move);
+  window.addEventListener('pointerup',end);
+  window.addEventListener('pointercancel',end);
+}
+function doSeek(e,i){
+  if(!audioEl.duration)return;
+  const rect=document.getElementById(`pw-${i}`).getBoundingClientRect();
+  const x=e.clientX??e.touches?.[0]?.clientX;if(x==null)return;
+  let p=Math.max(0,Math.min(1,(x-rect.left)/rect.width));
+  audioEl.currentTime=p*audioEl.duration;
+  updateProgress(i,p);
+}
+function updateProgress(i,p){
+  const f=document.getElementById(`pf-${i}`),th=document.getElementById(`pt-${i}`);
+  if(f)f.style.width=(p*100)+'%';
+  if(th)th.style.left=(p*100)+'%';
+}
+
+function toggleMode(i){
+  mode=mode==='ngaji'?'arti':'ngaji';
+  document.querySelectorAll('[id^=m-label-]').forEach(b=>b.textContent=mode==='ngaji'?'Ngaji':'Arti');
+  if(i===idx)play(i);
+}
+
+function play(i){
+  stopAll();idx=i;
+  const [s,a]=list[i];
+  const arEl=document.getElementById(`ar-${i}`),trEl=document.getElementById(`tr-${i}`),stEl=document.getElementById(`st-${i}`);
+  if(!arEl||arEl.querySelector('.loader')||!trEl?.dataset?.text){
+    stEl.textContent='Menunggu...';setTimeout(()=>play(i),280);return;
+  }
+  document.querySelectorAll('[id^=m-label-]').forEach(b=>b.textContent=mode==='ngaji'?'Ngaji':'Arti');
+
+  if(mode==='ngaji'){
+    stEl.textContent='';
+    audioEl.src=`https://cdn.islamic.network/quran/audio/128/${reciter}/${globalAyah(s,a)}.mp3`;
+    audioEl.ontimeupdate=()=>{
+      if(seeking||!audioEl.duration)return;
+      const p=audioEl.currentTime/audioEl.duration;
+      updateProgress(i,p);
+      const wc=+arEl.dataset.wc||1;
+      const ai=Math.min(wc-1,Math.floor(p*wc));
+      arEl.querySelectorAll('.word').forEach((w,wi)=>w.classList.toggle('active',wi<=ai));
+    };
+    audioEl.onended=()=>{
+      isPlaying=false;updateBtn(i);
+      arEl.querySelectorAll('.word').forEach(w=>w.classList.remove('active'));
+      mode='arti';
+      document.querySelectorAll('[id^=m-label-]').forEach(b=>b.textContent='Arti');
+      setTimeout(()=>play(i),280);
+    };
+    audioEl.onerror=()=>{stEl.textContent='Audio gagal';isPlaying=false;updateBtn(i)};
+    audioEl.play().then(()=>{
+      isPlaying=true;updateBtn(i);
+      setupMediaSession(currentTema+` · ${SURAH[s]} ${s}:${a}`,trEl.dataset.text||'');
+    }).catch(()=>{stEl.textContent='Tap ▶';isPlaying=false;updateBtn(i)});
+  } else {
+    const text=trEl.dataset.text;if(!text)return;
+    stEl.textContent='Arti';
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=lang==='id'?'id-ID':'en-US';u.rate=.92;
+    let t0=0,est=Math.max(5,text.length/11),iv=null;
+    u.onstart=()=>{
+      isPlaying=true;updateBtn(i);trEl.style.color='var(--yellow)';
+      iv=setInterval(()=>{
+        if(!isPlaying){clearInterval(iv);return}
+        t0+=.25;updateProgress(i,Math.min(.98,t0/est));
+      },250);
+    };
+    u.onend=()=>{
+      isPlaying=false;updateBtn(i);trEl.style.color='';
+      if(iv)clearInterval(iv);updateProgress(i,1);
+      setTimeout(next,400);
+    };
+    speechSynthesis.speak(u);
+  }
+}
+
+function toggle(i){
+  if(i!==idx){play(i);return}
+  if(mode==='ngaji'){
+    if(!audioEl.src){play(i);return}
+    if(isPlaying){audioEl.pause();isPlaying=false}else{audioEl.play();isPlaying=true}
+    updateBtn(i);
+  } else {
+    if(isPlaying){speechSynthesis.cancel();isPlaying=false;updateBtn(i)}
+    else play(i);
+  }
+}
+function next(){if(idx<list.length-1)document.querySelectorAll('.card')[idx+1]?.scrollIntoView({behavior:'smooth'})}
+function stopAll(){
+  audioEl.pause();audioEl.removeAttribute('src');audioEl.load();
+  speechSynthesis.cancel();isPlaying=false;
+  document.querySelectorAll('[id^=play-]').forEach(b=>b.textContent='▶');
+  document.querySelectorAll('.word.active').forEach(w=>w.classList.remove('active'));
+  document.querySelectorAll('[id^=pf-]').forEach(el=>el.style.width='0%');
+  document.querySelectorAll('[id^=pt-]').forEach(el=>el.style.left='0%');
+}
+function updateBtn(i){const b=document.getElementById(`play-${i}`);if(b)b.textContent=isPlaying?'⏸':'▶'}
+
+function setupObserver(){
+  if(observer)observer.disconnect();
+  observer=new IntersectionObserver(ents=>{
+    ents.forEach(e=>{
+      if(e.isIntersecting&&e.intersectionRatio>.55){
+        const i=+e.target.dataset.i;
+        if(i!==idx){
+          idx=i;mode='ngaji';
+          document.querySelectorAll('[id^=m-label-]').forEach(b=>b.textContent='Ngaji');
+          play(i);
+        }
+      }
+    });
+  },{threshold:.55});
+  document.querySelectorAll('.card').forEach(c=>observer.observe(c));
+}
+
+function setupMediaSession(title,artist){
+  if(!('mediaSession' in navigator))return;
+  navigator.mediaSession.metadata=new MediaMetadata({title:title||"Al Qur'an",artist:(artist||'').slice(0,80),album:"Al Qur'an Tematik"});
+  navigator.mediaSession.setActionHandler('play',()=>{if(list.length)toggle(idx)});
+  navigator.mediaSession.setActionHandler('pause',()=>{if(list.length)toggle(idx)});
+  navigator.mediaSession.setActionHandler('nexttrack',()=>next());
+}
+
+function toggleLang(){
+  lang=lang==='id'?'en':'id';
+  document.querySelectorAll('#langLabel').forEach(el=>el.textContent=lang==='id'?'ID':'EN');
+  if(list.length)list.forEach((_,i)=>{const[s,a]=list[i];loadText(i,s,a)});
+}
+function toggleTheme(){
+  const isDark=document.documentElement.classList.contains('dark');
+  document.documentElement.classList.toggle('dark',!isDark);
+  document.documentElement.classList.toggle('light',isDark);
+}
+function openQuickReciter(){
+  const el=document.getElementById('quickReciterList');el.innerHTML='';
+  RECITERS.forEach(r=>{
+    const b=document.createElement('button');
+    b.className=`w-full text-left px-4 py-3 rounded-xl text-sm glass ${reciter===r.id?'mode-on':''}`;
+    b.textContent=r.name;
+    b.onclick=()=>{reciter=r.id;closeQuickReciter();if(list.length)play(idx)};
+    el.appendChild(b);
+  });
+  document.getElementById('quickReciter').classList.remove('hidden');
+  requestAnimationFrame(()=>document.getElementById('qoriSheet').classList.add('open'));
+}
+function closeQuickReciter(){
+  document.getElementById('qoriSheet').classList.remove('open');
+  setTimeout(()=>document.getElementById('quickReciter').classList.add('hidden'),280);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeDrawer();closeQuickReciter()}
+  if(e.key===' '&&list.length){e.preventDefault();toggle(idx)}
+});
+
+applyFont();
+setTimeout(()=>{
+  document.getElementById('splashInner').classList.add('fade-out');
+  setTimeout(()=>{
+    document.getElementById('splash').classList.remove('active');
+    runOpening();
+  },450);
+},1000);
+</script>
+</body>
+</html>
