@@ -15,7 +15,7 @@ body{background:#0a0c12;color:#d0d8e4;font-family:system-ui,-apple-system,sans-s
 .badge{background:#ff1744;color:#fff;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:4px}
 .wrap{max-width:920px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:12px}
 .cam{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-select{flex:1;min-width:120px;background:#151a24;color:#d0d8e4;border:1px solid #2a3344;border-radius:6px;padding:8px 10px;font-size:.85rem}
+select{flex:1;min-width:130px;background:#151a24;color:#d0d8e4;border:1px solid #2a3344;border-radius:6px;padding:8px 10px;font-size:.82rem}
 .thresh{display:flex;align-items:center;gap:6px;font-size:.75rem;color:#8a94a4}
 .thresh input[type=range]{width:90px;accent-color:#00d4ff}
 .thresh span{min-width:32px;color:#00d4ff;font-weight:600}
@@ -35,7 +35,7 @@ canvas{pointer-events:none}
 .total .box .num{font-size:1.25rem}
 .report{background:#0c1810;border:1px solid #1a3a28;border-radius:6px;padding:10px;font-size:.8rem;line-height:1.45;margin-top:8px}
 .report b{color:#00e676}
-.log{background:#0a0d12;border-radius:6px;padding:8px;font-size:.7rem;color:#6a9;font-family:monospace;max-height:90px;overflow-y:auto;margin-top:8px;line-height:1.5}
+.log{background:#000;border:1px solid #0a3;border-radius:4px;padding:8px;font-size:.68rem;color:#0f0;font-family:"Courier New",Consolas,monospace;max-height:110px;overflow-y:auto;margin-top:8px;line-height:1.55;text-shadow:0 0 4px #0f05}
 </style>
 </head>
 <body>
@@ -61,9 +61,11 @@ canvas{pointer-events:none}
       <option value="https://matanya.batam.go.id/cctv/delta2/stream.m3u8">Delta Villa 2</option>
     </select>
     <select id="modelSel" onchange="changeModel()">
-      <option value="lite_mobilenet_v2" selected>Fast (default)</option>
-      <option value="mobilenet_v2">Small</option>
-      <option value="mobilenet_v2">Big</option>
+      <option value="lite_mobilenet_v2" selected>Fast (lite_mobilenet_v2)</option>
+      <option value="mobilenet_v2">Balanced (mobilenet_v2)</option>
+      <option value="lite_mobilenet_v2">Speed Priority (lite)</option>
+      <option value="mobilenet_v2">Accuracy Priority (v2)</option>
+      <option value="mobilenet_v2">Standard COCO-SSD</option>
     </select>
     <div class="thresh">Conf <input type="range" id="conf" min="20" max="70" value="35" oninput="updateConf(this.value)"><span id="confVal">0.35</span></div>
   </div>
@@ -93,7 +95,7 @@ canvas{pointer-events:none}
     </div>
 
     <div class="report" id="rep"><b>Analysis:</b> Waiting...</div>
-    <div class="log" id="log">System starting...</div>
+    <div class="log" id="log">> SYSTEM ONLINE_</div>
   </div>
 </div>
 
@@ -108,27 +110,40 @@ var frameSkip = 0;
 var prevTracks = [];
 var totals = { car: 0, bus: 0, truck: 0, motor: 0 };
 var confThreshold = 0.35;
-var currentModel = "lite_mobilenet_v2";
 var classMap = {
-  car: "car",
-  bus: "bus",
-  truck: "truck",
-  motorcycle: "motor",
-  bicycle: "motor"
+  car: "car", bus: "bus", truck: "truck",
+  motorcycle: "motor", bicycle: "motor"
 };
+
+// Click sound
+var audioCtx = null;
+function clickSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = 800;
+    o.type = "square";
+    g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    o.start(audioCtx.currentTime);
+    o.stop(audioCtx.currentTime + 0.08);
+  } catch (e) {}
+}
 
 function log(msg) {
   var el = document.getElementById("log");
   var t = new Date().toLocaleTimeString();
-  el.innerHTML = t + " | " + msg + "<br>" + el.innerHTML;
-  // keep short
-  if (el.innerHTML.length > 600) el.innerHTML = el.innerHTML.slice(0, 600);
+  el.innerHTML = "> [" + t + "] " + msg + "<br>" + el.innerHTML;
+  if (el.innerHTML.length > 700) el.innerHTML = el.innerHTML.slice(0, 700);
 }
 
 function updateConf(v) {
+  clickSound();
   confThreshold = parseInt(v, 10) / 100;
   document.getElementById("confVal").textContent = confThreshold.toFixed(2);
-  log("Confidence set to " + confThreshold.toFixed(2));
+  log("CONFIDENCE → " + confThreshold.toFixed(2));
 }
 
 function resetCounts() {
@@ -145,7 +160,7 @@ function resetCounts() {
   document.getElementById("dens").className = "dens d3";
   document.getElementById("dens").textContent = "NORMAL";
   document.getElementById("rep").innerHTML = "<b>Analysis:</b> Reset.";
-  log("Counts reset to zero");
+  log("COUNTS RESET TO ZERO");
 }
 
 function setDensity(n) {
@@ -195,20 +210,17 @@ function matchTracks(curr) {
 async function detectLoop() {
   if (!running || !model) return;
   if (video.readyState < 2) { requestAnimationFrame(detectLoop); return; }
-
   frameSkip++;
   if (frameSkip < 2) { requestAnimationFrame(detectLoop); return; }
   frameSkip = 0;
 
   var w = video.videoWidth, h = video.videoHeight;
   if (!w || !h) { requestAnimationFrame(detectLoop); return; }
-
   canvas.width = w; canvas.height = h;
 
   try {
     var preds = await model.detect(video, 20);
     ctx.clearRect(0, 0, w, h);
-
     var rt = { car: 0, bus: 0, truck: 0, motor: 0 };
     var tracks = [];
 
@@ -217,11 +229,9 @@ async function detectLoop() {
       if (p.score < confThreshold) continue;
       var key = classMap[p.class];
       if (!key) continue;
-
       rt[key]++;
       var x = p.bbox[0], y = p.bbox[1], bw = p.bbox[2], bh = p.bbox[3];
       tracks.push({ x: x + bw / 2, y: y + bh / 2, k: key });
-
       var col = key === "car" ? "#00d4ff" : key === "bus" ? "#d500f9" : key === "truck" ? "#ff1744" : "#ffea00";
       ctx.strokeStyle = col; ctx.lineWidth = 2;
       ctx.strokeRect(x, y, bw, bh);
@@ -234,7 +244,6 @@ async function detectLoop() {
     totals.truck += added.truck; totals.motor += added.motor;
 
     var totalNow = rt.car + rt.bus + rt.truck + rt.motor;
-
     document.getElementById("r-car").textContent = rt.car;
     document.getElementById("r-bus").textContent = rt.bus;
     document.getElementById("r-truck").textContent = rt.truck;
@@ -247,16 +256,15 @@ async function detectLoop() {
     var dens = setDensity(totalNow);
     setReport(dens, rt);
   } catch (err) {
-    log("Detect error: " + (err.message || "unknown"));
+    log("DETECT ERROR: " + (err.message || "unknown"));
   }
-
   requestAnimationFrame(detectLoop);
 }
 
 function startDetection() {
   if (model && video.readyState >= 2 && !running) {
     running = true;
-    log("Detection loop started");
+    log("DETECTION LOOP STARTED");
     detectLoop();
   }
 }
@@ -269,66 +277,68 @@ function destroyStream() {
 function loadStream(url) {
   destroyStream();
   resetCounts();
-  log("Connecting to stream...");
-
+  log("CONNECTING STREAM...");
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({ enableWorker: true, lowLatencyMode: true, maxBufferLength: 8 });
     hls.loadSource(url);
     hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, function () {
       video.play().catch(function () {});
-      log("Stream connected & playing");
+      log("STREAM CONNECTED & PLAYING");
       setTimeout(startDetection, 600);
     });
     hls.on(Hls.Events.ERROR, function (evt, data) {
-      if (data.fatal) log("Stream fatal error: " + data.type);
+      if (data.fatal) log("STREAM ERROR: " + data.type);
     });
   } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
     video.src = url;
     video.play().catch(function () {});
-    log("Stream connected (native HLS)");
+    log("STREAM CONNECTED (NATIVE)");
     setTimeout(startDetection, 600);
   } else {
-    log("HLS not supported on this browser");
+    log("HLS NOT SUPPORTED");
   }
 }
 
 function switchCam() {
-  log("Camera switched → reset counts");
+  clickSound();
+  log("CAMERA SWITCH → RESET");
   loadStream(document.getElementById("cam").value);
 }
 
 async function changeModel() {
+  clickSound();
   var base = document.getElementById("modelSel").value;
-  currentModel = base;
+  var name = document.getElementById("modelSel").options[document.getElementById("modelSel").selectedIndex].text;
   running = false;
   model = null;
-  log("Loading model: " + base + " ...");
+  log("LOADING MODEL: " + name);
   try {
     model = await cocoSsd.load({ base: base });
-    log("Model loaded: " + base);
+    log("MODEL READY: " + name);
     startDetection();
   } catch (e) {
-    log("Model load failed: " + (e.message || "error"));
+    log("MODEL FAILED: " + (e.message || "error"));
   }
 }
 
 async function loadModel() {
-  log("Loading default model (Fast / lite_mobilenet_v2)...");
+  log("LOADING DEFAULT: Fast (lite_mobilenet_v2)");
   try {
     model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
-    log("Default model ready (Fast)");
+    log("MODEL READY: Fast (lite_mobilenet_v2)");
     startDetection();
   } catch (e) {
-    log("Model failed: " + (e.message || "error"));
+    log("MODEL FAILED");
   }
 }
 
 video.addEventListener("playing", function () {
-  log("Video playing event");
+  log("VIDEO PLAYING");
   setTimeout(startDetection, 400);
 });
 
+log("SYSTEM ONLINE");
 loadStream("https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8");
 loadModel();
 </script>
