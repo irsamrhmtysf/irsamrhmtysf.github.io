@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Batam AI Vision *</title>
+<title>Batam AI Vision</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
@@ -86,7 +86,7 @@ canvas{pointer-events:none}
       <div class="box"><div class="num" id="t-motor" style="color:#ffea00">0</div><div class="lab">Motor</div></div>
     </div>
 
-    <div class="report" id="rep"><b>Analysis:</b> Waiting for stream & model...</div>
+    <div class="report" id="rep"><b>Analysis:</b> Waiting...</div>
     <div class="status" id="st">Initializing...</div>
   </div>
 </div>
@@ -111,6 +111,22 @@ var classMap = {
 
 function setStatus(msg) {
   document.getElementById("st").textContent = msg;
+}
+
+function resetCounts() {
+  totals = { car: 0, bus: 0, truck: 0, motor: 0 };
+  prevTracks = [];
+  document.getElementById("r-car").textContent = "0";
+  document.getElementById("r-bus").textContent = "0";
+  document.getElementById("r-truck").textContent = "0";
+  document.getElementById("r-motor").textContent = "0";
+  document.getElementById("t-car").textContent = "0";
+  document.getElementById("t-bus").textContent = "0";
+  document.getElementById("t-truck").textContent = "0";
+  document.getElementById("t-motor").textContent = "0";
+  document.getElementById("dens").className = "dens d3";
+  document.getElementById("dens").textContent = "NORMAL";
+  document.getElementById("rep").innerHTML = "<b>Analysis:</b> Reset. Waiting for objects...";
 }
 
 function setDensity(n) {
@@ -143,7 +159,7 @@ function matchTracks(curr) {
   for (var i = 0; i < prevTracks.length; i++) used.push(false);
 
   for (var i = 0; i < curr.length; i++) {
-    var best = 70;
+    var best = 80;
     var bestIdx = -1;
     for (var j = 0; j < prevTracks.length; j++) {
       if (used[j] || prevTracks[j].k !== curr[i].k) continue;
@@ -191,7 +207,7 @@ async function detectLoop() {
   canvas.height = h;
 
   try {
-    var preds = await model.detect(video, 15);
+    var preds = await model.detect(video, 20);
     ctx.clearRect(0, 0, w, h);
 
     var rt = { car: 0, bus: 0, truck: 0, motor: 0 };
@@ -199,7 +215,7 @@ async function detectLoop() {
 
     for (var i = 0; i < preds.length; i++) {
       var p = preds[i];
-      if (p.score < 0.4) continue;
+      if (p.score < 0.35) continue;  // lower threshold for better recall
       var key = classMap[p.class];
       if (!key) continue;
 
@@ -244,7 +260,7 @@ async function detectLoop() {
     setReport(dens, rt);
     setStatus("Live • " + totalNow + " objects • " + dens);
   } catch (err) {
-    setStatus("Detect error: " + (err.message || "unknown"));
+    setStatus("Detect error");
   }
 
   requestAnimationFrame(detectLoop);
@@ -264,25 +280,25 @@ function destroyStream() {
     hls = null;
   }
   running = false;
-  prevTracks = [];
 }
 
 function loadStream(url) {
   destroyStream();
+  resetCounts();
   setStatus("Connecting stream...");
 
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({
       enableWorker: true,
       lowLatencyMode: true,
-      maxBufferLength: 6
+      maxBufferLength: 8
     });
     hls.loadSource(url);
     hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, function () {
       video.play().catch(function () {});
       setStatus("Stream ready");
-      startDetection();
+      setTimeout(startDetection, 800);
     });
     hls.on(Hls.Events.ERROR, function (evt, data) {
       if (data.fatal) setStatus("Stream error");
@@ -290,8 +306,8 @@ function loadStream(url) {
   } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
     video.src = url;
     video.play().catch(function () {});
-    setStatus("Stream ready (native)");
-    startDetection();
+    setStatus("Stream ready");
+    setTimeout(startDetection, 800);
   } else {
     setStatus("HLS not supported");
   }
@@ -308,18 +324,22 @@ function loadUrl() {
 }
 
 async function loadModel() {
-  setStatus("Loading COCO-SSD model...");
+  setStatus("Loading model...");
   try {
     model = await cocoSsd.load({ base: "mobilenet_v2" });
     setStatus("Model ready");
     startDetection();
   } catch (e) {
-    setStatus("Model failed: " + (e.message || "error"));
+    setStatus("Model failed");
   }
 }
 
-video.addEventListener("playing", startDetection);
-video.addEventListener("loadeddata", startDetection);
+video.addEventListener("playing", function () {
+  setTimeout(startDetection, 500);
+});
+video.addEventListener("loadeddata", function () {
+  setTimeout(startDetection, 500);
+});
 
 loadStream("https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8");
 loadModel();
