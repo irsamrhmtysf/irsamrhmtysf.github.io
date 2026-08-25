@@ -1,61 +1,57 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Batam AI Traffic Vision</title>
+<title>Realtime CCTV CV - Batam</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-:root{--bg:#0b0e14;--card:#12161f;--bd:#1e2533;--acc:#00c2ff;--g:#00e676;--o:#ff9100;--r:#ff1744}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:#c8d0dc;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;min-height:100vh}
-.top{background:#0d111a;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd)}
-.top h1{font-size:.95rem;font-weight:700;color:var(--acc)}
-.live{background:var(--r);color:#fff;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:3px}
-.main{display:grid;grid-template-columns:1fr;gap:10px;padding:10px;max-width:1200px;margin:0 auto}
-@media(min-width:860px){.main{grid-template-columns:1.35fr 1fr}}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px}
-.cam{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
-select,input{background:#0d111a;color:#c8d0dc;border:1px solid #2a3344;border-radius:5px;padding:6px 8px;font-size:.78rem;flex:1;min-width:110px}
-button{background:var(--acc);color:#000;border:none;padding:6px 10px;border-radius:5px;font-weight:600;cursor:pointer;font-size:.78rem}
-.vbox{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden}
-video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+body{background:#0a0a0f;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow-x:hidden;min-height:100vh}
+.header{padding:10px 14px;background:linear-gradient(90deg,#111,#1a1a2e);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222;flex-wrap:wrap;gap:8px}
+.header h1{font-size:1rem;font-weight:600;color:#00d4ff}
+.badge{background:#e11;color:#fff;font-size:.65rem;padding:2px 7px;border-radius:4px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.main{display:flex;flex-direction:column;gap:10px;padding:10px;max-width:1100px;margin:0 auto}
+.video-wrap{position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+video,canvas{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
 canvas{pointer-events:none}
-.dens{text-align:center;padding:7px;border-radius:5px;font-weight:700;font-size:.95rem;margin-bottom:8px}
-.d1{background:#0a2f1a;color:var(--g)}.d2{background:#0d3b1f;color:#69f0ae}.d3{background:#1a2a3a;color:var(--acc)}
-.d4{background:#3a2a0a;color:var(--o)}.d5{background:#3a0a0a;color:var(--r)}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.item{background:#0d111a;border:1px solid var(--bd);border-radius:5px;padding:8px 4px;text-align:center}
-.item .n{font-size:1.35rem;font-weight:700;line-height:1.1}
-.item .l{font-size:.62rem;color:#7a8494;margin-top:2px}
-.ttl{font-size:.68rem;color:#6a7484;text-transform:uppercase;letter-spacing:.4px;margin:8px 0 5px;font-weight:600}
-.chart-box{height:110px;margin-top:4px}
-.dec{background:#0c1810;border:1px solid #1a3a28;border-radius:5px;padding:8px;font-size:.75rem;line-height:1.4;margin-top:8px}
-.dec b{color:var(--g)}
-.st{font-size:.68rem;color:#5a6474;margin-top:6px}
-.run{font-size:.72rem;color:#8a94a4;text-align:center;margin-top:6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+@media(min-width:500px){.stats{grid-template-columns:repeat(6,1fr)}}
+.stat{background:#16161f;border:1px solid #2a2a3a;border-radius:8px;padding:8px 4px;text-align:center}
+.stat .num{font-size:1.5rem;font-weight:700;color:#00d4ff;line-height:1.1}
+.stat .label{font-size:.68rem;color:#888;margin-top:1px}
+.select-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+select,input[type=text]{background:#1a1a25;color:#eee;border:1px solid #333;border-radius:6px;padding:8px 10px;font-size:.85rem;flex:1;min-width:140px}
+button{background:#00d4ff;color:#000;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem;white-space:nowrap}
+button.secondary{background:#2a2a3a;color:#ccc}
+.status{font-size:.75rem;color:#888}
+.log{background:#111;border-radius:6px;padding:8px;font-size:.7rem;max-height:90px;overflow-y:auto;color:#6a6;font-family:monospace}
 </style>
 </head>
 <body>
-<div class="top">
-  <h1>BATAM AI TRAFFIC VISION.</h1>
-  <span class="live">LIVE</span>
+<div class="header">
+  <h1>Batam CCTV Vision</h1>
+  <span class="badge">LIVE</span>
 </div>
-
 <div class="main">
-  <div class="card">
-    <div class="cam">
-      <select id="camSelect" onchange="changeCam()">
-        <option value="https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8">Simp. Kuda 1</option>
-        <option value="https://matanya.batam.go.id/cctv/atap/stream.m3u8">Atap Walikota</option>
-        <option value="https://matanya.batam.go.id/cctv/casablanca2/stream.m3u8">Casablanca</option>
-        <option value="https://matanya.batam.go.id/cctv/matakucing1/stream.m3u8">Mata Kucing 1</option>
-        <option value="https://matanya.batam.go.id/cctv/pasarjodoh2/stream.m3u8">Pasar Jodoh 2</option>
-        <option value="https://matanya.batam.go.id/cctv/madanipancuran/stream.m3u8">Bundaran Madani</option>
-        <option value="https://matanya.batam.go.id/cctv/madaniseipanas/stream.m3u8">Madani S.Panas</option>
-        <option value="https://matanya.batam.go.id/cctv/batuaji/stream.m3u8">SP Batu Aji</option>
-        <option value="https://matanya.batam.go.id/cctv/gerutara/stream.m3u8">Gerb. Utara</opt
+  <div class="select-row">
+    <select id="camSelect" onchange="changeCam()">
+      <option value="https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8">Simp. Kuda 1</option>
+      <option value="https://matanya.batam.go.id/cctv/atap/stream.m3u8">Atap Kantor Walikota</option>
+      <option value="https://matanya.batam.go.id/cctv/casablanca2/stream.m3u8">Simp. Casablanca</option>
+      <option value="https://matanya.batam.go.id/cctv/matakucing1/stream.m3u8">Mata Kucing 1</option>
+      <option value="https://matanya.batam.go.id/cctv/pasarjodoh2/stream.m3u8">Pasar Jodoh 2</option>
+      <option value="https://matanya.batam.go.id/cctv/madanipancuran/stream.m3u8">Bundaran Madani</option>
+      <option value="https://matanya.batam.go.id/cctv/madaniseipanas/stream.m3u8">Madani Arah S.Panas</option>
+      <option value="https://matanya.batam.go.id/cctv/batuaji/stream.m3u8">SP Batu Aji</option>
+      <option value="https://matanya.batam.go.id/cctv/gerutara/stream.m3u8">Gerb. Utara Engku Putri</option>
+      <option value="https://matanya.batam.go.id/cctv/southgate/stream.m3u8">Gerb. Selatan Engku Putri</option>
+      <option value="https://matanya.batam.go.id/cctv/kejaksaanbi/stream.m3u8">Kejaksaan BI</option>
+      <option value="https://matanya.batam.go.id/cctv/punggur1/stream.m3u8">Pelabuhan Punggur</option>
+      <option value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">Pelabuhan Sekupang</option>
+      <option value="https://matanya.batam.go.id/cctv/delta2/stream.m3u8">Delta Villa 2</option>
+      <option value="https://matanya.batam.go.id/cctv/sambau2/
 ... 
