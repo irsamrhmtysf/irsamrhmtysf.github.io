@@ -15,7 +15,7 @@ body{background:#0a0c12;color:#d0d8e4;font-family:system-ui,-apple-system,sans-s
 .badge{background:#ff1744;color:#fff;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:4px}
 .wrap{max-width:920px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:12px}
 .cam{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-select{flex:1;min-width:130px;background:#151a24;color:#d0d8e4;border:1px solid #2a3344;border-radius:6px;padding:8px 10px;font-size:.82rem}
+select{flex:1;min-width:140px;background:#151a24;color:#d0d8e4;border:1px solid #2a3344;border-radius:6px;padding:8px 10px;font-size:.82rem}
 .thresh{display:flex;align-items:center;gap:6px;font-size:.75rem;color:#8a94a4}
 .thresh input[type=range]{width:90px;accent-color:#00d4ff}
 .thresh span{min-width:32px;color:#00d4ff;font-weight:600}
@@ -48,26 +48,37 @@ canvas{pointer-events:none}
   <div class="cam">
     <select id="cam" onchange="switchCam()">
       <option value="https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8">Simp. Kuda 1</option>
-      <option value="https://matanya.batam.go.id/cctv/atap/stream.m3u8">Atap Walikota</option>
+      <option value="https://matanya.batam.go.id/cctv/simpkuda2/stream.m3u8">Simp. Kuda 2</option>
+      <option value="https://matanya.batam.go.id/cctv/atap/stream.m3u8">Alun-Alun Engku Putri</option>
+      <option value="https://matanya.batam.go.id/cctv/gerselatan/stream.m3u8">Engku Putri Selatan</option>
+      <option value="https://matanya.batam.go.id/cctv/gerutara/stream.m3u8">Engku Putri Utara</option>
+      <option value="https://matanya.batam.go.id/cctv/madani1/stream.m3u8">Madani arah Ocarina</option>
+      <option value="https://matanya.batam.go.id/cctv/madanipancuran/stream.m3u8">Bundaran Madani</option>
       <option value="https://matanya.batam.go.id/cctv/casablanca2/stream.m3u8">Casablanca</option>
       <option value="https://matanya.batam.go.id/cctv/matakucing1/stream.m3u8">Mata Kucing 1</option>
+      <option value="https://matanya.batam.go.id/cctv/matakucing2/stream.m3u8">Mata Kucing 2</option>
+      <option value="https://matanya.batam.go.id/cctv/pasarjodoh1/stream.m3u8">Pasar Jodoh 1</option>
       <option value="https://matanya.batam.go.id/cctv/pasarjodoh2/stream.m3u8">Pasar Jodoh 2</option>
-      <option value="https://matanya.batam.go.id/cctv/madanipancuran/stream.m3u8">Bundaran Madani</option>
       <option value="https://matanya.batam.go.id/cctv/batuaji/stream.m3u8">SP Batu Aji</option>
-      <option value="https://matanya.batam.go.id/cctv/gerutara/stream.m3u8">Gerb. Utara</option>
-      <option value="https://matanya.batam.go.id/cctv/southgate/stream.m3u8">Gerb. Selatan</option>
-      <option value="https://matanya.batam.go.id/cctv/punggur1/stream.m3u8">Pel. Punggur</option>
       <option value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">Pel. Sekupang</option>
+      <option value="https://matanya.batam.go.id/cctv/punggur1/stream.m3u8">Pel. Punggur</option>
+      <option value="https://matanya.batam.go.id/cctv/danganom1/stream.m3u8">Dang Anom 1</option>
+      <option value="https://matanya.batam.go.id/cctv/danganom2/stream.m3u8">Dang Anom 2</option>
+      <option value="https://matanya.batam.go.id/cctv/pura1/stream.m3u8">Pura Sei Ladi 1</option>
+      <option value="https://matanya.batam.go.id/cctv/pura2/stream.m3u8">Pura Sei Ladi 2</option>
+      <option value="https://matanya.batam.go.id/cctv/seiladi1/stream.m3u8">Sei Ladi 1</option>
+      <option value="https://matanya.batam.go.id/cctv/seiladi2/stream.m3u8">Sei Ladi 2</option>
+      <option value="https://matanya.batam.go.id/cctv/seiladi3/stream.m3u8">Sei Ladi 3</option>
+      <option value="https://matanya.batam.go.id/cctv/southlink1/stream.m3u8">Tanjakan Southlink 1</option>
+      <option value="https://matanya.batam.go.id/cctv/southlink2/stream.m3u8">Tanjakan Southlink 2</option>
+      <option value="https://matanya.batam.go.id/cctv/southgate/stream.m3u8">Gerb. Selatan</option>
       <option value="https://matanya.batam.go.id/cctv/delta2/stream.m3u8">Delta Villa 2</option>
     </select>
     <select id="modelSel" onchange="changeModel()">
-      <option value="lite_mobilenet_v2" selected>Fast (lite_mobilenet_v2)</option>
-      <option value="mobilenet_v2">Balanced (mobilenet_v2)</option>
-      <option value="lite_mobilenet_v2">Speed Priority (lite)</option>
-      <option value="mobilenet_v2">Accuracy Priority (v2)</option>
-      <option value="mobilenet_v2">Standard COCO-SSD</option>
+      <option value="mobilenet_v2" selected>Best Accuracy (mobilenet_v2)</option>
+      <option value="lite_mobilenet_v2">Fast (lite_mobilenet_v2)</option>
     </select>
-    <div class="thresh">Conf <input type="range" id="conf" min="20" max="70" value="35" oninput="updateConf(this.value)"><span id="confVal">0.35</span></div>
+    <div class="thresh">Conf <input type="range" id="conf" min="15" max="60" value="25" oninput="updateConf(this.value)"><span id="confVal">0.25</span></div>
   </div>
 
   <div class="video">
@@ -109,13 +120,15 @@ var hls = null;
 var frameSkip = 0;
 var prevTracks = [];
 var totals = { car: 0, bus: 0, truck: 0, motor: 0 };
-var confThreshold = 0.35;
+var confThreshold = 0.25;
 var classMap = {
-  car: "car", bus: "bus", truck: "truck",
-  motorcycle: "motor", bicycle: "motor"
+  car: "car",
+  bus: "bus",
+  truck: "truck",
+  motorcycle: "motor",
+  bicycle: "motor"
 };
 
-// Click sound
 var audioCtx = null;
 function clickSound() {
   try {
@@ -123,12 +136,10 @@ function clickSound() {
     var o = audioCtx.createOscillator();
     var g = audioCtx.createGain();
     o.connect(g); g.connect(audioCtx.destination);
-    o.frequency.value = 800;
-    o.type = "square";
+    o.frequency.value = 800; o.type = "square";
     g.gain.setValueAtTime(0.08, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-    o.start(audioCtx.currentTime);
-    o.stop(audioCtx.currentTime + 0.08);
+    o.start(audioCtx.currentTime); o.stop(audioCtx.currentTime + 0.08);
   } catch (e) {}
 }
 
@@ -149,14 +160,9 @@ function updateConf(v) {
 function resetCounts() {
   totals = { car: 0, bus: 0, truck: 0, motor: 0 };
   prevTracks = [];
-  document.getElementById("r-car").textContent = "0";
-  document.getElementById("r-bus").textContent = "0";
-  document.getElementById("r-truck").textContent = "0";
-  document.getElementById("r-motor").textContent = "0";
-  document.getElementById("t-car").textContent = "0";
-  document.getElementById("t-bus").textContent = "0";
-  document.getElementById("t-truck").textContent = "0";
-  document.getElementById("t-motor").textContent = "0";
+  ["r-car","r-bus","r-truck","r-motor","t-car","t-bus","t-truck","t-motor"].forEach(function(id) {
+    document.getElementById(id).textContent = "0";
+  });
   document.getElementById("dens").className = "dens d3";
   document.getElementById("dens").textContent = "NORMAL";
   document.getElementById("rep").innerHTML = "<b>Analysis:</b> Reset.";
@@ -177,11 +183,9 @@ function setDensity(n) {
 }
 
 function setReport(dens, rt) {
-  var msg = "";
-  if (dens.indexOf("SANGAT PADAT") >= 0) msg = "Sangat padat. Rekomendasi: rekayasa / pengalihan.";
-  else if (dens.indexOf("PADAT") >= 0) msg = "Padat. Pantau terus.";
-  else if (dens.indexOf("NORMAL") >= 0) msg = "Normal. Kondisi aman.";
-  else msg = "Lengang. Optimal.";
+  var msg = dens.indexOf("SANGAT PADAT") >= 0 ? "Sangat padat. Rekomendasi: rekayasa / pengalihan." :
+            dens.indexOf("PADAT") >= 0 ? "Padat. Pantau terus." :
+            dens.indexOf("NORMAL") >= 0 ? "Normal. Kondisi aman." : "Lengang. Optimal.";
   document.getElementById("rep").innerHTML =
     "<b>Analysis:</b> " + msg +
     " | Car:" + rt.car + " Bus:" + rt.bus + " Truck:" + rt.truck + " Motor:" + rt.motor;
@@ -192,7 +196,7 @@ function matchTracks(curr) {
   var used = [];
   for (var i = 0; i < prevTracks.length; i++) used.push(false);
   for (var i = 0; i < curr.length; i++) {
-    var best = 80, bestIdx = -1;
+    var best = 90, bestIdx = -1;
     for (var j = 0; j < prevTracks.length; j++) {
       if (used[j] || prevTracks[j].k !== curr[i].k) continue;
       var dx = curr[i].x - prevTracks[j].x;
@@ -219,7 +223,7 @@ async function detectLoop() {
   canvas.width = w; canvas.height = h;
 
   try {
-    var preds = await model.detect(video, 20);
+    var preds = await model.detect(video, 25);
     ctx.clearRect(0, 0, w, h);
     var rt = { car: 0, bus: 0, truck: 0, motor: 0 };
     var tracks = [];
@@ -229,9 +233,11 @@ async function detectLoop() {
       if (p.score < confThreshold) continue;
       var key = classMap[p.class];
       if (!key) continue;
+
       rt[key]++;
       var x = p.bbox[0], y = p.bbox[1], bw = p.bbox[2], bh = p.bbox[3];
       tracks.push({ x: x + bw / 2, y: y + bh / 2, k: key });
+
       var col = key === "car" ? "#00d4ff" : key === "bus" ? "#d500f9" : key === "truck" ? "#ff1744" : "#ffea00";
       ctx.strokeStyle = col; ctx.lineWidth = 2;
       ctx.strokeRect(x, y, bw, bh);
@@ -247,11 +253,11 @@ async function detectLoop() {
     document.getElementById("r-car").textContent = rt.car;
     document.getElementById("r-bus").textContent = rt.bus;
     document.getElementById("r-truck").textContent = rt.truck;
-    document.getElementById("r-motor").textContent = rt.motor;
     document.getElementById("t-car").textContent = totals.car;
     document.getElementById("t-bus").textContent = totals.bus;
     document.getElementById("t-truck").textContent = totals.truck;
     document.getElementById("t-motor").textContent = totals.motor;
+    document.getElementById("r-motor").textContent = rt.motor;
 
     var dens = setDensity(totalNow);
     setReport(dens, rt);
@@ -310,23 +316,22 @@ async function changeModel() {
   clickSound();
   var base = document.getElementById("modelSel").value;
   var name = document.getElementById("modelSel").options[document.getElementById("modelSel").selectedIndex].text;
-  running = false;
-  model = null;
+  running = false; model = null;
   log("LOADING MODEL: " + name);
   try {
     model = await cocoSsd.load({ base: base });
     log("MODEL READY: " + name);
     startDetection();
   } catch (e) {
-    log("MODEL FAILED: " + (e.message || "error"));
+    log("MODEL FAILED");
   }
 }
 
 async function loadModel() {
-  log("LOADING DEFAULT: Fast (lite_mobilenet_v2)");
+  log("LOADING BEST MODEL: mobilenet_v2 (conf 0.25)");
   try {
-    model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
-    log("MODEL READY: Fast (lite_mobilenet_v2)");
+    model = await cocoSsd.load({ base: "mobilenet_v2" });
+    log("MODEL READY: Best Accuracy (mobilenet_v2)");
     startDetection();
   } catch (e) {
     log("MODEL FAILED");
