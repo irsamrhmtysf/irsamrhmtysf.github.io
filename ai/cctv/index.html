@@ -13,20 +13,20 @@
 body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:13px;min-height:100vh}
 .header{background:#0c1018;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
 .header h1{font-size:.95rem;font-weight:700;color:var(--accent)}
-.live{background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:4px;animation:pulse 1.6s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.live{background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:4px}
 .wrap{max-width:960px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px}
 .controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 select,button{background:#151a24;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.8rem}
 select{flex:1;min-width:120px}
 button{cursor:pointer;font-weight:600}
 button.active{background:var(--accent);color:#000;border-color:var(--accent)}
+button:disabled{opacity:.4;cursor:not-allowed}
 .ctrl{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);background:#151a24;border:1px solid var(--border);border-radius:6px;padding:6px 8px}
 .ctrl input[type=range]{width:70px;accent-color:var(--accent)}
 .ctrl span{color:var(--accent);font-weight:600;min-width:28px}
 .video-box{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border);touch-action:none}
 video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-#c{pointer-events:auto;cursor:crosshair}
+#c{pointer-events:auto}
 .overlay-info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-size:.65rem;padding:3px 7px;border-radius:4px;font-family:monospace;z-index:5;pointer-events:none}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:640px){.grid{grid-template-columns:1fr}}
@@ -43,6 +43,10 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain
 .report b{color:var(--green)}
 .log{background:#000;border:1px solid #0a3a1a;border-radius:4px;padding:6px;font-size:.63rem;color:#0f0;font-family:"Courier New",monospace;max-height:80px;overflow-y:auto;margin-top:8px;line-height:1.45}
 .hint{font-size:.7rem;color:var(--muted);margin-top:6px}
+.mode-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:700;margin-left:6px}
+.mode-off{background:#333;color:#aaa}
+.mode-ai{background:#0a3a2a;color:var(--green)}
+.mode-line{background:#1a2a4a;color:var(--accent)}
 </style>
 </head>
 <body>
@@ -81,32 +85,35 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain
       <option value="https://matanya.batam.go.id/cctv/southgate/stream.m3u8">Gerb. Selatan</option>
       <option value="https://matanya.batam.go.id/cctv/delta2/stream.m3u8">Delta Villa 2</option>
     </select>
-    <select id="modelSel" onchange="changeModel()">
-      <option value="lite_mobilenet_v2" selected>Fast (lite)</option>
-      <option value="mobilenet_v2">Accurate (v2)</option>
+
+    <select id="modelSel" onchange="onModelChange()">
+      <option value="off" selected>AI Off (Camera only)</option>
+      <option value="lite_mobilenet_v2">AI Fast (lite)</option>
+      <option value="mobilenet_v2">AI Accurate (v2)</option>
     </select>
-    <div class="ctrl">Conf <input type="range" id="conf" min="15" max="55" value="25" oninput="updateConf(this.value)"><span id="confVal">0.25</span></div>
-    <button id="btnLine" onclick="toggleLineMode()">Draw Line</button>
-    <button onclick="clearLine()">Clear Line</button>
+
+    <div class="ctrl">Conf <input type="range" id="conf" min="15" max="55" value="25" oninput="updateConf(this.value)" disabled><span id="confVal">0.25</span></div>
+    <button id="btnLine" onclick="toggleLineMode()" disabled>Draw Line</button>
+    <button id="btnClear" onclick="clearLine()" disabled>Clear Line</button>
   </div>
 
   <div class="video-box">
     <video id="v" muted playsinline autoplay></video>
     <canvas id="c"></canvas>
-    <div class="overlay-info" id="overlay">Loading...</div>
+    <div class="overlay-info" id="overlay">Camera only</div>
   </div>
 
   <div class="grid">
     <div class="card">
-      <div class="card-title">Realtime Now</div>
+      <div class="card-title">Realtime Detection <span id="modeBadge" class="mode-badge mode-off">OFF</span></div>
       <div class="counts">
         <div class="stat"><div class="n" id="r-car" style="color:var(--accent)">0</div><div class="l">Car</div></div>
         <div class="stat"><div class="n" id="r-bus" style="color:var(--purple)">0</div><div class="l">Bus</div></div>
         <div class="stat"><div class="n" id="r-truck" style="color:var(--red)">0</div><div class="l">Truck</div></div>
         <div class="stat"><div class="n" id="r-motor" style="color:var(--yellow)">0</div><div class="l">Motor</div></div>
       </div>
-      <div id="dens" class="density d3">NORMAL</div>
-      <div class="report" id="rep"><b>Decision:</b> Waiting...</div>
+      <div id="dens" class="density d3">—</div>
+      <div class="report" id="rep"><b>Status:</b> Camera only. Select AI model to start detection.</div>
     </div>
 
     <div class="card">
@@ -117,7 +124,7 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain
         <div class="stat"><div class="n" id="l-truck" style="color:var(--red)">0</div><div class="l">Truck</div></div>
         <div class="stat"><div class="n" id="l-motor" style="color:var(--yellow)">0</div><div class="l">Motor</div></div>
       </div>
-      <div class="hint">Tap video 2 points to draw counting line. Vehicles crossing it will be counted.</div>
+      <div class="hint" id="lineHint">Enable AI model first, then Draw Line (2 taps on video).</div>
       <div class="log" id="log">> SYSTEM BOOT_</div>
     </div>
   </div>
@@ -125,18 +132,14 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain
 
 <script>
 var video=document.getElementById("v"),canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
-var model=null,running=false,hls=null,frameSkip=0;
+var model=null,aiOn=false,running=false,hls=null,frameSkip=0;
 var confThreshold=0.25;
 var classMap={car:"car",bus:"bus",truck:"truck",motorcycle:"motor",bicycle:"motor"};
 var COLORS={car:"#00d4ff",bus:"#d500f9",truck:"#ff1744",motor:"#ffea00"};
 
-// Tracking for line crossing
-var tracks={}; // id -> {x,y,k,side,age}
-var nextId=1;
+var tracks={},nextId=1;
 var lineCounts={car:0,bus:0,truck:0,motor:0};
-var line=null; // {x1,y1,x2,y2} in canvas coords
-var lineMode=false;
-var linePoints=[];
+var line=null,lineMode=false,linePoints=[];
 
 function clickSound(){try{if(!window._ac)window._ac=new(window.AudioContext||window.webkitAudioContext);var o=window._ac.createOscillator(),g=window._ac.createGain();o.connect(g);g.connect(window._ac.destination);o.frequency.value=780;o.type="square";g.gain.setValueAtTime(0.07,window._ac.currentTime);g.gain.exponentialRampToValueAtTime(0.001,window._ac.currentTime+0.07);o.start();o.stop(window._ac.currentTime+0.07)}catch(e){}}
 
@@ -144,38 +147,80 @@ function log(m){var el=document.getElementById("log"),t=new Date().toLocaleTimeS
 
 function updateConf(v){clickSound();confThreshold=parseInt(v,10)/100;document.getElementById("confVal").textContent=confThreshold.toFixed(2);log("CONF "+confThreshold.toFixed(2))}
 
-function resetLineCounts(){lineCounts={car:0,bus:0,truck:0,motor:0};tracks={};["l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"})}
+function setUIMode(mode){
+  var badge=document.getElementById("modeBadge");
+  var conf=document.getElementById("conf");
+  var btnL=document.getElementById("btnLine");
+  var btnC=document.getElementById("btnClear");
+  if(mode==="off"){
+    badge.className="mode-badge mode-off";badge.textContent="OFF";
+    conf.disabled=true;btnL.disabled=true;btnC.disabled=true;
+    document.getElementById("overlay").textContent="Camera only";
+    document.getElementById("dens").textContent="—";
+    document.getElementById("rep").innerHTML="<b>Status:</b> Camera only. Select AI model to start detection.";
+    document.getElementById("lineHint").textContent="Enable AI model first, then Draw Line.";
+  }else{
+    badge.className="mode-badge mode-ai";badge.textContent="AI ON";
+    conf.disabled=false;btnL.disabled=false;btnC.disabled=false;
+    document.getElementById("lineHint").textContent="Draw Line: tap 2 points on video to count crossings.";
+  }
+}
 
-function resetAll(){resetLineCounts();document.getElementById("r-car").textContent="0";document.getElementById("r-bus").textContent="0";document.getElementById("r-truck").textContent="0";document.getElementById("r-motor").textContent="0";document.getElementById("dens").className="density d3";document.getElementById("dens").textContent="NORMAL";document.getElementById("rep").innerHTML="<b>Decision:</b> Reset.";log("RESET")}
+function resetCounts(){
+  lineCounts={car:0,bus:0,truck:0,motor:0};tracks={};
+  ["r-car","r-bus","r-truck","r-motor","l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"});
+  document.getElementById("dens").className="density d3";
+}
 
 function setDensity(n){var el=document.getElementById("dens"),cls,txt;if(n<=2){cls="d1";txt="SANGAT LENGANG"}else if(n<=5){cls="d2";txt="LENGANG"}else if(n<=11){cls="d3";txt="NORMAL"}else if(n<=18){cls="d4";txt="PADAT"}else{cls="d5";txt="SANGAT PADAT"}el.className="density "+cls;el.textContent=txt;return txt}
 
-function setReport(dens,rt){var msg=dens.indexOf("SANGAT PADAT")>=0?"Sangat padat → rekayasa.":dens.indexOf("PADAT")>=0?"Padat → pantau.":dens.indexOf("NORMAL")>=0?"Normal → aman.":"Lengang → optimal.";document.getElementById("rep").innerHTML="<b>Decision:</b> "+msg+" | C"+rt.car+" B"+rt.bus+" T"+rt.truck+" M"+rt.motor}
+function setReport(dens,rt){
+  var msg=dens.indexOf("SANGAT PADAT")>=0?"Sangat padat → rekayasa.":dens.indexOf("PADAT")>=0?"Padat → pantau.":dens.indexOf("NORMAL")>=0?"Normal → aman.":"Lengang → optimal.";
+  var lineTotal=lineCounts.car+lineCounts.bus+lineCounts.truck+lineCounts.motor;
+  var extra=line?" | Line crosses: "+lineTotal:"";
+  document.getElementById("rep").innerHTML="<b>Decision:</b> "+msg+" | Now C"+rt.car+" B"+rt.bus+" T"+rt.truck+" M"+rt.motor+extra;
+}
 
-// Side of line: return >0 or <0
 function sideOfLine(x,y){if(!line)return 0;return (line.x2-line.x1)*(y-line.y1)-(line.y2-line.y1)*(x-line.x1)}
 
-function toggleLineMode(){lineMode=!lineMode;linePoints=[];document.getElementById("btnLine").classList.toggle("active",lineMode);document.getElementById("btnLine").textContent=lineMode?"Drawing...":"Draw Line";log(lineMode?"LINE MODE ON - click 2 points":"LINE MODE OFF");clickSound()}
+function toggleLineMode(){
+  if(!aiOn)return;
+  lineMode=!lineMode;linePoints=[];
+  document.getElementById("btnLine").classList.toggle("active",lineMode);
+  document.getElementById("btnLine").textContent=lineMode?"Drawing...":"Draw Line";
+  log(lineMode?"LINE MODE ON":"LINE MODE OFF");clickSound();
+}
 
-function clearLine(){line=null;linePoints=[];resetLineCounts();log("LINE CLEARED");clickSound()}
+function clearLine(){line=null;linePoints=[];lineCounts={car:0,bus:0,truck:0,motor:0};tracks={};["l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"});log("LINE CLEARED");clickSound()}
 
-function getCanvasPos(e){var r=canvas.getBoundingClientRect();var clientX=e.touches?e.touches[0].clientX:e.clientX;var clientY=e.touches?e.touches[0].clientY:e.clientY;var scaleX=canvas.width/r.width,scaleY=canvas.height/r.height;return{x:(clientX-r.left)*scaleX,y:(clientY-r.top)*scaleY}}
+function getCanvasPos(e){var r=canvas.getBoundingClientRect();var cx=e.touches?e.touches[0].clientX:e.clientX;var cy=e.touches?e.touches[0].clientY:e.clientY;return{x:(cx-r.left)*(canvas.width/r.width),y:(cy-r.top)*(canvas.height/r.height)}}
 
-canvas.addEventListener("click",function(e){if(!lineMode)return;var p=getCanvasPos(e);linePoints.push(p);if(linePoints.length===1){log("Point 1 set")}else if(linePoints.length>=2){line={x1:linePoints[0].x,y1:linePoints[0].y,x2:linePoints[1].x,y2:linePoints[1].y};linePoints=[];lineMode=false;document.getElementById("btnLine").classList.remove("active");document.getElementById("btnLine").textContent="Draw Line";resetLineCounts();log("LINE SET - counting active");clickSound()}});
+function onCanvasClick(e){
+  if(!lineMode||!aiOn)return;
+  e.preventDefault();
+  var p=getCanvasPos(e);
+  linePoints.push(p);
+  if(linePoints.length===1){log("Point 1 set")}
+  else if(linePoints.length>=2){
+    line={x1:linePoints[0].x,y1:linePoints[0].y,x2:linePoints[1].x,y2:linePoints[1].y};
+    linePoints=[];lineMode=false;
+    document.getElementById("btnLine").classList.remove("active");
+    document.getElementById("btnLine").textContent="Draw Line";
+    lineCounts={car:0,bus:0,truck:0,motor:0};tracks={};
+    ["l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"});
+    log("LINE ACTIVE");clickSound();
+  }
+}
+canvas.addEventListener("click",onCanvasClick);
+canvas.addEventListener("touchstart",onCanvasClick,{passive:false});
 
-canvas.addEventListener("touchstart",function(e){if(!lineMode)return;e.preventDefault();var p=getCanvasPos(e);linePoints.push(p);if(linePoints.length===1){log("Point 1 set")}else if(linePoints.length>=2){line={x1:linePoints[0].x,y1:linePoints[0].y,x2:linePoints[1].x,y2:linePoints[1].y};linePoints=[];lineMode=false;document.getElementById("btnLine").classList.remove("active");document.getElementById("btnLine").textContent="Draw Line";resetLineCounts();log("LINE SET");clickSound()}},{passive:false});
-
-function updateTracks(detections){
-  // Simple nearest matching
-  var used={};
-  var newTracks={};
-  for(var i=0;i<detections.length;i++){
-    var d=detections[i];
-    var bestId=null,bestDist=80;
+function updateTracks(dets){
+  var used={},newTracks={};
+  for(var i=0;i<dets.length;i++){
+    var d=dets[i],bestId=null,bestDist=80;
     for(var id in tracks){
       if(used[id])continue;
-      var t=tracks[id];
-      if(t.k!==d.k)continue;
+      var t=tracks[id];if(t.k!==d.k)continue;
       var dist=Math.hypot(t.x-d.x,t.y-d.y);
       if(dist<bestDist){bestDist=dist;bestId=id}
     }
@@ -183,23 +228,21 @@ function updateTracks(detections){
       used[bestId]=true;
       var old=tracks[bestId];
       var newSide=sideOfLine(d.x,d.y);
-      // Crossing detection
-      if(line && old.side!==0 && newSide!==0 && (old.side>0)!==(newSide>0)){
+      if(line&&old.side!==0&&newSide!==0&&(old.side>0)!==(newSide>0)){
         lineCounts[d.k]++;
         document.getElementById("l-"+d.k).textContent=lineCounts[d.k];
-        log("CROSS "+d.k.toUpperCase()+" → total "+lineCounts[d.k]);
+        log("CROSS "+d.k.toUpperCase());
       }
-      newTracks[bestId]={x:d.x,y:d.y,k:d.k,side:newSide,age:0};
+      newTracks[bestId]={x:d.x,y:d.y,k:d.k,side:newSide};
     }else{
-      var id=nextId++;
-      newTracks[id]={x:d.x,y:d.y,k:d.k,side:sideOfLine(d.x,d.y),age:0};
+      newTracks[nextId++]={x:d.x,y:d.y,k:d.k,side:sideOfLine(d.x,d.y)};
     }
   }
   tracks=newTracks;
 }
 
 async function detectLoop(){
-  if(!running||!model)return;
+  if(!running||!aiOn||!model)return;
   if(video.readyState<2){requestAnimationFrame(detectLoop);return}
   frameSkip++;if(frameSkip<2){requestAnimationFrame(detectLoop);return}frameSkip=0;
   var w=video.videoWidth,h=video.videoHeight;if(!w||!h){requestAnimationFrame(detectLoop);return}
@@ -207,35 +250,26 @@ async function detectLoop(){
   try{
     var preds=await model.detect(video,25);
     ctx.clearRect(0,0,w,h);
-    var rt={car:0,bus:0,truck:0,motor:0};
-    var dets=[];
+    var rt={car:0,bus:0,truck:0,motor:0},dets=[];
     for(var i=0;i<preds.length;i++){
-      var p=preds[i];
-      if(p.score<confThreshold)continue;
-      var key=classMap[p.class];
-      if(!key)continue;
+      var p=preds[i];if(p.score<confThreshold)continue;
+      var key=classMap[p.class];if(!key)continue;
       rt[key]++;
       var x=p.bbox[0],y=p.bbox[1],bw=p.bbox[2],bh=p.bbox[3];
-      var cx=x+bw/2,cy=y+bh/2;
-      dets.push({x:cx,y:cy,k:key});
+      dets.push({x:x+bw/2,y:y+bh/2,k:key});
       var col=COLORS[key];
-      ctx.strokeStyle=col;ctx.lineWidth=2;
-      ctx.strokeRect(x,y,bw,bh);
+      ctx.strokeStyle=col;ctx.lineWidth=2;ctx.strokeRect(x,y,bw,bh);
       ctx.fillStyle=col;ctx.font="bold 11px system-ui";
       ctx.fillText(p.class+" "+Math.round(p.score*100)+"%",x,y>12?y-3:y+12);
     }
     updateTracks(dets);
-    // Draw line
     if(line){
       ctx.strokeStyle="#00ff88";ctx.lineWidth=3;ctx.setLineDash([8,6]);
       ctx.beginPath();ctx.moveTo(line.x1,line.y1);ctx.lineTo(line.x2,line.y2);ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle="#00ff88";ctx.font="bold 12px system-ui";
+      ctx.setLineDash([]);ctx.fillStyle="#00ff88";ctx.font="bold 12px system-ui";
       ctx.fillText("COUNT LINE",Math.min(line.x1,line.x2)+4,Math.min(line.y1,line.y2)-6);
     }
-    if(linePoints.length===1){
-      ctx.fillStyle="#ff0";ctx.beginPath();ctx.arc(linePoints[0].x,linePoints[0].y,6,0,Math.PI*2);ctx.fill();
-    }
+    if(linePoints.length===1){ctx.fillStyle="#ff0";ctx.beginPath();ctx.arc(linePoints[0].x,linePoints[0].y,6,0,Math.PI*2);ctx.fill()}
     document.getElementById("r-car").textContent=rt.car;
     document.getElementById("r-bus").textContent=rt.bus;
     document.getElementById("r-truck").textContent=rt.truck;
@@ -243,24 +277,69 @@ async function detectLoop(){
     var totalNow=rt.car+rt.bus+rt.truck+rt.motor;
     var dens=setDensity(totalNow);
     setReport(dens,rt);
-    document.getElementById("overlay").textContent="AI • "+totalNow+" obj"+(line?" • LINE ON":"");
-  }catch(err){log("ERR "+(err.message||""))}
+    document.getElementById("overlay").textContent="AI • "+totalNow+" obj"+(line?" • LINE":"");
+  }catch(err){log("ERR")}
   requestAnimationFrame(detectLoop);
 }
 
-function startDetection(){if(model&&video.readyState>=2&&!running){running=true;log("DETECT ON");detectLoop()}}
+function stopAI(){
+  aiOn=false;running=false;model=null;
+  ctx&&ctx.clearRect(0,0,canvas.width,canvas.height);
+  resetCounts();
+  setUIMode("off");
+  log("AI OFF - camera only");
+}
+
+function startAI(){
+  if(!model||!aiOn)return;
+  if(video.readyState>=2&&!running){running=true;log("DETECT ON");detectLoop()}
+}
+
+async function onModelChange(){
+  clickSound();
+  var val=document.getElementById("modelSel").value;
+  if(val==="off"){
+    stopAI();
+    return;
+  }
+  // Turn AI on
+  aiOn=false;running=false;model=null;
+  setUIMode("ai");
+  log("LOADING "+val+"...");
+  try{
+    model=await cocoSsd.load({base:val});
+    aiOn=true;
+    log("MODEL READY");
+    startAI();
+  }catch(e){
+    log("MODEL FAIL");
+    document.getElementById("modelSel").value="off";
+    stopAI();
+  }
+}
+
 function destroyStream(){if(hls){try{hls.destroy()}catch(e){}hls=null}running=false}
 
-function loadStream(url){destroyStream();resetAll();log("CONNECT...");if(window.Hls&&Hls.isSupported()){hls=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:8});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,function(){video.play().catch(function(){});log("STREAM OK");setTimeout(startDetection,400)});hls.on(Hls.Events.ERROR,function(e,d){if(d.fatal)log("STREAM FAIL")})}else if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=url;video.play().catch(function(){});log("STREAM NATIVE");setTimeout(startDetection,400)}else log("NO HLS")}
+function loadStream(url){
+  destroyStream();
+  resetCounts();
+  log("CONNECT...");
+  if(window.Hls&&Hls.isSupported()){
+    hls=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:8});
+    hls.loadSource(url);hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED,function(){video.play().catch(function(){});log("STREAM OK");if(aiOn)setTimeout(startAI,400)});
+    hls.on(Hls.Events.ERROR,function(e,d){if(d.fatal)log("STREAM FAIL")});
+  }else if(video.canPlayType("application/vnd.apple.mpegurl")){
+    video.src=url;video.play().catch(function(){});log("STREAM NATIVE");if(aiOn)setTimeout(startAI,400);
+  }else log("NO HLS");
+}
 
 function switchCam(){clickSound();log("CAM CHANGE");loadStream(document.getElementById("cam").value)}
-async function changeModel(){clickSound();var base=document.getElementById("modelSel").value,name=document.getElementById("modelSel").selectedOptions[0].text;running=false;model=null;log("LOAD "+name);try{model=await cocoSsd.load({base:base});log("MODEL OK");startDetection()}catch(e){log("MODEL FAIL")}}
-async function loadModel(){log("BOOT Fast (lite)");try{model=await cocoSsd.load({base:"lite_mobilenet_v2"});log("MODEL READY Fast");startDetection()}catch(e){log("MODEL FAIL")}}
 
-video.addEventListener("playing",function(){log("VIDEO PLAY");setTimeout(startDetection,300)});
-log("SYSTEM ONLINE");
+video.addEventListener("playing",function(){if(aiOn)setTimeout(startAI,300)});
+setUIMode("off");
+log("SYSTEM ONLINE - Camera only");
 loadStream("https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8");
-loadModel();
 </script>
 </body>
 </html>
