@@ -10,36 +10,39 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#07090f;--card:#10141c;--border:#1c2433;--text:#c8d0dc;--muted:#6b7585;--accent:#00d4ff;--green:#00e676;--yellow:#ffea00;--red:#ff1744;--purple:#d500f9}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;min-height:100vh;line-height:1.4}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:13px;min-height:100vh}
 .header{background:#0c1018;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
-.header h1{font-size:.95rem;font-weight:700;color:var(--accent);letter-spacing:.3px}
+.header h1{font-size:.95rem;font-weight:700;color:var(--accent)}
 .live{background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:4px;animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 .wrap{max-width:960px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px}
 .controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-select{flex:1;min-width:130px;background:#151a24;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.8rem}
+select,button{background:#151a24;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.8rem}
+select{flex:1;min-width:120px}
+button{cursor:pointer;font-weight:600}
+button.active{background:var(--accent);color:#000;border-color:var(--accent)}
 .ctrl{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);background:#151a24;border:1px solid var(--border);border-radius:6px;padding:6px 8px}
-.ctrl input[type=range]{width:80px;accent-color:var(--accent)}
+.ctrl input[type=range]{width:70px;accent-color:var(--accent)}
 .ctrl span{color:var(--accent);font-weight:600;min-width:28px}
-.video-box{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.video-box{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border);touch-action:none}
 video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-canvas{pointer-events:none}
-.overlay-info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.65);color:#fff;font-size:.65rem;padding:3px 7px;border-radius:4px;font-family:monospace}
+#c{pointer-events:auto;cursor:crosshair}
+.overlay-info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-size:.65rem;padding:3px 7px;border-radius:4px;font-family:monospace;z-index:5;pointer-events:none}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:640px){.grid{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px}
-.card-title{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600}
+.card-title{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600}
 .counts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .stat{background:#0a0d14;border-radius:7px;padding:10px 4px;text-align:center}
-.stat .n{font-size:1.55rem;font-weight:700;line-height:1}
+.stat .n{font-size:1.5rem;font-weight:700;line-height:1}
 .stat .l{font-size:.65rem;color:var(--muted);margin-top:3px}
-.density{text-align:center;padding:9px;border-radius:6px;font-weight:700;font-size:.95rem;margin:8px 0}
+.density{text-align:center;padding:8px;border-radius:6px;font-weight:700;font-size:.9rem;margin:8px 0}
 .d1{background:#062816;color:var(--green)}.d2{background:#0a2f1a;color:#69f0ae}
 .d3{background:#0e1c2a;color:var(--accent)}.d4{background:#2a1e08;color:#ff9100}.d5{background:#2a0a0a;color:var(--red)}
-.report{background:#081410;border:1px solid #153525;border-radius:6px;padding:9px;font-size:.75rem;line-height:1.45}
+.report{background:#081410;border:1px solid #153525;border-radius:6px;padding:8px;font-size:.75rem;line-height:1.4}
 .report b{color:var(--green)}
-.log{background:#000;border:1px solid #0a3a1a;border-radius:4px;padding:7px;font-size:.65rem;color:#0f0;font-family:"Courier New",Consolas,monospace;max-height:88px;overflow-y:auto;margin-top:8px;line-height:1.5;text-shadow:0 0 3px #0f04}
-.fps{color:var(--muted);font-size:.65rem;text-align:right;margin-top:4px}
+.log{background:#000;border:1px solid #0a3a1a;border-radius:4px;padding:6px;font-size:.63rem;color:#0f0;font-family:"Courier New",monospace;max-height:80px;overflow-y:auto;margin-top:8px;line-height:1.45}
+.hint{font-size:.7rem;color:var(--muted);margin-top:6px}
 </style>
 </head>
 <body>
@@ -79,10 +82,12 @@ canvas{pointer-events:none}
       <option value="https://matanya.batam.go.id/cctv/delta2/stream.m3u8">Delta Villa 2</option>
     </select>
     <select id="modelSel" onchange="changeModel()">
-      <option value="mobilenet_v2" selected>Accurate (mobilenet_v2)</option>
-      <option value="lite_mobilenet_v2">Fast (lite)</option>
+      <option value="lite_mobilenet_v2" selected>Fast (lite)</option>
+      <option value="mobilenet_v2">Accurate (v2)</option>
     </select>
-    <div class="ctrl">Conf <input type="range" id="conf" min="15" max="55" value="22" oninput="updateConf(this.value)"><span id="confVal">0.22</span></div>
+    <div class="ctrl">Conf <input type="range" id="conf" min="15" max="55" value="25" oninput="updateConf(this.value)"><span id="confVal">0.25</span></div>
+    <button id="btnLine" onclick="toggleLineMode()">Draw Line</button>
+    <button onclick="clearLine()">Clear Line</button>
   </div>
 
   <div class="video-box">
@@ -101,18 +106,18 @@ canvas{pointer-events:none}
         <div class="stat"><div class="n" id="r-motor" style="color:var(--yellow)">0</div><div class="l">Motor</div></div>
       </div>
       <div id="dens" class="density d3">NORMAL</div>
-      <div class="report" id="rep"><b>Decision:</b> Waiting for detection...</div>
+      <div class="report" id="rep"><b>Decision:</b> Waiting...</div>
     </div>
 
     <div class="card">
-      <div class="card-title">Session Total</div>
+      <div class="card-title">Line Crossing Count</div>
       <div class="counts">
-        <div class="stat"><div class="n" id="t-car" style="color:var(--accent)">0</div><div class="l">Car</div></div>
-        <div class="stat"><div class="n" id="t-bus" style="color:var(--purple)">0</div><div class="l">Bus</div></div>
-        <div class="stat"><div class="n" id="t-truck" style="color:var(--red)">0</div><div class="l">Truck</div></div>
-        <div class="stat"><div class="n" id="t-motor" style="color:var(--yellow)">0</div><div class="l">Motor</div></div>
+        <div class="stat"><div class="n" id="l-car" style="color:var(--accent)">0</div><div class="l">Car</div></div>
+        <div class="stat"><div class="n" id="l-bus" style="color:var(--purple)">0</div><div class="l">Bus</div></div>
+        <div class="stat"><div class="n" id="l-truck" style="color:var(--red)">0</div><div class="l">Truck</div></div>
+        <div class="stat"><div class="n" id="l-motor" style="color:var(--yellow)">0</div><div class="l">Motor</div></div>
       </div>
-      <div class="fps" id="fps">FPS: — | Model: —</div>
+      <div class="hint">Tap video 2 points to draw counting line. Vehicles crossing it will be counted.</div>
       <div class="log" id="log">> SYSTEM BOOT_</div>
     </div>
   </div>
@@ -120,38 +125,137 @@ canvas{pointer-events:none}
 
 <script>
 var video=document.getElementById("v"),canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
-var model=null,running=false,hls=null,frameSkip=0,prevTracks=[],totals={car:0,bus:0,truck:0,motor:0};
-var confThreshold=0.22,lastFps=0,frameCount=0,lastFpsTime=performance.now();
+var model=null,running=false,hls=null,frameSkip=0;
+var confThreshold=0.25;
 var classMap={car:"car",bus:"bus",truck:"truck",motorcycle:"motor",bicycle:"motor"};
 var COLORS={car:"#00d4ff",bus:"#d500f9",truck:"#ff1744",motor:"#ffea00"};
 
+// Tracking for line crossing
+var tracks={}; // id -> {x,y,k,side,age}
+var nextId=1;
+var lineCounts={car:0,bus:0,truck:0,motor:0};
+var line=null; // {x1,y1,x2,y2} in canvas coords
+var lineMode=false;
+var linePoints=[];
+
 function clickSound(){try{if(!window._ac)window._ac=new(window.AudioContext||window.webkitAudioContext);var o=window._ac.createOscillator(),g=window._ac.createGain();o.connect(g);g.connect(window._ac.destination);o.frequency.value=780;o.type="square";g.gain.setValueAtTime(0.07,window._ac.currentTime);g.gain.exponentialRampToValueAtTime(0.001,window._ac.currentTime+0.07);o.start();o.stop(window._ac.currentTime+0.07)}catch(e){}}
 
-function log(m){var el=document.getElementById("log"),t=new Date().toLocaleTimeString();el.innerHTML="> ["+t+"] "+m+"<br>"+el.innerHTML;if(el.innerHTML.length>650)el.innerHTML=el.innerHTML.slice(0,650)}
+function log(m){var el=document.getElementById("log"),t=new Date().toLocaleTimeString();el.innerHTML="> ["+t+"] "+m+"<br>"+el.innerHTML;if(el.innerHTML.length>600)el.innerHTML=el.innerHTML.slice(0,600)}
 
-function updateConf(v){clickSound();confThreshold=parseInt(v,10)/100;document.getElementById("confVal").textContent=confThreshold.toFixed(2);log("CONF → "+confThreshold.toFixed(2))}
+function updateConf(v){clickSound();confThreshold=parseInt(v,10)/100;document.getElementById("confVal").textContent=confThreshold.toFixed(2);log("CONF "+confThreshold.toFixed(2))}
 
-function resetCounts(){totals={car:0,bus:0,truck:0,motor:0};prevTracks=[];["r-car","r-bus","r-truck","r-motor","t-car","t-bus","t-truck","t-motor"].forEach(function(id){document.getElementById(id).textContent="0"});document.getElementById("dens").className="density d3";document.getElementById("dens").textContent="NORMAL";document.getElementById("rep").innerHTML="<b>Decision:</b> Reset.";log("COUNTS RESET")}
+function resetLineCounts(){lineCounts={car:0,bus:0,truck:0,motor:0};tracks={};["l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"})}
+
+function resetAll(){resetLineCounts();document.getElementById("r-car").textContent="0";document.getElementById("r-bus").textContent="0";document.getElementById("r-truck").textContent="0";document.getElementById("r-motor").textContent="0";document.getElementById("dens").className="density d3";document.getElementById("dens").textContent="NORMAL";document.getElementById("rep").innerHTML="<b>Decision:</b> Reset.";log("RESET")}
 
 function setDensity(n){var el=document.getElementById("dens"),cls,txt;if(n<=2){cls="d1";txt="SANGAT LENGANG"}else if(n<=5){cls="d2";txt="LENGANG"}else if(n<=11){cls="d3";txt="NORMAL"}else if(n<=18){cls="d4";txt="PADAT"}else{cls="d5";txt="SANGAT PADAT"}el.className="density "+cls;el.textContent=txt;return txt}
 
-function setReport(dens,rt){var msg=dens.indexOf("SANGAT PADAT")>=0?"Sangat padat → rekayasa lalu lintas / pengalihan.":dens.indexOf("PADAT")>=0?"Padat → pantau ketat.":dens.indexOf("NORMAL")>=0?"Normal → aman.":"Lengang → optimal.";document.getElementById("rep").innerHTML="<b>Decision:</b> "+msg+" <br>Now: C"+rt.car+" B"+rt.bus+" T"+rt.truck+" M"+rt.motor}
+function setReport(dens,rt){var msg=dens.indexOf("SANGAT PADAT")>=0?"Sangat padat → rekayasa.":dens.indexOf("PADAT")>=0?"Padat → pantau.":dens.indexOf("NORMAL")>=0?"Normal → aman.":"Lengang → optimal.";document.getElementById("rep").innerHTML="<b>Decision:</b> "+msg+" | C"+rt.car+" B"+rt.bus+" T"+rt.truck+" M"+rt.motor}
 
-function matchTracks(curr){var added={car:0,bus:0,truck:0,motor:0},used=[];for(var i=0;i<prevTracks.length;i++)used.push(false);for(var i=0;i<curr.length;i++){var best=100,bestIdx=-1;for(var j=0;j<prevTracks.length;j++){if(used[j]||prevTracks[j].k!==curr[i].k)continue;var dx=curr[i].x-prevTracks[j].x,dy=curr[i].y-prevTracks[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<best){best=d;bestIdx=j}}if(bestIdx>=0)used[bestIdx]=true;else added[curr[i].k]++}prevTracks=curr;return added}
+// Side of line: return >0 or <0
+function sideOfLine(x,y){if(!line)return 0;return (line.x2-line.x1)*(y-line.y1)-(line.y2-line.y1)*(x-line.x1)}
 
-async function detectLoop(){if(!running||!model)return;if(video.readyState<2){requestAnimationFrame(detectLoop);return}frameSkip++;if(frameSkip<2){requestAnimationFrame(detectLoop);return}frameSkip=0;var w=video.videoWidth,h=video.videoHeight;if(!w||!h){requestAnimationFrame(detectLoop);return}canvas.width=w;canvas.height=h;try{var preds=await model.detect(video,30);ctx.clearRect(0,0,w,h);var rt={car:0,bus:0,truck:0,motor:0},tracks=[];for(var i=0;i<preds.length;i++){var p=preds[i];if(p.score<confThreshold)continue;var key=classMap[p.class];if(!key)continue;rt[key]++;var x=p.bbox[0],y=p.bbox[1],bw=p.bbox[2],bh=p.bbox[3];tracks.push({x:x+bw/2,y:y+bh/2,k:key});var col=COLORS[key];ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.strokeRect(x,y,bw,bh);ctx.fillStyle=col;ctx.font="bold 11px system-ui";ctx.fillText(p.class+" "+Math.round(p.score*100)+"%",x,y>14?y-4:y+14)}var added=matchTracks(tracks);totals.car+=added.car;totals.bus+=added.bus;totals.truck+=added.truck;totals.motor+=added.motor;var totalNow=rt.car+rt.bus+rt.truck+rt.motor;document.getElementById("r-car").textContent=rt.car;document.getElementById("r-bus").textContent=rt.bus;document.getElementById("r-truck").textContent=rt.truck;document.getElementById("r-motor").textContent=rt.motor;document.getElementById("t-car").textContent=totals.car;document.getElementById("t-bus").textContent=totals.bus;document.getElementById("t-truck").textContent=totals.truck;document.getElementById("t-motor").textContent=totals.motor;var dens=setDensity(totalNow);setReport(dens,rt);frameCount++;var now=performance.now();if(now-lastFpsTime>1000){lastFps=frameCount;frameCount=0;lastFpsTime=now;document.getElementById("fps").textContent="FPS: "+lastFps+" | Model: "+(document.getElementById("modelSel").selectedOptions[0].text.split(" ")[0]);document.getElementById("overlay").textContent="AI • "+totalNow+" obj • "+lastFps+" FPS"}}catch(err){log("ERR: "+(err.message||"detect"))}requestAnimationFrame(detectLoop)}
+function toggleLineMode(){lineMode=!lineMode;linePoints=[];document.getElementById("btnLine").classList.toggle("active",lineMode);document.getElementById("btnLine").textContent=lineMode?"Drawing...":"Draw Line";log(lineMode?"LINE MODE ON - click 2 points":"LINE MODE OFF");clickSound()}
+
+function clearLine(){line=null;linePoints=[];resetLineCounts();log("LINE CLEARED");clickSound()}
+
+function getCanvasPos(e){var r=canvas.getBoundingClientRect();var clientX=e.touches?e.touches[0].clientX:e.clientX;var clientY=e.touches?e.touches[0].clientY:e.clientY;var scaleX=canvas.width/r.width,scaleY=canvas.height/r.height;return{x:(clientX-r.left)*scaleX,y:(clientY-r.top)*scaleY}}
+
+canvas.addEventListener("click",function(e){if(!lineMode)return;var p=getCanvasPos(e);linePoints.push(p);if(linePoints.length===1){log("Point 1 set")}else if(linePoints.length>=2){line={x1:linePoints[0].x,y1:linePoints[0].y,x2:linePoints[1].x,y2:linePoints[1].y};linePoints=[];lineMode=false;document.getElementById("btnLine").classList.remove("active");document.getElementById("btnLine").textContent="Draw Line";resetLineCounts();log("LINE SET - counting active");clickSound()}});
+
+canvas.addEventListener("touchstart",function(e){if(!lineMode)return;e.preventDefault();var p=getCanvasPos(e);linePoints.push(p);if(linePoints.length===1){log("Point 1 set")}else if(linePoints.length>=2){line={x1:linePoints[0].x,y1:linePoints[0].y,x2:linePoints[1].x,y2:linePoints[1].y};linePoints=[];lineMode=false;document.getElementById("btnLine").classList.remove("active");document.getElementById("btnLine").textContent="Draw Line";resetLineCounts();log("LINE SET");clickSound()}},{passive:false});
+
+function updateTracks(detections){
+  // Simple nearest matching
+  var used={};
+  var newTracks={};
+  for(var i=0;i<detections.length;i++){
+    var d=detections[i];
+    var bestId=null,bestDist=80;
+    for(var id in tracks){
+      if(used[id])continue;
+      var t=tracks[id];
+      if(t.k!==d.k)continue;
+      var dist=Math.hypot(t.x-d.x,t.y-d.y);
+      if(dist<bestDist){bestDist=dist;bestId=id}
+    }
+    if(bestId!==null){
+      used[bestId]=true;
+      var old=tracks[bestId];
+      var newSide=sideOfLine(d.x,d.y);
+      // Crossing detection
+      if(line && old.side!==0 && newSide!==0 && (old.side>0)!==(newSide>0)){
+        lineCounts[d.k]++;
+        document.getElementById("l-"+d.k).textContent=lineCounts[d.k];
+        log("CROSS "+d.k.toUpperCase()+" → total "+lineCounts[d.k]);
+      }
+      newTracks[bestId]={x:d.x,y:d.y,k:d.k,side:newSide,age:0};
+    }else{
+      var id=nextId++;
+      newTracks[id]={x:d.x,y:d.y,k:d.k,side:sideOfLine(d.x,d.y),age:0};
+    }
+  }
+  tracks=newTracks;
+}
+
+async function detectLoop(){
+  if(!running||!model)return;
+  if(video.readyState<2){requestAnimationFrame(detectLoop);return}
+  frameSkip++;if(frameSkip<2){requestAnimationFrame(detectLoop);return}frameSkip=0;
+  var w=video.videoWidth,h=video.videoHeight;if(!w||!h){requestAnimationFrame(detectLoop);return}
+  canvas.width=w;canvas.height=h;
+  try{
+    var preds=await model.detect(video,25);
+    ctx.clearRect(0,0,w,h);
+    var rt={car:0,bus:0,truck:0,motor:0};
+    var dets=[];
+    for(var i=0;i<preds.length;i++){
+      var p=preds[i];
+      if(p.score<confThreshold)continue;
+      var key=classMap[p.class];
+      if(!key)continue;
+      rt[key]++;
+      var x=p.bbox[0],y=p.bbox[1],bw=p.bbox[2],bh=p.bbox[3];
+      var cx=x+bw/2,cy=y+bh/2;
+      dets.push({x:cx,y:cy,k:key});
+      var col=COLORS[key];
+      ctx.strokeStyle=col;ctx.lineWidth=2;
+      ctx.strokeRect(x,y,bw,bh);
+      ctx.fillStyle=col;ctx.font="bold 11px system-ui";
+      ctx.fillText(p.class+" "+Math.round(p.score*100)+"%",x,y>12?y-3:y+12);
+    }
+    updateTracks(dets);
+    // Draw line
+    if(line){
+      ctx.strokeStyle="#00ff88";ctx.lineWidth=3;ctx.setLineDash([8,6]);
+      ctx.beginPath();ctx.moveTo(line.x1,line.y1);ctx.lineTo(line.x2,line.y2);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle="#00ff88";ctx.font="bold 12px system-ui";
+      ctx.fillText("COUNT LINE",Math.min(line.x1,line.x2)+4,Math.min(line.y1,line.y2)-6);
+    }
+    if(linePoints.length===1){
+      ctx.fillStyle="#ff0";ctx.beginPath();ctx.arc(linePoints[0].x,linePoints[0].y,6,0,Math.PI*2);ctx.fill();
+    }
+    document.getElementById("r-car").textContent=rt.car;
+    document.getElementById("r-bus").textContent=rt.bus;
+    document.getElementById("r-truck").textContent=rt.truck;
+    document.getElementById("r-motor").textContent=rt.motor;
+    var totalNow=rt.car+rt.bus+rt.truck+rt.motor;
+    var dens=setDensity(totalNow);
+    setReport(dens,rt);
+    document.getElementById("overlay").textContent="AI • "+totalNow+" obj"+(line?" • LINE ON":"");
+  }catch(err){log("ERR "+(err.message||""))}
+  requestAnimationFrame(detectLoop);
+}
 
 function startDetection(){if(model&&video.readyState>=2&&!running){running=true;log("DETECT ON");detectLoop()}}
-
 function destroyStream(){if(hls){try{hls.destroy()}catch(e){}hls=null}running=false}
 
-function loadStream(url){destroyStream();resetCounts();log("CONNECT...");if(window.Hls&&Hls.isSupported()){hls=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:8});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,function(){video.play().catch(function(){});log("STREAM OK");setTimeout(startDetection,500)});hls.on(Hls.Events.ERROR,function(e,d){if(d.fatal)log("STREAM FAIL")})}else if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=url;video.play().catch(function(){});log("STREAM NATIVE");setTimeout(startDetection,500)}else log("NO HLS")}
+function loadStream(url){destroyStream();resetAll();log("CONNECT...");if(window.Hls&&Hls.isSupported()){hls=new Hls({enableWorker:true,lowLatencyMode:true,maxBufferLength:8});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,function(){video.play().catch(function(){});log("STREAM OK");setTimeout(startDetection,400)});hls.on(Hls.Events.ERROR,function(e,d){if(d.fatal)log("STREAM FAIL")})}else if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=url;video.play().catch(function(){});log("STREAM NATIVE");setTimeout(startDetection,400)}else log("NO HLS")}
 
 function switchCam(){clickSound();log("CAM CHANGE");loadStream(document.getElementById("cam").value)}
-
 async function changeModel(){clickSound();var base=document.getElementById("modelSel").value,name=document.getElementById("modelSel").selectedOptions[0].text;running=false;model=null;log("LOAD "+name);try{model=await cocoSsd.load({base:base});log("MODEL OK");startDetection()}catch(e){log("MODEL FAIL")}}
-
-async function loadModel(){log("BOOT MODEL Accurate");try{model=await cocoSsd.load({base:"mobilenet_v2"});log("MODEL READY");startDetection()}catch(e){log("MODEL FAIL")}}
+async function loadModel(){log("BOOT Fast (lite)");try{model=await cocoSsd.load({base:"lite_mobilenet_v2"});log("MODEL READY Fast");startDetection()}catch(e){log("MODEL FAIL")}}
 
 video.addEventListener("playing",function(){log("VIDEO PLAY");setTimeout(startDetection,300)});
 log("SYSTEM ONLINE");
