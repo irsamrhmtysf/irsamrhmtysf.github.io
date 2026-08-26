@@ -177,11 +177,19 @@ function setDensity(n){var el=document.getElementById("dens"),cls,txt;if(n<=2){c
 function setReport(dens,rt){
   var msg=dens.indexOf("SANGAT PADAT")>=0?"Sangat padat → rekayasa.":dens.indexOf("PADAT")>=0?"Padat → pantau.":dens.indexOf("NORMAL")>=0?"Normal → aman.":"Lengang → optimal.";
   var lineTotal=lineCounts.car+lineCounts.bus+lineCounts.truck+lineCounts.motor;
-  var extra=line?" | Line crosses: "+lineTotal:"";
+  var extra = line ? ("<br><b>Line Total:</b> "+lineTotal+" vehicles (C"+lineCounts.car+" B"+lineCounts.bus+" T"+lineCounts.truck+" M"+lineCounts.motor+")") : "";
   document.getElementById("rep").innerHTML="<b>Decision:</b> "+msg+" | Now C"+rt.car+" B"+rt.bus+" T"+rt.truck+" M"+rt.motor+extra;
 }
 
-function sideOfLine(x,y){if(!line)return 0;return (line.x2-line.x1)*(y-line.y1)-(line.y2-line.y1)*(x-line.x1)}
+function getLinePixels(){
+  if(!line) return null;
+  var w=canvas.width||1, h=canvas.height||1;
+  return {x1:line.nx1*w, y1:line.ny1*h, x2:line.nx2*w, y2:line.ny2*h};
+}
+function sideOfLine(x,y){
+  var L=getLinePixels(); if(!L) return 0;
+  return (L.x2-L.x1)*(y-L.y1)-(L.y2-L.y1)*(x-L.x1);
+}
 
 function toggleLineMode(){
   if(!aiOn)return;
@@ -202,7 +210,8 @@ function onCanvasClick(e){
   linePoints.push(p);
   if(linePoints.length===1){log("Point 1 set")}
   else if(linePoints.length>=2){
-    line={x1:linePoints[0].x,y1:linePoints[0].y,x2:linePoints[1].x,y2:linePoints[1].y};
+    var w=canvas.width||1,h=canvas.height||1;
+    line={nx1:linePoints[0].x/w, ny1:linePoints[0].y/h, nx2:linePoints[1].x/w, ny2:linePoints[1].y/h};
     linePoints=[];lineMode=false;
     document.getElementById("btnLine").classList.remove("active");
     document.getElementById("btnLine").textContent="Draw Line";
@@ -214,31 +223,60 @@ function onCanvasClick(e){
 canvas.addEventListener("click",onCanvasClick);
 canvas.addEventListener("touchstart",onCanvasClick,{passive:false});
 
+// Robust vehicle tracker + line crossing (count once per vehicle)
 function updateTracks(dets){
-  var used={},newTracks={};
+  var MAX_DIST=140, MAX_AGE=18;
+  var used={}, newTracks={};
+
+  for(var id in tracks){ tracks[id].age = (tracks[id].age||0)+1; }
+
   for(var i=0;i<dets.length;i++){
-    var d=dets[i],bestId=null,bestDist=80;
+    var d=dets[i];
+    var bestId=null, bestScore=1e9;
     for(var id in tracks){
-      if(used[id])continue;
-      var t=tracks[id];if(t.k!==d.k)continue;
-      var dist=Math.hypot(t.x-d.x,t.y-d.y);
-      if(dist<bestDist){bestDist=dist;bestId=id}
+      if(used[id]) continue;
+      var t=tracks[id];
+      // Allow any vehicle class match more loosely for counting reliability
+      var dist = Math.hypot((t.x+(t.vx||0))-d.x, (t.y+(t.vy||0))-d.y);
+      if(dist < MAX_DIST && dist < bestScore){
+        bestScore = dist; bestId = id;
+      }
     }
+
     if(bestId!==null){
       used[bestId]=true;
-      var old=tracks[bestId];
-      var newSide=sideOfLine(d.x,d.y);
-      if(line&&old.side!==0&&newSide!==0&&(old.side>0)!==(newSide>0)){
-        lineCounts[d.k]++;
-        document.getElementById("l-"+d.k).textContent=lineCounts[d.k];
-        log("CROSS "+d.k.toUpperCase());
+      var old = tracks[bestId];
+      var vx = d.x - old.x, vy = d.y - old.y;
+      var newSide = sideOfLine(d.x, d.y);
+      var counted = old.counted || false;
+
+      // Reliable crossing: side sign changed and not yet counted
+      if(line && !counted && old.side !== 0 && newSide !== 0 && (old.side > 0) !== (newSide > 0)){
+        counted = true;
+        lineCounts[d.k] = (lineCounts[d.k]||0) + 1;
+        document.getElementById("l-"+d.k).textContent = lineCounts[d.k];
+        var total = lineCounts.car+lineCounts.bus+lineCounts.truck+lineCounts.motor;
+        log("COUNTED "+d.k.toUpperCase()+" | TOTAL "+total);
       }
-      newTracks[bestId]={x:d.x,y:d.y,k:d.k,side:newSide};
-    }else{
-      newTracks[nextId++]={x:d.x,y:d.y,k:d.k,side:sideOfLine(d.x,d.y)};
+
+      newTracks[bestId] = {x:d.x, y:d.y, k:d.k, side:newSide, vx:vx*0.6, vy:vy*0.6, age:0, counted:counted};
+    } else {
+      newTracks[nextId++] = {x:d.x, y:d.y, k:d.k, side:sideOfLine(d.x,d.y), vx:0, vy:0, age:0, counted:false};
     }
   }
-  tracks=newTracks;
+
+  // Keep lost tracks briefly
+  for(var id in tracks){
+    if(!used[id] && (tracks[id].age||0) < MAX_AGE){
+      var t = tracks[id];
+      newTracks[id] = {
+        x: t.x+(t.vx||0), y: t.y+(t.vy||0), k: t.k,
+        side: t.side, vx:(t.vx||0)*0.8, vy:(t.vy||0)*0.8,
+        age: t.age, counted: t.counted||false
+      };
+    }
+  }
+  tracks = newTracks;
 }
 
 async function detectLoop(){
@@ -264,10 +302,11 @@ async function detectLoop(){
     }
     updateTracks(dets);
     if(line){
+      var L=getLinePixels();
       ctx.strokeStyle="#00ff88";ctx.lineWidth=3;ctx.setLineDash([8,6]);
-      ctx.beginPath();ctx.moveTo(line.x1,line.y1);ctx.lineTo(line.x2,line.y2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(L.x1,L.y1);ctx.lineTo(L.x2,L.y2);ctx.stroke();
       ctx.setLineDash([]);ctx.fillStyle="#00ff88";ctx.font="bold 12px system-ui";
-      ctx.fillText("COUNT LINE",Math.min(line.x1,line.x2)+4,Math.min(line.y1,line.y2)-6);
+      ctx.fillText("COUNT LINE",Math.min(L.x1,L.x2)+4,Math.min(L.y1,L.y2)-6);
     }
     if(linePoints.length===1){ctx.fillStyle="#ff0";ctx.beginPath();ctx.arc(linePoints[0].x,linePoints[0].y,6,0,Math.PI*2);ctx.fill()}
     document.getElementById("r-car").textContent=rt.car;
