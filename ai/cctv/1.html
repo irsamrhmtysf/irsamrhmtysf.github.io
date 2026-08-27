@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Batam Traffic AI Vision</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07090f;--card:#10141c;--border:#1c2433;--text:#c8d0dc;--muted:#6b7585;--accent:#00d4ff;--green:#00e676;--yellow:#ffea00;--red:#ff1744;--purple:#d500f9}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:13px;min-height:100vh}
+.header{background:#0c1018;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.header h1{font-size:.95rem;font-weight:700;color:var(--accent)}
+.live{background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:4px}
+.wrap{max-width:960px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+select,button{background:#151a24;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.78rem}
+select{flex:1;min-width:110px}
+button{cursor:pointer;font-weight:600}
+button.active{background:var(--accent);color:#000;border-color:var(--accent)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.ctrl{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);background:#151a24;border:1px solid var(--border);border-radius:6px;padding:6px 8px}
+.ctrl input[type=range]{width:70px;accent-color:var(--accent)}
+.ctrl span{color:var(--accent);font-weight:600;min-width:28px}
+.video-box{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border);touch-action:none}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+#c{pointer-events:auto}
+.overlay-info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.75);color:#fff;font-size:.65rem;padding:4px 8px;border-radius:4px;font-family:monospace;z-index:5;pointer-events:none;max-width:90%}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px}
+.card-title{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600}
+.counts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat{background:#0a0d14;border-radius:7px;padding:10px 4px;text-align:center}
+.stat .n{font-size:1.45rem;font-weight:700;line-height:1}
+.stat .l{font-size:.65rem;color:var(--muted);margin-top:3px}
+.density{text-align:center;padding:8px;border-radius:6px;font-weight:700;font-size:.9rem;margin:8px 0}
+.d0{background:#1a1a1a;color:#666}.d1{background:#062816;color:var(--green)}.d2{background:#0a2f1a;color:#69f0ae}
+.d3{background:#0e1c2a;color:var(--accent)}.d4{background:#2a1e08;color:#ff9100}.d5{background:#2a0a0a;color:var(--red)}
+.report{background:#081410;border:1px solid #153525;border-radius:6px;padding:8px;font-size:.75rem;line-height:1.45}
+.report b{color:var(--green)}
+.health{background:#120a0a;border:1px solid #3a1515;border-radius:6px;padding:8px;font-size:.72rem;line-height:1.45;margin-top:8px;display:none}
+.health.show{display:block}
+.health b{color:var(--red)}
+.log{background:#000;border:1px solid #0a3a1a;border-radius:4px;padding:6px;font-size:.63rem;color:#0f0;font-family:"Courier New",monospace;max-height:90px;overflow-y:auto;margin-top:8px;line-height:1.45}
+.hint{font-size:.7rem;color:var(--muted);margin-top:6px}
+.mode-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:700;margin-left:6px}
+.mode-off{background:#333;color:#aaa}
+.mode-ai{background:#0a3a2a;color:var(--green)}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>BATAM TRAFFIC AI VISION</h1>
+  <span class="live">● LIVE</span>
+</div>
+
+<div class="wrap">
+  <div class="controls">
+    <select id="cam" onchange="switchCam()">
+      <option value="https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8">Simp. Kuda 1</option>
+      <option value="https://matanya.batam.go.id/cctv/simpkuda2/stream.m3u8">Simp. Kuda 2</option>
+      <option value="https://matanya.batam.go.id/cctv/atap/stream.m3u8">Alun-Alun Engku Putri</option>
+      <option value="https://matanya.batam.go.id/cctv/gerselatan/stream.m3u8">Engku Putri Selatan</option>
+      <option value="https://matanya.batam.go.id/cctv/gerutara/stream.m3u8">Engku Putri Utara</option>
+      <option value="https://matanya.batam.go.id/cctv/madani1/stream.m3u8">Madani Ocarina</option>
+      <option value="https://matanya.batam.go.id/cctv/madanipancuran/stream.m3u8">Bundaran Madani</option>
+      <option value="https://matanya.batam.go.id/cctv/casablanca2/stream.m3u8">Casablanca</option>
+      <option value="https://matanya.batam.go.id/cctv/matakucing1/stream.m3u8">Mata Kucing 1</option>
+      <option value="https://matanya.batam.go.id/cctv/matakucing2/stream.m3u8">Mata Kucing 2</option>
+      <option value="https://matanya.batam.go.id/cctv/pasarjodoh1/stream.m3u8">Pasar Jodoh 1</option>
+      <option value="https://matanya.batam.go.id/cctv/pasarjodoh2/stream.m3u8">Pasar Jodoh 2</option>
+      <option value="https://matanya.batam.go.id/cctv/batuaji/stream.m3u8">SP Batu Aji</option>
+      <option value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">Pel. Sekupang</option>
+      <option value="https://matanya.batam.go.id/cctv/punggur1/stream.m3u8">Pel. Punggur</option>
+      <option value="https://matanya.batam.go.id/cctv/danganom1/stream.m3u8">Dang Anom 1</option>
+      <option value="https://matanya.batam.go.id/cctv/danganom2/stream.m3u8">Dang Anom 2</option>
+      <option value="https://matanya.batam.go.id/cctv/pura1/stream.m3u8">Pura Sei Ladi 1</option>
+      <option value="https://matanya.batam.go.id/cctv/pura2/stream.m3u8">Pura Sei Ladi 2</option>
+      <option value="https://matanya.batam.go.id/cctv/seiladi1/stream.m3u8">Sei Ladi 1</option>
+      <option value="https://matanya.batam.go.id/cctv/seiladi2/stream.m3u8">Sei Ladi 2</option>
+      <option value="https://matanya.batam.go.id/cctv/seiladi3/stream.m3u8">Sei Ladi 3</option>
+      <option value="https://matanya.batam.go.id/cctv/southlink1/stream.m3u8">Southlink 1</option>
+      <option value="https://matanya.batam.go.id/cctv/southlink2/stream.m3u8">Southlink 2</option>
+      <option value="https://matanya.batam.go.id/cctv/southgate/stream.m3u8">Gerb. Selatan</option>
+      <option value="https://matanya.batam.go.id/cctv/delta2/stream.m3u8">Delta Villa 2</option>
+    </select>
+
+    <select id="modelSel" onchange="onModelChange()">
+      <option value="off" selected>AI Off (Camera only)</option>
+      <option value="lite_mobilenet_v2">AI Fast (lite)</option>
+      <option value="mobilenet_v2">AI Accurate (v2)</option>
+    </select>
+
+    <div class="ctrl">Conf <input type="range" id="conf" min="15" max="55" value="25" oninput="updateConf(this.value)" disabled><span id="confVal">0.25</span></div>
+
+    <select id="lineSize" onchange="onLineSizeChange()" disabled>
+      <option value="20">Line Thin</option>
+      <option value="40" selected>Line Medium</option>
+      <option value="70">Line Thick</option>
+      <option value="110">Line Very Thick</option>
+    </select>
+
+    <button id="btnLine" onclick="toggleLineMode()" disabled>Draw Line</button>
+    <button id="btnClear" onclick="clearLine()" disabled>Clear Line</button>
+  </div>
+
+  <div class="video-box">
+    <video id="v" muted playsinline autoplay></video>
+    <canvas id="c"></canvas>
+    <div class="overlay-info" id="overlay">Camera only</div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">Realtime Detection <span id="modeBadge" class="mode-badge mode-off">OFF</span></div>
+      <div class="counts">
+        <div class="stat"><div class="n" id="r-car" style="color:var(--accent)">0</div><div class="l">Car</div></div>
+        <div class="stat"><div class="n" id="r-bus" style="color:var(--purple)">0</div><div class="l">Bus</div></div>
+        <div class="stat"><div class="n" id="r-truck" style="color:var(--red)">0</div><div class="l">Truck</div></div>
+        <div class="stat"><div class="n" id="r-motor" style="color:var(--yellow)">0</div><div class="l">Motor</div></div>
+      </div>
+      <div id="dens" class="density d0">—</div>
+      <div class="report" id="rep"><b>Status:</b> Camera only. Select AI model to start.</div>
+      <div class="health" id="health"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Line Crossing Count</div>
+      <div class="counts">
+        <div class="stat"><div class="n" id="l-car" style="color:var(--accent)">0</div><div class="l">Car</div></div>
+        <div class="stat"><div class="n" id="l-bus" style="color:var(--purple)">0</div><div class="l">Bus</div></div>
+        <div class="stat"><div class="n" id="l-truck" style="color:var(--red)">0</div><div class="l">Truck</div></div>
+        <div class="stat"><div class="n" id="l-motor" style="color:var(--yellow)">0</div><div class="l">Motor</div></div>
+      </div>
+      <div class="hint" id="lineHint">1) Turn AI ON  2) Choose line size  3) Draw Line (2 taps)</div>
+      <div class="log" id="log">> SYSTEM BOOT_</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var video=document.getElementById("v"), canvas=document.getElementById("c"), ctx=canvas.getContext("2d");
+var model=null, aiOn=false, running=false, hls=null, frameSkip=0;
+var confThreshold=0.25, lineBand=40;
+var classMap={car:"car",bus:"bus",truck:"truck",motorcycle:"motor",bicycle:"motor"};
+var COLORS={car:"#00d4ff",bus:"#d500f9",truck:"#ff1744",motor:"#ffea00"};
+
+var tracks={}, nextId=1;
+var lineCounts={car:0,bus:0,truck:0,motor:0};
+var line=null, lineMode=false, linePoints=[];
+
+// Health / diagnostics
+var health={
+  bootTime: Date.now(),
+  streamOk:false, streamError:null,
+  modelOk:false, modelError:null,
+  detectFrames:0, lastDetectAt:0,
+  lastError:null
+};
+
+function clickSound(){try{if(!window._ac)window._ac=new(window.AudioContext||window.webkitAudioContext);var o=window._ac.createOscillator(),g=window._ac.createGain();o.connect(g);g.connect(window._ac.destination);o.frequency.value=780;o.type="square";g.gain.setValueAtTime(0.07,window._ac.currentTime);g.gain.exponentialRampToValueAtTime(0.001,window._ac.currentTime+0.07);o.start();o.stop(window._ac.currentTime+0.07)}catch(e){}}
+
+function log(m){var el=document.getElementById("log"),t=new Date().toLocaleTimeString();el.innerHTML="> ["+t+"] "+m+"<br>"+el.innerHTML;if(el.innerHTML.length>700)el.innerHTML=el.innerHTML.slice(0,700)}
+
+function updateConf(v){clickSound();confThreshold=parseInt(v,10)/100;document.getElementById("confVal").textContent=confThreshold.toFixed(2);log("CONF "+confThreshold.toFixed(2))}
+function onLineSizeChange(){lineBand=parseInt(document.getElementById("lineSize").value,10);log("LINE SIZE "+lineBand+"px");clickSound()}
+
+function showHealth(msg){
+  var el=document.getElementById("health");
+  el.className="health show";
+  el.innerHTML="<b>System Report:</b><br>"+msg;
+}
+
+function checkHealth(){
+  var age=(Date.now()-health.bootTime)/1000;
+  if(age<5) return;
+  var issues=[];
+  if(!health.streamOk) issues.push("Camera/stream NOT playing ("+(health.streamError||"timeout / blocked")+")");
+  if(aiOn && !health.modelOk) issues.push("AI model failed to load ("+(health.modelError||"unknown")+")");
+  if(aiOn && health.modelOk && health.detectFrames===0 && age>15) issues.push("AI loaded but no detection frames yet (video not ready or model stuck)");
+  if(aiOn && health.modelOk && health.detectFrames>0 && health.lastDetectAt && (Date.now()-health.lastDetectAt)>10000) issues.push("Detection stopped (last frame >10s ago)");
+  if(issues.length){
+    showHealth(issues.join("<br>")+"<br><br>Age: "+Math.round(age)+"s. Tell support these messages.");
+  }
+}
+setInterval(checkHealth, 3000);
+
+function setUIMode(mode){
+  var badge=document.getElementById("modeBadge");
+  var conf=document.getElementById("conf");
+  var btnL=document.getElementById("btnLine");
+  var btnC=document.getElementById("btnClear");
+  var lineSz=document.getElementById("lineSize");
+  if(mode==="off"){
+    badge.className="mode-badge mode-off"; badge.textContent="OFF";
+    conf.disabled=true; btnL.disabled=true; btnC.disabled=true; lineSz.disabled=true;
+    document.getElementById("overlay").textContent="Camera only";
+    document.getElementById("dens").className="density d0";
+    document.getElementById("dens").textContent="—";
+    document.getElementById("rep").innerHTML="<b>Status:</b> Camera only. Select AI model to start.";
+    document.getElementById("lineHint").textContent="1) Turn AI ON  2) Choose line size  3) Draw Line (2 taps)";
+  }else{
+    badge.className="mode-badge mode-ai"; badge.textContent="AI ON";
+    conf.disabled=false; btnL.disabled=false; btnC.disabled=false; lineSz.disabled=false;
+    document.getElementById("lineHint").textContent="Choose line size, then Draw Line → tap 2 points on road.";
+  }
+}
+
+function resetCounts(){
+  lineCounts={car:0,bus:0,truck:0,motor:0}; tracks={};
+  ["r-car","r-bus","r-truck","r-motor","l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"});
+}
+
+function setDensity(n){
+  var el=document.getElementById("dens"),cls,txt;
+  if(n<=0){cls="d0";txt="—"}
+  else if(n<=2){cls="d1";txt="SANGAT LENGANG"}
+  else if(n<=5){cls="d2";txt="LENGANG"}
+  else if(n<=11){cls="d3";txt="NORMAL"}
+  else if(n<=18){cls="d4";txt="PADAT"}
+  else{cls="d5";txt="SANGAT PADAT"}
+  el.className="density "+cls; el.textContent=txt; return txt;
+}
+
+function setReport(dens,rt){
+  var msg=dens==="—"?"Waiting...": dens.indexOf("SANGAT PADAT")>=0?"Sangat padat → rekayasa.":dens.indexOf("PADAT")>=0?"Padat → pantau.":dens.indexOf("NORMAL")>=0?"Normal → aman.":"Lengang → optimal.";
+  var lineTotal=lineCounts.car+lineCounts.bus+lineCounts.truck+lineCounts.motor;
+  var extra=line?("<br><b>Line Total:</b> "+lineTotal+" (C"+lineCounts.car+" B"+lineCounts.bus+" T"+lineCounts.truck+" M"+lineCounts.motor+")"):"";
+  document.getElementById("rep").innerHTML="<b>Decision:</b> "+msg+" | Now C"+rt.car+" B"+rt.bus+" T"+rt.truck+" M"+rt.motor+extra;
+}
+
+function getLinePixels(){
+  if(!line) return null;
+  var w=canvas.width||1, h=canvas.height||1;
+  return {x1:line.nx1*w, y1:line.ny1*h, x2:line.nx2*w, y2:line.ny2*h};
+}
+
+// Signed distance from point to infinite line, then band check
+function distToLine(x,y){
+  var L=getLinePixels(); if(!L) return 9999;
+  var dx=L.x2-L.x1, dy=L.y2-L.y1;
+  var len2=dx*dx+dy*dy; if(len2<1) return 9999;
+  var t=((x-L.x1)*dx+(y-L.y1)*dy)/len2;
+  t=Math.max(0,Math.min(1,t));
+  var px=L.x1+t*dx, py=L.y1+t*dy;
+  return Math.hypot(x-px,y-py);
+}
+
+function sideOfLine(x,y){
+  var L=getLinePixels(); if(!L) return 0;
+  return (L.x2-L.x1)*(y-L.y1)-(L.y2-L.y1)*(x-L.x1);
+}
+
+function toggleLineMode(){
+  if(!aiOn) return;
+  lineMode=!lineMode; linePoints=[];
+  document.getElementById("btnLine").classList.toggle("active",lineMode);
+  document.getElementById("btnLine").textContent=lineMode?"Drawing... (tap 2x)":"Draw Line";
+  log(lineMode?"LINE DRAW MODE":"LINE MODE OFF"); clickSound();
+}
+
+function clearLine(){
+  line=null; linePoints=[]; tracks={};
+  lineCounts={car:0,bus:0,truck:0,motor:0};
+  ["l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"});
+  log("LINE CLEARED"); clickSound();
+}
+
+function getCanvasPos(e){
+  var r=canvas.getBoundingClientRect();
+  var cx=e.touches?e.touches[0].clientX:e.clientX;
+  var cy=e.touches?e.touches[0].clientY:e.clientY;
+  return {x:(cx-r.left)*(canvas.width/r.width), y:(cy-r.top)*(canvas.height/r.height)};
+}
+
+function onCanvasClick(e){
+  if(!lineMode||!aiOn) return;
+  e.preventDefault();
+  var p=getCanvasPos(e);
+  linePoints.push(p);
+  if(linePoints.length===1){ log("Point 1 OK - tap point 2"); }
+  else if(linePoints.length>=2){
+    var w=canvas.width||1, h=canvas.height||1;
+    line={nx1:linePoints[0].x/w, ny1:linePoints[0].y/h, nx2:linePoints[1].x/w, ny2:linePoints[1].y/h};
+    linePoints=[]; lineMode=false;
+    document.getElementById("btnLine").classList.remove("active");
+    document.getElementById("btnLine").textContent="Draw Line";
+    tracks={}; lineCounts={car:0,bus:0,truck:0,motor:0};
+    ["l-car","l-bus","l-truck","l-motor"].forEach(function(id){document.getElementById(id).textContent="0"});
+    log("LINE ACTIVE size="+lineBand); clickSound();
+  }
+}
+canvas.addEventListener("click", onCanvasClick);
+canvas.addEventListener("touchstart", onCanvasClick, {passive:false});
+
+function updateTracks(dets){
+  var MAX_DIST=170, MAX_AGE=25;
+  var used={}, newTracks={};
+  for(var id in tracks) tracks[id].age=(tracks[id].age||0)+1;
+
+  for(var i=0;i<dets.length;i++){
+    var d=dets[i], bestId=null, bestCost=1e9;
+    for(var id in tracks){
+      if(used[id]) continue;
+      var t=tracks[id];
+      var pen=(t.k===d.k)?1:1.6;
+      var dist=Math.hypot((t.x+(t.vx||0))-d.x,(t.y+(t.vy||0))-d.y)*pen;
+      if(t.s&&d.s){ var ratio=Math.max(t.s,d.s)/Math.max(1,Math.min(t.s,d.s)); dist*=Math.min(ratio,2); }
+      if(dist<MAX_DIST && dist<bestCost){ bestCost=dist; bestId=id; }
+    }
+
+    if(bestId!==null){
+      used[bestId]=true;
+      var old=tracks[bestId];
+      var vx=(d.x-old.x)*0.5+(old.vx||0)*0.5;
+      var vy=(d.y-old.y)*0.5+(old.vy||0)*0.5;
+      var newSide=sideOfLine(d.x,d.y);
+      var counted=!!old.counted;
+      var near=distToLine(d.x,d.y) <= lineBand;
+
+      // Count when: inside band, side flipped, not counted yet, moved enough
+      if(line && !counted && near && old.side!==0 && newSide!==0 && (old.side>0)!==(newSide>0)){
+        var moved=Math.hypot(d.x-old.x,d.y-old.y);
+        if(moved>2){
+          counted=true;
+          lineCounts[d.k]=(lineCounts[d.k]||0)+1;
+          document.getElementById("l-"+d.k).textContent=lineCounts[d.k];
+          var total=lineCounts.car+lineCounts.bus+lineCounts.truck+lineCounts.motor;
+          log("COUNTED "+d.k.toUpperCase()+" TOTAL="+total);
+        }
+      }
+      newTracks[bestId]={x:d.x,y:d.y,k:d.k,s:d.s||old.s||0,side:newSide,vx:vx,vy:vy,age:0,counted:counted};
+    }else{
+      newTracks[nextId++]={x:d.x,y:d.y,k:d.k,s:d.s||0,side:sideOfLine(d.x,d.y),vx:0,vy:0,age:0,counted:false};
+    }
+  }
+
+  for(var id in tracks){
+    if(!used[id] && (tracks[id].age||0)<MAX_AGE){
+      var t=tracks[id];
+      newTracks[id]={x:t.x+(t.vx||0),y:t.y+(t.vy||0),k:t.k,s:t.s||0,side:t.side,vx:(t.vx||0)*0.8,vy:(t.vy||0)*0.8,age:t.age,counted:!!t.counted};
+    }
+  }
+  tracks=newTracks;
+}
+
+async function detectLoop(){
+  if(!running||!aiOn||!model) return;
+  if(video.readyState<2){ requestAnimationFrame(detectLoop); return; }
+  frameSkip++; if(frameSkip<2){ requestAnimationFrame(detectLoop); return; } frameSkip=0;
+  var w=video.videoWidth, h=video.videoHeight;
+  if(!w||!h){ requestAnimationFrame(detectLoop); return; }
+  canvas.width=w; canvas.height=h;
+
+  try{
+    var preds=await model.detect(video, 25);
+    ctx.clearRect(0,0,w,h);
+    var rt={car:0,bus:0,truck:0,motor:0}, dets=[];
+
+    for(var i=0;i<preds.length;i++){
+      var p=preds[i]; if(p.score<confThreshold) continue;
+      var key=classMap[p.class]; if(!key) continue;
+      rt[key]++;
+      var x=p.bbox[0], y=p.bbox[1], bw=p.bbox[2], bh=p.bbox[3];
+      dets.push({x:x+bw/2, y:y+bh/2, k:key, s:bw*bh});
+      var col=COLORS[key];
+      ctx.strokeStyle=col; ctx.lineWidth=2; ctx.strokeRect(x,y,bw,bh);
+      ctx.fillStyle=col; ctx.font="bold 11px system-ui";
+      ctx.fillText(p.class+" "+Math.round(p.score*100)+"%", x, y>12?y-3:y+12);
+    }
+
+    updateTracks(dets);
+
+    // Draw thick line band
+    if(line){
+      var L=getLinePixels();
+      ctx.strokeStyle="rgba(0,255,136,0.25)"; ctx.lineWidth=lineBand*2;
+      ctx.beginPath(); ctx.moveTo(L.x1,L.y1); ctx.lineTo(L.x2,L.y2); ctx.stroke();
+      ctx.strokeStyle="#00ff88"; ctx.lineWidth=3; ctx.setLineDash([8,5]);
+      ctx.beginPath(); ctx.moveTo(L.x1,L.y1); ctx.lineTo(L.x2,L.y2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle="#00ff88"; ctx.font="bold 12px system-ui";
+      ctx.fillText("COUNT ZONE "+lineBand+"px", Math.min(L.x1,L.x2)+4, Math.min(L.y1,L.y2)-8);
+    }
+    if(linePoints.length===1){
+      ctx.fillStyle="#ff0"; ctx.beginPath(); ctx.arc(linePoints[0].x,linePoints[0].y,7,0,Math.PI*2); ctx.fill();
+    }
+
+    document.getElementById("r-car").textContent=rt.car;
+    document.getElementById("r-bus").textContent=rt.bus;
+    document.getElementById("r-truck").textContent=rt.truck;
+    document.getElementById("r-motor").textContent=rt.motor;
+    var totalNow=rt.car+rt.bus+rt.truck+rt.motor;
+    var dens=setDensity(totalNow);
+    setReport(dens, rt);
+    document.getElementById("overlay").textContent="AI • "+totalNow+" obj"+(line?" • LINE "+lineBand+"px":"");
+
+    health.detectFrames++;
+    health.lastDetectAt=Date.now();
+  }catch(err){
+    health.lastError=err.message||"detect error";
+    log("ERR "+health.lastError);
+  }
+  requestAnimationFrame(detectLoop);
+}
+
+function stopAI(){
+  aiOn=false; running=false; model=null;
+  if(ctx) ctx.clearRect(0,0,canvas.width,canvas.height);
+  resetCounts(); setUIMode("off");
+  log("AI OFF");
+}
+
+function startAI(){
+  if(!model||!aiOn) return;
+  if(video.readyState>=2 && !running){ running=true; log("DETECT ON"); detectLoop(); }
+}
+
+async function onModelChange(){
+  clickSound();
+  var val=document.getElementById("modelSel").value;
+  if(val==="off"){ stopAI(); return; }
+  aiOn=false; running=false; model=null;
+  setUIMode("ai");
+  log("LOADING "+val+"...");
+  health.modelOk=false; health.modelError=null;
+  try{
+    model=await cocoSsd.load({base:val});
+    aiOn=true; health.modelOk=true;
+    log("MODEL READY");
+    startAI();
+  }catch(e){
+    health.modelError=e.message||"load fail";
+    log("MODEL FAIL: "+health.modelError);
+    document.getElementById("modelSel").value="off";
+    stopAI();
+    showHealth("AI model failed: "+health.modelError);
+  }
+}
+
+function destroyStream(){ if(hls){try{hls.destroy()}catch(e){} hls=null;} running=false; }
+
+function loadStream(url){
+  destroyStream();
+  resetCounts();
+  health.streamOk=false; health.streamError=null;
+  log("CONNECT STREAM...");
+  if(window.Hls && Hls.isSupported()){
+    hls=new Hls({enableWorker:true, lowLatencyMode:true, maxBufferLength:8});
+    hls.loadSource(url); hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, function(){
+      video.play().catch(function(){});
+      health.streamOk=true;
+      log("STREAM OK");
+      if(aiOn) setTimeout(startAI, 400);
+    });
+    hls.on(Hls.Events.ERROR, function(e,d){
+      if(d.fatal){ health.streamError=d.type||"fatal"; log("STREAM FAIL "+health.streamError); showHealth("Camera stream failed: "+health.streamError); }
+    });
+  }else if(video.canPlayType("application/vnd.apple.mpegurl")){
+    video.src=url; video.play().catch(function(){});
+    health.streamOk=true; log("STREAM NATIVE");
+    if(aiOn) setTimeout(startAI, 400);
+  }else{
+    health.streamError="HLS not supported";
+    log("NO HLS");
+    showHealth("Browser does not support HLS stream.");
+  }
+}
+
+function switchCam(){ clickSound(); log("CAM CHANGE"); loadStream(document.getElementById("cam").value); }
+
+video.addEventListener("playing", function(){ health.streamOk=true; if(aiOn) setTimeout(startAI, 300); });
+video.addEventListener("error", function(){ health.streamError="video element error"; showHealth("Video error. Try another camera."); });
+
+setUIMode("off");
+log("SYSTEM ONLINE - Camera only");
+loadStream("https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8");
+</script>
+</body>
+</html>
