@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CMS Admin</title>
+  <title>Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,7 +24,7 @@
   <header class="border-b border-white/5">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
       <div>
-        <a href="index.html" class="text-white font-semibold">Notes CMS</a>
+        <a href="index.html" class="text-white font-semibold">Notes</a>
         <p class="text-xs text-slate-500">CRUD .md → GitHub</p>
       </div>
       <a href="index.html" class="text-sm text-sky-400">View site</a>
@@ -76,7 +76,7 @@
   </div>
 
   <script>
-    const DEFAULTS = { owner:'irsamrhmtysf', repo:'irsamrhmtysf.github.io', branch:'master', dir:'cms/posts', token:'' };
+    const DEFAULTS = { owner:'irsamrhmtysf', repo:'irsamrhmtysf.github.io', branch:'master', dir:'notes/posts', token:'' };
     let cfg = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('mdcms')||'{}') };
     let current = { name:'', sha:null, content:'' };
 
