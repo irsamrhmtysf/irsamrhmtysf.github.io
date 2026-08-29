@@ -6,9 +6,6 @@
   <title>Notes</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script>
-    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','system-ui','sans-serif'] } } } }
-  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { background:#0a0a0f; }
@@ -31,78 +28,96 @@
   <header class="border-b border-white/5 sticky top-0 bg-[#0a0a0f]/90 backdrop-blur z-10">
     <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="#/" class="font-semibold text-white">Notes</a>
-      <a href="admin.html" class="text-sm text-sky-400 hover:text-sky-300">Admin</a>
+      <a href="admit.html" class="text-sm text-sky-400 hover:text-sky-300">Admin</a>
     </div>
   </header>
   <main id="app" class="max-w-3xl mx-auto px-4 py-8"></main>
   <script>
-    const CFG = JSON.parse(localStorage.getItem('mdcms') || '{}');
-    const OWNER = CFG.owner || 'irsamrhmtysf';
-    const REPO = CFG.repo || 'irsamrhmtysf.github.io';
-    const BRANCH = CFG.branch || 'master';
-    const DIR = (CFG.dir || 'cms/posts').replace(/^\/|\/$/g,'');
-    const API = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${DIR}`;
-
-    const app = document.getElementById('app');
-    const route = () => location.hash.slice(2) || '';
-
-    async function listMd() {
-      const r = await fetch(`${API}?ref=${BRANCH}`);
-      if (!r.ok) throw new Error('Cannot load posts');
-      const files = await r.json();
-      return (Array.isArray(files) ? files : [])
-        .filter(f => f.type === 'file' && f.name.endsWith('.md'))
-        .sort((a,b) => a.name.localeCompare(b.name));
-    }
-
-    async function getMd(name) {
-      const r = await fetch(`${API}/${encodeURIComponent(name)}?ref=${BRANCH}`);
-      if (!r.ok) throw new Error('Not found');
-      const data = await r.json();
-      return decodeURIComponent(escape(atob(data.content.replace(/\n/g,''))));
-    }
-
-    function titleFrom(name, md) {
-      const m = md && md.match(/^#\s+(.+)$/m);
-      return m ? m[1].trim() : name.replace(/\.md$/,'');
-    }
-
-    function listView(files) {
-      app.innerHTML = `
-        <h1 class="text-2xl font-bold text-white mb-6">Articles</h1>
-        ${files.length ? `<ul class="space-y-2">${files.map(f => `
-          <li><a href="#/${encodeURIComponent(f.name)}" class="block rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 hover:border-sky-500/40">
-            <p class="text-white font-medium">${f.name.replace(/\.md$/,'')}</p>
-            <p class="text-xs text-slate-500">${(f.size/1024).toFixed(1)} KB</p>
-          </a></li>`).join('')}</ul>` : `<p class="text-slate-500">No .md files yet. Open Admin to write one.</p>`}
-      `;
-    }
-
-    function articleView(name, md) {
-      app.innerHTML = `
-        <a href="#/" class="text-sm text-sky-400">← All articles</a>
-        <article class="prose mt-6">${marked.parse(md)}</article>
-        <p class="mt-10 text-xs text-slate-600">${name}</p>
-      `;
-    }
-
-    async function render() {
-      const path = decodeURIComponent(route());
-      app.innerHTML = '<p class="text-slate-500">Loading…</p>';
-      try {
-        if (!path) listView(await listMd());
-        else {
-          const md = await getMd(path);
-          document.title = titleFrom(path, md);
-          articleView(path, md);
-        }
-      } catch (e) {
-        app.innerHTML = `<p class="text-red-400">${e.message}</p><a href="#/" class="text-sky-400 text-sm">Back</a>`;
+    (function () {
+      const saved = JSON.parse(localStorage.getItem('mdcms') || '{}');
+      if (!saved.dir || saved.dir.indexOf('cms') !== -1) {
+        saved.dir = 'notes/posts';
+        localStorage.setItem('mdcms', JSON.stringify(saved));
       }
-    }
+      const OWNER = saved.owner || 'irsamrhmtysf';
+      const REPO = saved.repo || 'irsamrhmtysf.github.io';
+      const BRANCH = saved.branch || 'master';
+      const DIR = (saved.dir || 'notes/posts').replace(/^\/|\/$/g, '');
+      const API = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + DIR;
+      const app = document.getElementById('app');
 
-    window.addEventListener('hashchange', render);
-    render();
+      function route() {
+        return decodeURIComponent((location.hash || '').replace(/^#\/?/, ''));
+      }
+
+      async function listMd() {
+        try {
+          const r = await fetch('posts/index.json?t=' + Date.now());
+          if (r.ok) {
+            const data = await r.json();
+            const names = Array.isArray(data) ? data : (data.files || []);
+            return names.map(function (n) {
+              return typeof n === 'string' ? { name: n, size: 0 } : n;
+            }).filter(function (f) { return f.name && f.name.slice(-3) === '.md'; });
+          }
+        } catch (e) {}
+        const r = await fetch(API + '?ref=' + BRANCH);
+        if (!r.ok) throw new Error('Cannot load posts');
+        const files = await r.json();
+        return (Array.isArray(files) ? files : []).filter(function (f) {
+          return f.type === 'file' && f.name && f.name.slice(-3) === '.md';
+        });
+      }
+
+      async function getMd(name) {
+        try {
+          const local = await fetch('posts/' + encodeURIComponent(name) + '?t=' + Date.now());
+          if (local.ok) return await local.text();
+        } catch (e) {}
+        const r = await fetch(API + '/' + encodeURIComponent(name) + '?ref=' + BRANCH);
+        if (!r.ok) throw new Error('Not found');
+        const data = await r.json();
+        return decodeURIComponent(escape(atob((data.content || '').replace(/\n/g, ''))));
+      }
+
+      function titleFrom(name, md) {
+        const m = md && md.match(/^#\s+(.+)$/m);
+        return m ? m[1].trim() : name.replace(/\.md$/, '');
+      }
+
+      function listView(files) {
+        app.innerHTML = '<h1 class="text-2xl font-bold text-white mb-6">Articles</h1>' +
+          (files.length
+            ? '<ul class="space-y-2">' + files.map(function (f) {
+                return '<li><a href="#/' + encodeURIComponent(f.name) + '" class="block rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 hover:border-sky-500/40"><p class="text-white font-medium">' +
+                  f.name.replace(/\.md$/, '') + '</p></a></li>';
+              }).join('') + '</ul>'
+            : '<p class="text-slate-500">No .md files yet.</p>');
+      }
+
+      function articleView(name, md) {
+        app.innerHTML = '<a href="#/" class="text-sm text-sky-400">← All articles</a><article class="prose mt-6">' +
+          marked.parse(md) + '</article><p class="mt-10 text-xs text-slate-600">' + name + '</p>';
+      }
+
+      async function render() {
+        const path = route();
+        app.innerHTML = '<p class="text-slate-500">Loading…</p>';
+        try {
+          if (!path) listView(await listMd());
+          else {
+            const md = await getMd(path);
+            document.title = titleFrom(path, md);
+            articleView(path, md);
+          }
+        } catch (e) {
+          app.innerHTML = '<p class="text-red-400">' + e.message + '</p><a href="#/" class="text-sky-400 text-sm">Back</a>';
+        }
+      }
+
+      window.addEventListener('hashchange', render);
+      render();
+    })();
   </script>
 </body>
 </html>
