@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMS Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { background:#0a0a0f; }
+    textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .prose { color:#cbd5e1; line-height:1.7; }
+    .prose h1 { color:#fff; font-size:1.5rem; font-weight:700; margin:0 0 .75rem; }
+    .prose h2 { color:#fff; font-size:1.2rem; font-weight:600; margin:1.2rem 0 .5rem; }
+    .prose p { margin:.6rem 0; }
+    .prose a { color:#38bdf8; }
+    .prose ul { margin:.6rem 0 .6rem 1.2rem; }
+    .prose code { background:#1e293b; padding:.1rem .3rem; border-radius:.25rem; }
+    .prose pre { background:#111827; padding:.8rem; border-radius:.6rem; overflow:auto; }
+  </style>
+</head>
+<body class="font-sans text-slate-300 antialiased min-h-screen">
+  <header class="border-b border-white/5">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div>
+        <a href="index.html" class="text-white font-semibold">Notes CMS</a>
+        <p class="text-xs text-slate-500">CRUD .md → GitHub</p>
+      </div>
+      <a href="index.html" class="text-sm text-sky-400">View site</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 grid lg:grid-cols-[240px_1fr] gap-6">
+    <aside class="space-y-3">
+      <button id="btnNew" class="w-full rounded-lg bg-sky-500 text-white text-sm font-medium py-2 hover:bg-sky-600">New post</button>
+      <label class="block w-full rounded-lg border border-white/10 text-center text-sm py-2 cursor-pointer hover:border-sky-500/40">
+        Upload .md
+        <input id="fileUp" type="file" accept=".md,text/markdown,text/plain" class="hidden" />
+      </label>
+      <div id="fileList" class="space-y-1 text-sm"></div>
+      <button id="btnCfg" class="text-xs text-slate-500 hover:text-slate-300">Settings</button>
+    </aside>
+
+    <section>
+      <div id="editorWrap" class="hidden space-y-3">
+        <input id="fname" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white text-sm" placeholder="filename.md" />
+        <textarea id="body" rows="16" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-200 text-sm" placeholder="# Title&#10;&#10;Write markdown…"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <button id="btnSave" class="rounded-lg bg-sky-500 text-white text-sm px-4 py-2">Save to GitHub</button>
+          <button id="btnPrev" class="rounded-lg border border-white/10 text-sm px-4 py-2">Preview</button>
+          <button id="btnDl" class="rounded-lg border border-white/10 text-sm px-4 py-2">Download</button>
+          <button id="btnDel" class="rounded-lg border border-red-500/30 text-red-400 text-sm px-4 py-2">Delete</button>
+        </div>
+        <p id="status" class="text-xs text-slate-500"></p>
+        <div id="preview" class="prose hidden rounded-xl border border-white/5 p-4"></div>
+      </div>
+      <p id="empty" class="text-slate-500 text-sm">Select a file or create a new post.</p>
+    </section>
+  </main>
+
+  <div id="cfgModal" class="hidden fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-2xl bg-[#12121a] border border-white/10 p-5 space-y-3">
+      <h2 class="text-white font-semibold">GitHub settings</h2>
+      <p class="text-xs text-slate-500">Create a PAT with <b>repo</b> scope. Token stays in this browser only.</p>
+      <input id="cfgOwner" placeholder="owner" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white" />
+      <input id="cfgRepo" placeholder="repo" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white" />
+      <input id="cfgBranch" placeholder="branch" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white" />
+      <input id="cfgDir" placeholder="folder e.g. cms/posts" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white" />
+      <input id="cfgToken" type="password" placeholder="GitHub token" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white" />
+      <div class="flex gap-2 justify-end">
+        <button id="cfgCancel" class="text-sm px-3 py-2">Cancel</button>
+        <button id="cfgSave" class="rounded-lg bg-sky-500 text-white text-sm px-4 py-2">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULTS = { owner:'irsamrhmtysf', repo:'irsamrhmtysf.github.io', branch:'master', dir:'cms/posts', token:'' };
+    let cfg = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('mdcms')||'{}') };
+    let current = { name:'', sha:null, content:'' };
+
+    const $ = id => document.getElementById(id);
+    const persist = () => localStorage.setItem('mdcms', JSON.stringify(cfg));
+    const apiBase = () => `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.dir.replace(/^\/|\/$/g,'')}`;
+    const headers = () => ({
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${cfg.token}`,
+      'X-GitHub-Api-Version': '2022-11-28'
+    });
+    const setStatus = (m, ok) => { $('status').textContent = m; $('status').className = 'text-xs ' + (ok===false?'text-red-400':ok?'text-emerald-400':'text-slate-500'); };
+    const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'post';
+
+    function needToken() {
+      if (cfg.token) return true;
+      openCfg();
+      setStatus('Add a GitHub token in Settings.', false);
+      return false;
+    }
+
+    async function listFiles() {
+      $('fileList').innerHTML = '<p class="text-slate-500 text-xs">Loading…</p>';
+      try {
+        const r = await fetch(`${apiBase()}?ref=${cfg.branch}`, { headers: cfg.token ? headers() : {} });
+        if (!r.ok) throw new Error(r.status === 404 ? 'Folder empty or missing' : 'Load failed ' + r.status);
+        const files = await r.json();
+        const md = (Array.isArray(files)?files:[]).filter(f => f.name.endsWith('.md'));
+        $('fileList').innerHTML = md.length ? md.map(f =>
+          `<button data-name="${f.name}" data-sha="${f.sha}" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 truncate ${current.name===f.name?'text-sky-400':''}">${f.name}</button>`
+        ).join('') : '<p class="text-slate-500 text-xs">No .md files</p>';
+        $('fileList').querySelectorAll('button').forEach(b => b.onclick = () => openFile(b.dataset.name, b.dataset.sha));
+      } catch (e) {
+        $('fileList').innerHTML = `<p class="text-red-400 text-xs">${e.message}</p>`;
+      }
+    }
+
+    async function openFile(name, sha) {
+      setStatus('Loading…');
+      const r = await fetch(`${apiBase()}/${encodeURIComponent(name)}?ref=${cfg.branch}`, { headers: cfg.token ? headers() : {} });
+      if (!r.ok) return setStatus('Open failed', false);
+      const data = await r.json();
+      current = { name: data.name, sha: data.sha, content: decodeURIComponent(escape(atob(data.content.replace(/\n/g,'')))) };
+      $('fname').value = current.name;
+      $('fname').readOnly = true;
+      $('body').value = current.content;
+      $('editorWrap').classList.remove('hidden');
+      $('empty').classList.add('hidden');
+      $('preview').classList.add('hidden');
+      setStatus('Opened ' + name);
+      listFiles();
+    }
+
+    function newPost() {
+      current = { name:'', sha:null, content:'' };
+      $('fname').value = '';
+      $('fname').readOnly = false;
+      $('body').value = '# New post\n\n';
+      $('editorWrap').classList.remove('hidden');
+      $('empty').classList.add('hidden');
+      $('preview').classList.add('hidden');
+      setStatus('New draft (not saved)');
+    }
+
+    async function save() {
+      if (!needToken()) return;
+      let name = $('fname').value.trim();
+      if (!name) {
+        const first = $('body').value.match(/^#\s+(.+)$/m);
+        name = slug(first ? first[1] : 'post') + '.md';
+        $('fname').value = name;
+      }
+      if (!name.endsWith('.md')) name += '.md';
+      const content = $('body').value;
+      setStatus('Saving…');
+      const body = {
+        message: (current.sha ? 'update' : 'create') + ' ' + name,
+        content: btoa(unescape(encodeURIComponent(content))),
+        branch: cfg.branch
+      };
+      if (current.sha) body.sha = current.sha;
+      const r = await fetch(`${apiBase()}/${encodeURIComponent(name)}`, {
+        method: 'PUT', headers: { ...headers(), 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      const data = await r.json();
+      if (!r.ok) return setStatus(data.message || 'Save failed', false);
+      current = { name, sha: data.content.sha, content };
+      $('fname').readOnly = true;
+      setStatus('Saved to GitHub', true);
+      listFiles();
+    }
+
+    async function del() {
+      if (!needToken() || !current.name) return;
+      if (!confirm('Delete ' + current.name + '?')) return;
+      setStatus('Deleting…');
+      const r = await fetch(`${apiBase()}/${encodeURIComponent(current.name)}`, {
+        method: 'DELETE',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'delete ' + current.name, sha: current.sha, branch: cfg.branch })
+      });
+      if (!r.ok) return setStatus('Delete failed', false);
+      current = { name:'', sha:null, content:'' };
+      $('editorWrap').classList.add('hidden');
+      $('empty').classList.remove('hidden');
+      setStatus('Deleted', true);
+      listFiles();
+    }
+
+    function download() {
+      const name = $('fname').value || 'post.md';
+      const blob = new Blob([$('body').value], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name.endsWith('.md') ? name : name + '.md';
+      a.click();
+    }
+
+    $('fileUp').onchange = e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        current = { name: f.name.endsWith('.md') ? f.name : f.name + '.md', sha:null, content: reader.result };
+        $('fname').value = current.name;
+        $('fname').readOnly = false;
+        $('body').value = current.content;
+        $('editorWrap').classList.remove('hidden');
+        $('empty').classList.add('hidden');
+        setStatus('Uploaded locally — click Save to push to GitHub');
+      };
+      reader.readAsText(f);
+      e.target.value = '';
+    };
+
+    function openCfg() {
+      $('cfgOwner').value = cfg.owner;
+      $('cfgRepo').value = cfg.repo;
+      $('cfgBranch').value = cfg.branch;
+      $('cfgDir').value = cfg.dir;
+      $('cfgToken').value = cfg.token;
+      $('cfgModal').classList.remove('hidden');
+    }
+
+    $('btnNew').onclick = newPost;
+    $('btnSave').onclick = save;
+    $('btnDel').onclick = del;
+    $('btnDl').onclick = download;
+    $('btnPrev').onclick = () => {
+      const p = $('preview');
+      p.classList.toggle('hidden');
+      if (!p.classList.contains('hidden')) p.innerHTML = marked.parse($('body').value);
+    };
+    $('btnCfg').onclick = openCfg;
+    $('cfgCancel').onclick = () => $('cfgModal').classList.add('hidden');
+    $('cfgSave').onclick = () => {
+      cfg = {
+        owner: $('cfgOwner').value.trim() || DEFAULTS.owner,
+        repo: $('cfgRepo').value.trim() || DEFAULTS.repo,
+        branch: $('cfgBranch').value.trim() || DEFAULTS.branch,
+        dir: $('cfgDir').value.trim() || DEFAULTS.dir,
+        token: $('cfgToken').value.trim()
+      };
+      persist();
+      $('cfgModal').classList.add('hidden');
+      listFiles();
+    };
+
+    if (!cfg.token) openCfg();
+    listFiles();
+  </script>
+</body>
+</html>
