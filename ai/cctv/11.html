@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Private Vision V2</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<style>
+body{margin:0;background:#070707;color:#eee;font-family:system-ui}
+.h{padding:10px;background:#111;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input{padding:9px;background:#1e1e1e;border:1px solid #333;color:#fff;border-radius:8px}
+.btn{padding:10px 14px;border:0;border-radius:9px;font-weight:700;cursor:pointer}
+.g{background:#00ff88;color:#000}.d{background:#222;color:#fff}.y{background:#ffdd00;color:#000}
+.wrap{max-width:1000px;margin:auto;padding:8px}
+.stage{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9}
+#video{width:100%;height:100%;object-fit:contain} #cvs{position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none}
+#bar{height:3px;background:#00ff88;width:0%;transition:.3s}
+.card{background:#141414;padding:8px;border-radius:8px;text-align:center;font-size:12px}
+</style>
+</head>
+<body>
+<div class="h">
+  <b>PRIVATE VISION V2</b><span style="font-size:10px;background:#00ff88;color:#000;padding:2px 7px;border-radius:10px">OFFLINE READY</span>
+  <select id="modelSel"><option value="lite" selected>LITE - 0.3s</option><option value="fast">FAST - 1.5s</option></select>
+  <select id="camSel" style="min-width:220px"><option>Loading 26 Matanya cameras...</option></select>
+</div>
+<div id="bar"></div>
+<div class="wrap">
+  <div id="log" style="font-size:12px;color:#888">Init...</div>
+  <div id="cdnLog" style="font-size:9px;color:#444;white-space:pre-wrap"></div>
+  <div style="display:flex;gap:6px;margin:8px 0">
+    <button class="btn g" id="btnCam">CAMERA</button>
+    <button class="btn d" id="btnUrl">STREAM URL</button>
+    <button class="btn y" id="btnLine">DRAW LINE</button>
+    <button class="btn d" id="btnClearLine">CLEAR LINE</button>
+  </div>
+  <input id="urlInput" type="password" placeholder="m3u8 url (hidden)" value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8" style="width:100%;box-sizing:border-box">
+  <div style="font-size:11px;color:#555"><label><input type="checkbox" onchange="urlInput.type=this.checked?'text':'password'"> show url</label> • <span id="fps">0 fps</span> • <span id="cntInfo">No line</span></div>
+
+  <div class="stage" style="margin-top:8px">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="cvs"></canvas>
+    <div id="ov" style="position:absolute;color:#444;pointer-events:none">No signal</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px">
+    <div class="card"><b id="cc">0</b><br>Car<div style="font-size:10px" id="cc_dir"></div></div>
+    <div class="card"><b id="cb">0</b><br>Motor</div>
+    <div class="card"><b id="ct">0</b><br>Truck/Bus</div>
+    <div class="card"><b id="cp">0</b><br>Person</div>
+    <div class="card"><b id="ctot">0</b><br>Total Cross</div>
+  </div>
+  <button class="btn d" style="width:100%;margin-top:8px" onclick="resetCounts()">RESET COUNTS</button>
+</div>
+
+<script>
+const CAMERAS=[["sekupang","Sekupang"],["batu ampar","Batu Ampar"],["bengkong","Bengkong"],["nongsa","Nongsa"],["sei beduk","Sei Beduk"],["lubuk baja","Lubuk Baja"],["batam kota","Batam Kota"],["batu aji","Batu Aji"],["belakang padang","Belakang Padang"],["sagulung","Sagulung"],["bulang","Bulang"],["galang","Galang"],["sei jodoh","Sei Jodoh"],["nagoya","Nagoya"],["botania","Botania"],["kepri mall","Kepri Mall"],["engku putri","Engku Putri"],["harbour bay","Harbour Bay"],["ocbc","OCBC"],["dataran engku putri","Dataran Engku Putri"],["simpang jam","Simpang Jam"],["simpang kepri mall","Simpang Kepri Mall"],["simpang frengky","Simpang Frengky"],["simpang kabil","Simpang Kabil"],["simpang barelang","Simpang Barelang"],["sukajadi","Sukajadi"]];
+const sel=document.getElementById('camSel'); sel.innerHTML=''; CAMERAS.forEach(c=>{let o=document.createElement('option');o.value=`https://matanya.batam.go.id/cctv/${c[0].replace(/ /g,'')}/stream.m3u8`;o.textContent=c[1];sel.appendChild(o);});
+
+let model=null, hls=null, stream=null, animId=null, trackId=0, tracks={}, line=null, tmpLine=[], drawing=false;
+let counts={car:0,motor:0,truck:0,person:0,total:0, a2b:0, b2a:0};
+const video=document.getElementById('video'), cvs=document.getElementById('cvs'), ctx=cvs.getContext('2d');
+
+function log(t){document.getElementById('log').innerText=t}
+function clog(t){document.getElementById('cdnLog').innerText+=t+'\n'}
+
+function loadScript(url){return new Promise((res,rej)=>{let s=document.createElement('script');s.src=url;s.onload=res;s.onerror=()=>rej(url);document.head.appendChild(s);})}
+async function tryCDNs(urls, name){
+  for(let u of urls){try{clog('Try '+name+': '+u); await loadScript(u); clog('OK '+u); return true;}catch(e){clog('FAIL '+u)}}
+  return false;
+}
+
+async function initAI(type){
+  document.getElementById('bar').style.width='10%';
+  log('Loading AI... trying CDNs');
+  let tfOk = window.tf? true : await tryCDNs([
+    "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js",
+    "https://unpkg.com/@tensorflow/tfjs@4.20.0/dist/tf.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.20.0/tf.min.js"
+  ], 'tfjs');
+  if(!tfOk){ // fallback to local
+    try{await loadScript('./tf.min.js'); tfOk=true; clog('Loaded local tf.min.js')}catch(e){}
+  }
+  if(!tfOk){log('TFJS blocked - download offline zip'); return;}
+
+  let cocoOk = window.cocoSsd? true : await tryCDNs([
+    "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.3.2/dist/coco-ssd.min.js",
+    "https://unpkg.com/@tensorflow-models/coco-ssd@2.3.2/dist/coco-ssd.min.js"
+  ], 'coco');
+  if(!cocoOk){
+    try{await loadScript('./coco-ssd.min.js'); cocoOk=true; clog('Loaded local coco-ssd.min.js')}catch(e){}
+  }
+  if(!cocoOk){log('COCO blocked - need local file'); return;}
+
+  try{
+    document.getElementById('bar').style.width='60%';
+    let base = type==='lite'?'lite_mobilenet_v2':'mobilenet_v2';
+    log('Downloading weights '+base+'...');
+    model=await cocoSsd.load({base});
+    document.getElementById('bar').style.width='100%'; log(type.toUpperCase()+' READY - offline');
+    setTimeout(()=>document.getElementById('bar').style.width='0%',1000);
+  }catch(e){log('Weight error: '+e.message)}
+}
+
+function getSide(px,py, x1,y1,x2,y2){ return (x2-x1)*(py-y1) - (y2-y1)*(px-x1); }
+
+function startLoop(){
+  if(animId) cancelAnimationFrame(animId);
+  cvs.width=video.videoWidth||640; cvs.height=video.videoHeight||360;
+  let last=performance.now(), f=0;
+  let loop=async()=>{
+    if(video.readyState>=2){
+      if(cvs.width!==video.videoWidth){cvs.width=video.videoWidth; cvs.height=video.videoHeight;}
+      ctx.clearRect(0,0,cvs.width,cvs.height);
+      // draw line
+      if(line){ctx.strokeStyle='#00ff88';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(line[0],line[1]);ctx.lineTo(line[2],line[3]);ctx.stroke();
+        ctx.fillStyle='#00ff88';ctx.font='12px monospace';ctx.fillText('A',line[0],line[1]-8);ctx.fillText('B',line[2],line[3]-8);}
+      if(tmpLine.length==1){ctx.fillStyle='#ff0';ctx.beginPath();ctx.arc(tmpLine[0][0],tmpLine[0][1],5,0,Math.PI*2);ctx.fill();}
+
+      if(model){
+        try{
+          let preds=await model.detect(video,20,0.4);
+          let newTracks={};
+          preds.forEach(p=>{
+            if(!['car','motorcycle','bus','truck','person','bicycle'].includes(p.class)) return;
+            let cx=p.bbox[0]+p.bbox[2]/2, cy=p.bbox[1]+p.bbox[3]/2;
+            // simple IoU tracker
+            let best=null, bestIoU=0;
+            for(let id in tracks){let t=tracks[id]; let iou=Math.max(0,Math.min(t.x+p.bbox[2],cx)-Math.max(t.x,cx-p.bbox[2]/2))*Math.max(0,Math.min(t.y+p.bbox[3],cy)-Math.max(t.y,cy-p.bbox[3]/2)); if(iou>bestIoU){bestIoU=iou; best=t;}}
+            let cur;
+            if(best && bestIoU>2000){cur=best; cur.x=cx; cur.y=cy; cur.bbox=p.bbox; cur.miss=0;}
+            else{cur={id:trackId++, x:cx, y:cy, bbox:p.bbox, class:p.class, side: line? getSide(cx,cy,line[0],line[1],line[2],line[3]):0, counted:false, miss:0}; }
+            newTracks[cur.id]=cur;
+
+            if(line &&!cur.counted){
+              let curSide=getSide(cx,cy,line[0],line[1],line[2],line[3]);
+              if(cur.side!==0 && curSide!==0 && Math.sign(cur.side)!==Math.sign(curSide)){
+                cur.counted=true;
+                if(p.class==='car') counts.car++; else if(p.class==='motorcycle'||p.class==='bicycle') counts.motor++; else if(p.class==='bus'||p.class==='truck') counts.truck++; else counts.person++;
+                counts.total++; if(curSide>0) counts.a2b++; else counts.b2a++;
+              }
+              cur.side=curSide;
+            }
+            ctx.strokeStyle=cur.counted?'#ffaa00':'#00ff88'; ctx.lineWidth=2; ctx.strokeRect(...p.bbox);
+            ctx.fillStyle=ctx.strokeStyle; ctx.fillText(p.class+' #'+cur.id, p.bbox[0], p.bbox[1]-4);
+          });
+          tracks=newTracks;
+        }catch(e){}
+      }
+      document.getElementById('cc').innerText=counts.car; document.getElementById('cb').innerText=counts.motor;
+      document.getElementById('ct').innerText=counts.truck; document.getElementById('cp').innerText=counts.person;
+      document.getElementById('ctot').innerText=counts.total; document.getElementById('cntInfo').innerText=line?`A->B:${counts.a2b} B->A:${counts.b2a}`:'Draw line to count';
+      f++; if(performance.now()-last>1000){document.getElementById('fps').innerText=Math.round(f*1000/(performance.now()-last))+' fps'; f=0; last=performance.now();}
+    }
+    animId=requestAnimationFrame(loop);
+  }; loop();
+}
+
+function useCam(){
+  if(hls){hls.destroy();hls=null} if(stream){stream.getTracks().forEach(t=>t.stop())}
+  navigator.mediaDevices.getUserMedia({video:{width:640},audio:false}).then(s=>{stream=s; video.srcObject=s; video.play(); document.getElementById('ov').style.display='none'; startLoop();});
+}
+function useUrl(url){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null} if(hls){hls.destroy();hls=null}
+  let u=url||document.getElementById('urlInput').value.trim();
+  let play=(src)=>{if(Hls.isSupported()){hls=new Hls();hls.loadSource(src);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>{video.play();document.getElementById('ov').style.display='none';startLoop();});hls.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal){hls.destroy(); if(src===u) play('https://corsproxy.io/?'+encodeURIComponent(u));}});}else{video.src=src;video.play();startLoop();}};
+  play(u);
+}
+
+cvs.addEventListener('click', e=>{
+  if(!drawing) return;
+  let r=cvs.getBoundingClientRect(); let x=(e.clientX-r.left)*(cvs.width/r.width); let y=(e.clientY-r.top)*(cvs.height/r.height);
+  tmpLine.push([x,y]); if(tmpLine.length===2){line=[...tmpLine[0],...tmpLine[1]]; tmpLine=[]; drawing=false; document.getElementById('btnLine').innerText='DRAW LINE'; resetCounts(); log('Line set - counting starts');}
+});
+
+document.getElementById('btnLine').onclick=()=>{drawing=!drawing; tmpLine=[]; document.getElementById('btnLine').innerText=drawing?'TAP 2 POINTS...':'DRAW LINE'; log(drawing?'Tap 2 points on video':'');}
+document.getElementById('btnClearLine').onclick=()=>{line=null; tmpLine=[]; drawing=false; resetCounts();};
+document.getElementById('btnCam').onclick=useCam;
+document.getElementById('btnUrl').onclick=()=>useUrl();
+document.getElementById('camSel').onchange=e=>{document.getElementById('urlInput').value=e.target.value; useUrl(e.target.value);};
+document.getElementById('modelSel').onchange=e=>initAI(e.target.value);
+
+function resetCounts(){counts={car:0,motor:0,truck:0,person:0,total:0,a2b:0,b2a:0};}
+initAI('lite');
+</script>
+</body>
+</html>
