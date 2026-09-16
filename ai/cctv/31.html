@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matanya Batam PRO - AI Vision</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.3.2/dist/coco-ssd.min.js"></script>
+<style>
+:root{--green:#00ff88;--bg:#0a0a0a;--card:#1c1c1c}
+body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
+.header{padding:14px 16px;background:#151515;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.btn{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+.btn-green{background:var(--green);color:#000}
+.btn-gray{background:#2a2a2a;color:#fff}
+.wrap{max-width:1000px;margin:auto;padding:12px}
+.video-stage{position:relative;background:#000;border-radius:16px;overflow:hidden;aspect-ratio:16/9}
+#video{width:100%;height:100%;object-fit:cover}
+#canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.input{width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:10px;margin-top:8px}
+.grid{grid-template-columns:repeat(3,1fr);display:grid;gap:8px}
+.card{background:var(--card);padding:12px;border-radius:12px;text-align:center}
+.card b{font-size:22px;display:block}
+.status{padding:10px;border-radius:10px;margin:10px 0;font-weight:700;text-align:center}
+.lancar{background:#003d1f;color:var(--green)}
+.macet{background:#3d0000;color:#ff4d4d}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>🚦 <b>BATAM AI PRO</b> <small style="color:#888">Matanya Batam + Vision</small></div>
+  <div id="aiStatus" style="font-size:12px;color:#888">AI Ready</div>
+</div>
+
+<div class="wrap">
+  <div class="controls">
+    <button class="btn btn-green" onclick="useCamera()">1. USE DEVICE CAMERA</button>
+    <button class="btn btn-gray" onclick="useCCTV()">2. USE CCTV URL</button>
+  </div>
+  
+  <input id="cctvInput" class="input" value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">
+  <div style="font-size:11px;color:#666;margin:4px 0">Sekupang live from matanya.batam.go.id - if CORS blocked, use proxy button</div>
+
+  <div class="video-stage">
+    <video id="video" autoplay muted playsinline crossorigin="anonymous"></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div id="trafficStatus" class="status lancar">🟢 WAITING - START A CAMERA</div>
+
+  <div class="grid" id="stats">
+    <div class="card"><b id="c-car">0</b><span>Car</span></div>
+    <div class="card"><b id="c-motor">0</b><span>Motor</span></div>
+    <div class="card"><b id="c-truck">0</b><span>Truck/Bus</span></div>
+    <div class="card"><b id="c-person">0</b><span>Person</span></div>
+    <div class="card"><b id="c-total">0</b><span>Total</span></div>
+    <div class="card"><b id="c-fps">0</b><span>FPS</span></div>
+  </div>
+</div>
+
+<script>
+let model, video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let isDetecting = false;
+let hls;
+
+async function loadModel(){
+  document.getElementById('aiStatus').innerText = "Loading AI...";
+  model = await cocoSsd.load({base:'
