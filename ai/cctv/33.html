@@ -2,148 +2,117 @@
 <html>
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="referrer" content="no-referrer">
-<title>Private Vision - FIXED LOAD</title>
+<title>Private Vision - ANTI-BLOCK</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
 <style>
-body{margin:0;background:#050505;color:#eee;font-family:system-ui}
-.header{padding:10px;background:#111;display:flex;gap:8px;align-items:center}
-select,input{padding:10px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:8px}
-.btn{padding:12px;border:0;border-radius:10px;font-weight:700;cursor:pointer;flex:1}
-.btn-g{background:#00ff88;color:#000}
-.btn-d{background:#222;color:#fff}
-.wrap{max-width:960px;margin:auto;padding:10px}
-.stage{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
+body{margin:0;background:#000;color:#eee;font-family:system-ui}
+.header{padding:10px;background:#111;display:flex;gap:8px}
+select,input{padding:10px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:8px;width:100%;box-sizing:border-box}
+.btn{padding:12px;border:0;border-radius:10px;font-weight:700;flex:1}
+.btn-g{background:#00ff88;color:#000}.btn-d{background:#222;color:#fff}
+.stage{position:relative;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
 #video{width:100%;height:100%;object-fit:contain}
 #canvas{position:absolute;top:0;left:0;width:100%;height:100%}
-#bar{height:4px;background:#00ff88;width:0%;transition:width.3s}
-.card{background:#151515;padding:8px;border-radius:8px;text-align:center;font-size:12px}
+#bar{height:4px;background:#00ff88;width:0%;transition:.3s}
+.card{background:#151515;padding:8px;border-radius:8px;text-align:center}
 </style>
 </head>
 <body>
 <div class="header">
-  <b>COMOUTER VISION 3.4</b>
-  <select id="modelSel" style="margin-left:auto;min-width:200px">
-    <option value="lite">LITE - 1.8MB - Instant</option>
-    <option value="fast" selected>FAST - 6MB - Recommended</option>
-    <option value="accurate">ACCURATE - YOLOv5s - 14MB</option>
-    <option value="big">BIG - YOLOv8n - 6MB - Best</option>
+  <b>PRIVATE VISION</b>
+  <select id="modelSel" style="width:200px">
+    <option value="lite">LITE - Instant</option>
+    <option value="fast" selected>FAST - Balanced</option>
   </select>
 </div>
 <div id="bar"></div>
-<div class="wrap">
-  <div id="log" style="font-size:12px;color:#888">Initializing...</div>
+<div style="padding:10px;max-width:960px;margin:auto">
+  <div id="log" style="font-size:12px;color:#888">Trying to load AI from multiple CDNs...</div>
+  <div id="cdnLog" style="font-size:10px;color:#555;white-space:pre-wrap"></div>
   <div style="display:flex;gap:8px;margin:8px 0">
     <button class="btn btn-g" id="btnCam">USE CAMERA</button>
     <button class="btn btn-d" id="btnUrl">USE STREAM</button>
   </div>
-  <input id="urlInput" type="text" value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8" style="width:100%;box-sizing:border-box">
-  <div id="err" style="font-size:10px;color:#ff5555;white-space:pre-wrap"></div>
-
-  <div class="stage" style="margin-top:10px">
+  <input id="urlInput" value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">
+  <div class="stage" style="margin-top:10px;border-radius:12px;overflow:hidden">
     <video id="video" autoplay muted playsinline></video>
     <canvas id="canvas"></canvas>
-    <div id="overlay" style="position:absolute;color:#444">No signal</div>
+    <div id="overlay" style="position:absolute;color:#333">No signal</div>
   </div>
-
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">
-    <div class="card"><b id="c-car">0</b><br>Car</div>
-    <div class="card"><b id="c-bike">0</b><br>Bike</div>
-    <div class="card"><b id="c-truck">0</b><br>Truck</div>
-    <div class="card"><b id="c-total">0</b><br>Total</div>
+    <div class="card"><b id="c-car">0</b><br>Car</div><div class="card"><b id="c-bike">0</b><br>Bike</div><div class="card"><b id="c-truck">0</b><br>Truck</div><div class="card"><b id="c-total">0</b><br>Total</div>
   </div>
 </div>
 
 <script>
-ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/";
-ort.env.wasm.numThreads = 1;
-
-let currentModel=null, currentType='fast', hls=null, stream=null, animId=null;
+let model=null, hls=null, stream=null, animId=null;
 const video=document.getElementById('video'), canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d');
-
 function setBar(p){document.getElementById('bar').style.width=p+'%'}
 function log(t){document.getElementById('log').innerText=t}
-function err(t){document.getElementById('err').innerText+=t+'\n'; console.error(t);}
+function cdnLog(t){document.getElementById('cdnLog').innerText+=t+'\n'}
 
-async function loadTFJS(){
-  if(window.tf && window.cocoSsd) return;
-  await new Promise(res=>{
-    let s=document.createElement('script');
-    s.src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js";
-    s.onload=()=>{ let s2=document.createElement('script'); s2.src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.3.2/dist/coco-ssd.min.js"; s2.onload=res; s2.onerror=()=>err('coco-ssd CDN failed'); document.head.appendChild(s2); };
-    s.onerror=()=>err('tfjs CDN failed'); document.head.appendChild(s);
+function loadScript(url){
+  return new Promise((res,rej)=>{
+    let s=document.createElement('script'); s.src=url; s.onload=res; s.onerror=()=>rej(url); document.head.appendChild(s);
   });
 }
 
-async function loadModel(type){
-  currentType=type; setBar(5); log('Loading '+type+'...');
-  document.getElementById('err').innerText='';
-  try{
-    if(type==='lite'){
-      await loadTFJS(); setBar(50);
-      currentModel=await cocoSsd.load({base:'lite_mobilenet_v2'});
-      currentModel.type='coco'; setBar(100); log('LITE READY - 1.8MB - fastest');
-    }else if(type==='fast'){
-      await loadTFJS(); setBar(50);
-      currentModel=await cocoSsd.load({base:'mobilenet_v2'});
-      currentModel.type='coco'; setBar(100); log('FAST READY - 6MB - balanced');
-    }else if(type==='accurate' || type==='big'){
-      // Try YOLO - use reliable CDN
-      let url = type==='big'
-       ? 'https://cdn.jsdelivr.net/gh/ultralytics/assets@main/yolov8n.onnx' // 6MB, CORS OK
-        : 'https://cdn.jsdelivr.net/gh/ultralytics/assets@main/yolov5su.onnx';
-      log(`Loading ${type} YOLO from ${url} - first time 10s...`);
-      setBar(20);
-      try{
-        currentModel=await ort.InferenceSession.create(url, {executionProviders:['wasm'], graphOptimizationLevel:'all'});
-        currentModel.type='yolo'; setBar(100); log(type.toUpperCase()+' YOLO READY - offline');
-      }catch(e){
-        err('YOLO CDN failed: '+e.message+' -> fallback to FAST COCO');
-        await loadTFJS();
-        currentModel=await cocoSsd.load({base:'mobilenet_v2'}); currentModel.type='coco';
-        setBar(100); log('FAST fallback READY');
-      }
-    }
-  }catch(e){ err('Load error: '+e.message); log('Failed, try LITE'); }
-  setTimeout(()=>setBar(0),1500);
+async function loadWithFallback(urls, name){
+  for(let url of urls){
+    try{ cdnLog('Trying '+name+': '+url); await loadScript(url); cdnLog('OK '+url); return true; }
+    catch(e){ cdnLog('FAIL '+url); }
+  }
+  return false;
 }
 
-// Simple working detection for both types
-async function detect(){
-  if(!currentModel) return [];
-  if(currentModel.type==='coco'){
-    return await currentModel.detect(video, 15, 0.4);
-  }else{
-    // YOLO simplified - for now return empty, we use COCO for stability
-    // Real YOLO decode is heavy, using COCO ensures no fallback
-    return [];
+async function loadModel(type){
+  setBar(10); log('Loading '+type+' - trying 4 CDNs...');
+  let tfUrls=[
+    "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js",
+    "https://unpkg.com/@tensorflow/tfjs@4.20.0/dist/tf.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.20.0/tf.min.js",
+    "https://esm.run/@tensorflow/tfjs@4.20.0"
+  ];
+  let cocoUrls=[
+    "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.3.2/dist/coco-ssd.min.js",
+    "https://unpkg.com/@tensorflow-models/coco-ssd@2.3.2/dist/coco-ssd.min.js",
+    "https://cdn.skypack.dev/@tensorflow-models/coco-ssd@2.3.2"
+  ];
+
+  let tfOk = window.tf ? true : await loadWithFallback(tfUrls, 'tfjs');
+  if(!tfOk){ log('ALL TFJS CDNs BLOCKED - need offline version'); setBar(0); return; }
+
+  let cocoOk = window.cocoSsd ? true : await loadWithFallback(cocoUrls, 'coco-ssd');
+  if(!cocoOk){ log('ALL COCO CDNs BLOCKED - need offline version'); setBar(0); return; }
+
+  try{
+    setBar(60);
+    let base = type==='lite' ? 'lite_mobilenet_v2' : 'mobilenet_v2';
+    log('Downloading model weights: '+base+'...');
+    model = await cocoSsd.load({base:base});
+    setBar(100); log(type.toUpperCase()+' READY - '+base+' - works offline now');
+    setTimeout(()=>setBar(0),1000);
+  }catch(e){
+    cdnLog('Model weights failed: '+e.message);
+    log('Weights blocked: '+e.message+' - Try LITE or use offline zip');
   }
 }
 
-async function useCamera(){
+function useCamera(){
   if(hls){hls.destroy();hls=null} if(stream){stream.getTracks().forEach(t=>t.stop())}
-  log('Requesting camera...');
-  try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{width:640},audio:false});
-    video.srcObject=stream; await video.play();
-    document.getElementById('overlay').style.display='none'; startLoop();
-  }catch(e){ err('Camera: '+e.message); log('Need HTTPS'); }
+  navigator.mediaDevices.getUserMedia({video:{width:640},audio:false}).then(s=>{
+    stream=s; video.srcObject=s; video.play(); document.getElementById('overlay').style.display='none'; startLoop();
+  }).catch(e=>log('Camera need HTTPS: '+e.message));
 }
-
 function useStream(){
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null} if(hls){hls.destroy();hls=null}
-  let url=document.getElementById('urlInput').value.trim(); if(!url) return;
-  log('Loading stream...'); document.getElementById('overlay').style.display='none';
-  const play=(src)=>{
-    if(Hls.isSupported()){
-      hls=new Hls(); hls.loadSource(src); hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED,()=>{video.play(); startLoop(); log('Stream playing');});
-      hls.on(Hls.Events.ERROR,(ev,d)=>{ if(d.fatal){ err('HLS error: '+d.type); hls.destroy(); if(src===url){ log('Retrying with proxy...'); play('https://corsproxy.io/?'+encodeURIComponent(url)); } }});
-    }else{ video.src=src; video.addEventListener('loadedmetadata',()=>{video.play(); startLoop();}); }
-  }; play(url);
+  let url=document.getElementById('urlInput').value.trim();
+  if(Hls.isSupported()){
+    hls=new Hls(); hls.loadSource(url); hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>{video.play(); document.getElementById('overlay').style.display='none'; startLoop();});
+    hls.on(Hls.Events.ERROR,(ev,d)=>{ if(d.fatal){ hls.destroy(); let prox='https://corsproxy.io/?'+encodeURIComponent(url); hls=new Hls(); hls.loadSource(prox); hls.attachMedia(video); hls.on(Hls.Events.MANIFEST_PARSED,()=>{video.play(); startLoop();}); } });
+  }else{ video.src=url; video.play(); startLoop(); }
 }
-
 function startLoop(){
   if(animId) cancelAnimationFrame(animId);
   canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||360;
@@ -151,28 +120,28 @@ function startLoop(){
     if(video.readyState>=2){
       if(canvas.width!==video.videoWidth){canvas.width=video.videoWidth; canvas.height=video.videoHeight;}
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      try{
-        let preds=await currentModel.detect(video,15,0.4);
-        let c={car:0,bike:0,truck:0,total:0};
-        preds.forEach(p=>{
-          if(['car','motorcycle','bus','truck'].includes(p.class)){
-            if(p.class==='car') c.car++; else if(p.class==='motorcycle') c.bike++; else c.truck++; c.total++;
-            ctx.strokeStyle='#00ff88'; ctx.lineWidth=2; ctx.strokeRect(...p.bbox);
-            ctx.fillStyle='#00ff88'; ctx.font='11px monospace'; ctx.fillText(p.class, p.bbox[0], p.bbox[1]-4);
-          }
-        });
-        document.getElementById('c-car').innerText=c.car; document.getElementById('c-bike').innerText=c.bike;
-        document.getElementById('c-truck').innerText=c.truck; document.getElementById('c-total').innerText=c.total;
-      }catch(e){}
+      if(model){
+        try{
+          let preds=await model.detect(video,10,0.45);
+          let c={car:0,bike:0,truck:0,total:0};
+          preds.forEach(p=>{
+            if(['car','motorcycle','bus','truck'].includes(p.class)){
+              if(p.class==='car') c.car++; else if(p.class==='motorcycle') c.bike++; else c.truck++; c.total++;
+              ctx.strokeStyle='#00ff88'; ctx.strokeRect(...p.bbox);
+            }
+          });
+          document.getElementById('c-car').innerText=c.car; document.getElementById('c-bike').innerText=c.bike;
+          document.getElementById('c-truck').innerText=c.truck; document.getElementById('c-total').innerText=c.total;
+        }catch(e){}
+      }
     }
     animId=requestAnimationFrame(loop);
   }; loop();
 }
-
 document.getElementById('btnCam').onclick=useCamera;
 document.getElementById('btnUrl').onclick=useStream;
 document.getElementById('modelSel').onchange=e=>loadModel(e.target.value);
-loadModel('fast');
+loadModel('lite');
 </script>
 </body>
 </html>
