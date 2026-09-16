@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matanya Batam AI - Easiest</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:sans-serif}
+#wrap{position:relative;max-width:900px;margin:auto}
+#video, #canvas{width:100%; border-radius:12px}
+#canvas{position:absolute;top:0;left:0}
+.top{padding:12px;background:#111;display:flex;justify-content:space-between;align-items:center}
+.card{background:#222;padding:10px;border-radius:8px;margin:6px 0}
+button{padding:8px 12px;border:0;border-radius:6px;background:#0f0;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="top">
+  <b>🚦 MATANYA BATAM - AI Vision (Easy)</b>
+  <button onclick="start()">START AI</button>
+</div>
+
+<div id="wrap">
+  <video id="video" autoplay muted playsinline></video>
+  <canvas id="canvas"></canvas>
+</div>
+
+<div style="padding:12px;max-width:900px;margin:auto">
+  <div id="stats">Klik START AI, izinkan kamera. Ganti source di bawah buat CCTV Batam.</div>
+  <input id="cctvUrl" style="width:100%;padding:8px;margin-top:10px" placeholder="Paste link.m3u8 dari matanyabatam.com disini (optional)">
+  <p style="font-size:12px;color:#888">Cara pakai CCTV Batam asli: Buka matanyabatam.com > Inspect > Network > cari m3u8 > paste disini. Atau pakai webcam dulu buat tes.</p>
+</div>
+
+<script>
+let model, video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let counting = {};
+
+async function start(){
+  document.getElementById('stats').innerText = "Loading AI... (10 detik)";
+  model = await cocoSsd.load();
+
+  // coba pakai webcam dulu (paling gampang)
+  let stream = await navigator.mediaDevices.getUserMedia({video:true});
+  video.srcObject = stream;
+  await new Promise(r=> video.onloadedmetadata = r);
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  detect();
+}
+
+async function detect(){
+  let preds = await model.detect(video);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  counting = {};
+
+  preds.forEach(p=>{
+    if(['car','motorcycle','bus','truck','person'].includes(p.class)){
+      counting[p.class] = (counting[p.class]||0)+1;
+      ctx.strokeStyle = "#00FF00";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(...p.bbox);
+      ctx.fillStyle = "#00FF00";
+      ctx.fillText(p.class, p.bbox[0], p.bbox[1]-5);
+    }
+  });
+
+  let total = Object.values(counting).reduce((a,b)=>a+b,0);
+  let status = total>15? "🔴 MACET" : "🟢 LANCAR";
+  document.getElementById('stats').innerHTML = `
+    <div class="card">${status} | Total: ${total}</div>
+    ${Object.entries(counting).map(([k,v])=>`<div class="card">${k}: ${v}</div>`).join('')}
+    <div class="card" style="font-size:12px">Ini = Jasa INVENTORI Komputer. Data ini bisa dijual.</div>
+  `;
+
+  requestAnimationFrame(detect);
+}
+</script>
+</body>
+</html>
