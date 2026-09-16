@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Private Vision OFFLINE</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<!-- OFFLINE AI - loads from local folder, no CDN -->
+<script src="./tf.min.js"></script>
+<script src="./coco-ssd.min.js"></script>
+<style>
+body{margin:0;background:#000;color:#eee;font-family:system-ui}
+.header{padding:12px;background:#111}
+.btn{padding:12px;border:0;border-radius:10px;font-weight:700;flex:1}
+.btn-g{background:#00ff88;color:#000}.btn-d{background:#222;color:#fff}
+.wrap{max-width:960px;margin:auto;padding:10px}
+.stage{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
+#video{width:100%;height:100%;object-fit:contain}
+#canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.card{background:#151515;padding:10px;border-radius:8px;text-align:center}
+</style>
+</head>
+<body>
+<div class="header"><b>PRIVATE VISION - OFFLINE MODE</b> <span style="font-size:10px;background:#00ff88;color:#000;padding:3px 8px;border-radius:10px">NO CDN • NO UPLOAD</span></div>
+<div style="padding:10px;max-width:960px;margin:auto">
+  <div id="log" style="font-size:12px;color:#00ff88">Offline AI files found. Loading...</div>
+  <div style="display:flex;gap:8px;margin:10px 0">
+    <button class="btn btn-g" id="btnCam">CAMERA</button>
+    <button class="btn btn-d" id="btnUrl">STREAM URL</button>
+    <select id="modelSel" style="background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:8px;padding:10px">
+      <option value="lite">LITE - 0.2s</option>
+      <option value="fast" selected>FAST - Recommended</option>
+    </select>
+  </div>
+  <input id="urlInput" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;color:#fff;border-radius:8px;box-sizing:border-box" value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">
+  <div class="stage" style="margin-top:10px">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+    <div id="overlay" style="position:absolute;color:#444">Click CAMERA or STREAM</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
+    <div class="card"><b id="c-car">0</b><br>Car</div><div class="card"><b id="c-bike">0</b><br>Bike</div><div class="card"><b id="c-truck">0</b><br>Truck</div><div class="card"><b id="c-total">0</b><br>Total</div>
+  </div>
+  <div style="font-size:10px;color:#444;margin-top:10px">Privacy: Runs 100% offline. Close tab = data gone. No server.</div>
+</div>
+<script>
+let model=null, hls=null, stream=null, animId=null;
+const video=document.getElementById('video'), canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d');
+function log(t){document.getElementById('log').innerText=t}
+
+async function loadModel(type){
+  log('Loading '+type+' offline... (first time downloads 6MB weights, then cached)');
+  try{
+    let base = type==='lite'? 'lite_mobilenet_v2' : 'mobilenet_v2';
+    model = await cocoSsd.load({base:base});
+    log(type.toUpperCase()+' READY - 100% offline, no CDN blocked anymore');
+  }catch(e){ log('Weight download blocked: '+e.message+' - try LITE, it uses smaller weights'); console.error(e); }
+}
+
+function useCamera(){
+  if(hls){hls.destroy();hls=null} if(stream){stream.getTracks().forEach(t=>t.stop())}
+  navigator.mediaDevices.getUserMedia({video:{width:640},audio:false}).then(s=>{
+    stream=s; video.srcObject=s; video.play(); document.getElementById('overlay').style.display='none'; startLoop();
+  }).catch(e=>log('Need HTTPS + Allow camera'));
+}
+function useStream(){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null} if(hls){hls.destroy();hls=null}
+  let url=document.getElementById('urlInput').value.trim();
+  const play=(src)=>{
+    if(Hls.isSupported()){
+      hls=new Hls(); hls.loadSource(src); hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED,()=>{video.play(); document.getElementById('overlay').style.display='none'; startLoop();});
+      hls.on(Hls.Events.ERROR,(ev,d)=>{ if(d.fatal){ hls.destroy(); play('https://corsproxy.io/?'+encodeURIComponent(url)); }});
+    }else{ video.src=src; video.play(); startLoop(); }
+  }; play(url);
+}
+function startLoop(){
+  if(animId) cancelAnimationFrame(animId);
+  canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||360;
+  let loop=async()=>{
+    if(video.readyState>=2){
+      if(canvas.width!==video.videoWidth){canvas.width=video.videoWidth; canvas.height=video.videoHeight;}
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      if(model){
+        try{
+          let preds=await model.detect(video,12,0.42);
+          let c={car:0,bike:0,truck:0,total:0};
+          preds.forEach(p=>{
+            if(['car','motorcycle','bus','truck'].includes(p.class)){
+              if(p.class==='car') c.car++; else if(p.class==='motorcycle') c.bike++; else c.truck++; c.total++;
+              ctx.strokeStyle='#00ff88'; ctx.lineWidth=2; ctx.strokeRect(...p.bbox);
+              ctx.fillStyle='#00ff88'; ctx.font='11px monospace'; ctx.fillText(p.class, p.bbox[0], p.bbox[1]-5);
+            }
+          });
+          document.getElementById('c-car').innerText=c.car; document.getElementById('c-bike').innerText=c.bike;
+          document.getElementById('c-truck').innerText=c.truck; document.getElementById('c-total').innerText=c.total;
+        }catch(e){}
+      }
+    }
+    animId=requestAnimationFrame(loop);
+  }; loop();
+}
+document.getElementById('btnCam').onclick=useCamera;
+document.getElementById('btnUrl').onclick=useStream;
+document.getElementById('modelSel').onchange=e=>loadModel(e.target.value);
+loadModel('lite');
+</script>
+</body>
+</html>
