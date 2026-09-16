@@ -53,15 +53,14 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain
 </head>
 <body>
 <div class="header">
-  <h1>BATAM TRAFFIC AI VISION</h1>
+  <h1>BATAM TRAFFIC AI VISION 2.4</h1>
   <span class="live">● LIVE</span>
 </div>
 
 <div class="wrap">
   <div class="controls">
     <select id="cam" onchange="switchCam()">
-      <option value="https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8">Simp. Kuda 1</option>
-      <option value="https://matanya.batam.go.id/cctv/simpkuda2/stream.m3u8">Simp. Kuda 2</option>
+      <option value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">Pel.Sekupang</option>
       <option value="https://matanya.batam.go.id/cctv/atap/stream.m3u8">Alun-Alun Engku Putri</option>
       <option value="https://matanya.batam.go.id/cctv/gerselatan/stream.m3u8">Engku Putri Selatan</option>
       <option value="https://matanya.batam.go.id/cctv/gerutara/stream.m3u8">Engku Putri Utara</option>
@@ -73,7 +72,7 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain
       <option value="https://matanya.batam.go.id/cctv/pasarjodoh1/stream.m3u8">Pasar Jodoh 1</option>
       <option value="https://matanya.batam.go.id/cctv/pasarjodoh2/stream.m3u8">Pasar Jodoh 2</option>
       <option value="https://matanya.batam.go.id/cctv/batuaji/stream.m3u8">SP Batu Aji</option>
-      <option value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8">Pel. Sekupang</option>
+      <option value="https://matanya.batam.go.id/cctv/simpkuda2/stream.m3u8">Simpang Kuda 2</option>
       <option value="https://matanya.batam.go.id/cctv/punggur1/stream.m3u8">Pel. Punggur</option>
       <option value="https://matanya.batam.go.id/cctv/danganom1/stream.m3u8">Dang Anom 1</option>
       <option value="https://matanya.batam.go.id/cctv/danganom2/stream.m3u8">Dang Anom 2</option>
@@ -478,7 +477,7 @@ video.addEventListener("error", function(){ health.streamError="video element er
 
 setUIMode("off");
 log("SYSTEM ONLINE - Camera only");
-loadStream("https://matanya.batam.go.id/cctv/simpkuda1/stream.m3u8");
+loadStream("https://matanya.batam.go.id/cctv/sekupang/stream.m3u8");
 </script>
 </body>
 </html>
