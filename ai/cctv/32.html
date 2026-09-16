@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Private Vision AI</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.3.2/dist/coco-ssd.min.js"></script>
+<style>
+body{margin:0;background:#0a0a0a;color:#fff;font-family:system-ui}
+.header{padding:12px;background:#151515;display:flex;justify-content:space-between}
+.btn{padding:12px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer;width:100%}
+.btn-green{background:#00ff88;color:#000}
+.btn-dark{background:#222;color:#fff}
+.wrap{max-width:900px;margin:auto;padding:12px}
+.stage{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
+#video{width:100%;height:100%;object-fit:contain}
+#canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.card{background:#1c1c1c;padding:10px;border-radius:10px;text-align:center}
+input{width:100%;padding:12px;background:#1c1c1c;border:1px solid #333;color:#fff;border-radius:10px;box-sizing:border-box}
+#log{font-size:11px;color:#888;margin:8px 0;min-height:18px}
+</style>
+</head>
+<body>
+<div class="header">
+  <b>PRIVATE VISION SYSTEM</b>
+  <span id="status" style="font-size:11px;color:#00ff88">READY</span>
+</div>
+
+<div class="wrap">
+  <div class="row">
+    <button class="btn btn-green" id="btnCam">USE DEVICE CAMERA</button>
+    <button class="btn btn-dark" id="btnUrl">USE STREAM URL</button>
+  </div>
+
+  <input id="urlInput" value="https://matanya.batam.go.id/cctv/sekupang/stream.m3u8" placeholder="Paste.m3u8 url here">
+  <div id="log">Enter URL then click USE STREAM URL. For camera, click USE DEVICE CAMERA and ALLOW permission.</div>
+
+  <div class="stage">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+    <div id="overlay" style="position:absolute;color:#555">No signal</div>
+  </div>
+
+  <div class="row" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
+    <div class="card"><b id="v-car">0</b><div>Car</div></div>
+    <div class="card"><b id="v-motor">0</b><div>Bike</div></div>
+    <div class="card"><b id="v-truck">0</b><div>Truck</div></div>
+    <div class="card"><b id="v-total">0</b><div>Total</div></div>
+  </div>
+  <button class="btn btn-dark" onclick="stopAll()" style="margin-top:10px;background:#3a0000">STOP</button>
+</div>
+
+<script>
+let model, hls, stream, animId;
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const logEl = document.getElementById('log');
+const statusEl = document.getElementById('status');
+
+function log(t){ logEl.innerText = t; console.log(t); }
+
+async function loadModel(){
+  statusEl.innerText = "LOADING AI...";
+  model = await cocoSsd.load({base:'lite_mobilenet_v2'});
+  statusEl.innerText = "AI READY";
+}
+
+async function useCamera(){
+  stopAll();
+  log("Requesting camera permission...");
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:360,facingMode:"environment"},audio:false});
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    document.getElementById('overlay').style.display='none';
+    log("Camera active. Starting detection...");
+    startDetect();
+  }catch(e){
+    log("Camera failed: "+e.message+" - Use Chrome and allow camera. Must be HTTPS.");
+    alert("Camera failed: "+e.message+"\n\n1. Use Chrome\n2. Open via https:// or localhost\n3. Allow camera permission");
+  }
+}
+
+function useStream(){
+  stopAll();
+  let url = document.getElementById('urlInput').value.trim();
+  if(!url){ alert("Paste URL"); return; }
+  log("Loading stream: "+url);
+  document.getElementById('overlay').style.display='none';
+
+  const playWithHls = (src)=>{
+    if(Hls.isSupported()){
+      hls = new Hls({enableWorker:true, lowLatencyMode:false});
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, async()=>{
+        try{ await video.play(); log("Stream playing"); startDetect(); }catch(e){log("Play error: "+e.message)}
+      });
+      hls.on(Hls.Events.ERROR, (ev,data)=>{
+        log("HLS error: "+data.type+" - trying proxy...");
+        if(data.fatal && src===url){
+          // auto proxy retry
+          let proxyUrl = "https://corsproxy.io/?"+encodeURIComponent(url);
+          log("Retrying with proxy: "+proxyUrl);
+          hls.destroy();
+          playWithHls(proxyUrl);
+        }
+      });
+    } else if(video.canPlayType('application/vnd.apple.mpegurl')){
+      video.src = src;
+      video.addEventListener('loadedmetadata', async()=>{ await video.play(); startDetect(); });
+    } else {
+      log("HLS not supported in this browser");
+    }
+  };
+  playWithHls(url);
+}
+
+function startDetect(){
+  if(!model){ log("AI not loaded yet"); return; }
+  const loop = async()=>{
+    if(video.readyState>=2){
+      if(canvas.width!==video.videoWidth){ canvas.width=video.videoWidth; canvas.height=video.videoHeight; }
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      try{
+        let preds = await model.detect(video, 20, 0.35);
+        let c={car:0,motorcycle:0,truck:0,bus:0,total:0};
+        preds.forEach(p=>{
+          if(['car','motorcycle','truck','bus','person'].includes(p.class)){
+            if(p.class==='car') c.car++;
+            else if(p.class==='motorcycle') c.motorcycle++;
+            else if(p.class==='truck'||p.class==='bus') c.truck++;
+            c.total++;
+            ctx.strokeStyle="#00ff88"; ctx.lineWidth=2; ctx.strokeRect(...p.bbox);
+            ctx.fillStyle="#00ff88"; ctx.font="12px monospace"; ctx.fillText(p.class, p.bbox[0], p.bbox[1]-5);
+          }
+        });
+        document.getElementById('v-car').innerText=c.car;
+        document.getElementById('v-motor').innerText=c.motorcycle;
+        document.getElementById('v-truck').innerText=c.truck;
+        document.getElementById('v-total').innerText=c.total;
+      }catch(e){}
+    }
+    animId = requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+function stopAll(){
+  if(animId) cancelAnimationFrame(animId);
+  if(hls){ hls.destroy(); hls=null; }
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  video.pause(); video.src=""; video.srcObject=null;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('overlay').style.display='block';
+}
+
+document.getElementById('btnCam').onclick = useCamera;
+document.getElementById('btnUrl').onclick = useStream;
+loadModel();
+</script>
+</body>
+</html>
