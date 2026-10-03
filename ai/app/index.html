@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Forge — build apps</title>
+<style>
+  :root {
+    --bg: #0c0e12;
+    --panel: #141820;
+    --panel2: #1c2230;
+    --line: #2a3142;
+    --text: #e7e4dc;
+    --muted: #8d93a3;
+    --accent: #e7a23a;
+    --accent2: #f3d7a1;
+    --ok: #3ecf8e;
+    --bad: #ef6b6b;
+    --code: #0a0c10;
+    --radius: 14px;
+    --nav: 64px;
+    --safe: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.45 ui-sans-serif, system-ui, sans-serif; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  #app { height: 100%; display: flex; flex-direction: column; }
+  header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px 8px; border-bottom: 1px solid var(--line);
+  }
+  .logo { font-weight: 750; letter-spacing: .04em; }
+  .logo span { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 12px; flex: 1; }
+  .chip {
+    border: 1px solid var(--line); background: var(--panel2); color: var(--accent2);
+    border-radius: 999px; padding: 6px 10px; font-size: 12px; max-width: 46vw;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  main { flex: 1; overflow: auto; padding: 12px 12px calc(var(--nav) + var(--safe) + 12px); }
+  .view { display: none; }
+  .view.on { display: block; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px;
+    margin-bottom: 10px;
+  }
+  label { display: block; color: var(--muted); font-size: 12px; margin: 8px 0 4px; }
+  textarea, input, select {
+    width: 100%; background: var(--code); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px; outline: none;
+  }
+  textarea { min-height: 96px; resize: vertical; }
+  textarea.code { min-height: 280px; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 0; }
+  .btn {
+    border: 1px solid var(--line); background: var(--panel2); border-radius: 10px; padding: 10px 12px;
+  }
+  .btn.primary { background: var(--accent); color: #1a1204; border-color: transparent; font-weight: 700; }
+  .btn.ghost { background: transparent; }
+  .btn:disabled { opacity: .5; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile {
+    text-align: left; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+  }
+  .tile b { display: block; margin-bottom: 2px; }
+  .tile span { color: var(--muted); font-size: 12px; }
+  .files { display: flex; gap: 6px; overflow: auto; padding-bottom: 8px; }
+  .filetab {
+    border: 1px solid var(--line); background: var(--panel2); border-radius: 999px; padding: 6px 10px; font-size: 12px; white-space: nowrap;
+  }
+  .filetab.on { border-color: var(--accent); color: var(--accent2); }
+  iframe.preview { width: 100%; height: 68vh; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+  .log { white-space: pre-wrap; color: var(--muted); font-size: 13px; max-height: 180px; overflow: auto; }
+  .status { font-size: 13px; color: var(--ok); min-height: 1.2em; }
+  .status.err { color: var(--bad); }
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--nav) + var(--safe));
+    padding-bottom: var(--safe); display: grid; grid-template-columns: repeat(4, 1fr);
+    background: #10141c; border-top: 1px solid var(--line);
+  }
+  nav button { background: none; border: 0; color: var(--muted); padding: 8px 0 6px; }
+  nav button.on { color: var(--accent); }
+  nav small { display: block; font-size: 11px; }
+  .hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  .modes { display: flex; gap: 6px; overflow: auto; margin-bottom: 8px; }
+  .modes button.on { border-color: var(--accent); color: var(--accent2); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">FOR<span>GE</span></div>
+    <div class="sub" id="projName">untitled</div>
+    <button class="chip" id="modelChip" type="button">model</button>
+  </header>
+  <main>
+    <section class="view on" id="view-build">
+      <div class="card">
+        <h2>Build an app</h2>
+        <div class="modes" id="modes"></div>
+        <textarea id="prompt" placeholder="Example: habit tracker with streaks, dark UI, local save"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn primary" id="run" type="button">Build</button>
+          <button class="btn" id="clearChat" type="button">New project</button>
+        </div>
+        <p class="status" id="status"></p>
+        <p class="hint">No key? Starters still build a working app. Add a free OpenRouter or local Ollama key in Model to generate custom apps.</p>
+      </div>
+      <div class="card">
+        <h2>Start now</h2>
+        <div class="grid" id="starters"></div>
+      </div>
+      <div class="card">
+        <h2>Last reply</h2>
+        <div class="log" id="log">Nothing yet.</div>
+      </div>
+    </section>
+
+    <section class="view" id="view-files">
+      <div class="card">
+        <h2>Files</h2>
+        <div class="files" id="filetabs"></div>
+        <textarea class="code" id="editor" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="addFile" type="button">Add file</button>
+          <button class="btn" id="delFile" type="button">Delete</button>
+          <button class="btn primary" id="download" type="button">Download zip</button>
+        </div>
+        <p class="hint">Edits save in this browser. Preview uses index.html plus linked css/js.</p>
+      </div>
+    </section>
+
+    <section class="view" id="view-preview">
+      <div class="card">
+        <div class="row">
+          <button class="btn" id="refreshPrev" type="button">Refresh</button>
+          <button class="btn" id="openPrev" type="button">Open tab</button>
+        </div>
+        <iframe class="preview" id="preview" title="preview" sandbox="allow-scripts allow-forms allow-modals"></iframe>
+      </div>
+    </section>
+
+    <section class="view" id="view-model">
+      <div class="card">
+        <h2>Coding model</h2>
+        <label>Provider</label>
+        <select id="provider"></select>
+        <label>Model</label>
+        <select id="model"></select>
+        <label>Custom model id (overrides list)</label>
+        <input id="customModel" placeholder="qwen/qwen3-coder:free" />
+        <label>Base URL</label>
+        <input id="baseUrl" />
+        <label>API key (stored only on this device)</label>
+        <input id="apiKey" type="password" placeholder="not needed for Ollama" autocomplete="off" />
+        <div class="row" style="margin-top:8px">
+          <button class="btn primary" id="saveCfg" type="button">Save</button>
+          <button class="btn" id="testCfg" type="button">Test</button>
+        </div>
+        <p class="status" id="cfgStatus"></p>
+        <p class="hint">Open models: Qwen3 Coder, Gemma, Nemotron, free router. Ollama: run <code>OLLAMA_ORIGINS=* ollama serve</code> then pull a coder model. Key never leaves this browser except to the endpoint you set.</p>
+      </div>
+      <div class="card">
+        <h2>Programmer kit</h2>
+        <p class="hint">Paste an error in Build, mode Fix. Paste code, mode Explain or Refactor. Ship checklist:</p>
+        <p class="hint">1. One job. 2. Works offline or with a key you control. 3. Preview on phone. 4. Save data locally. 5. Zip and host on GitHub Pages.</p>
+      </div>
+    </section>
+  </main>
+  <nav>
+    <button type="button" data-view="build" class="on">＋<small>Build</small></button>
+    <button type="button" data-view="files">{ }<small>Files</small></button>
+    <button type="button" data-view="preview">▷<small>Preview</small></button>
+    <button type="button" data-view="model">◎<small>Model</small></button>
+  </nav>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const MODES = [
+  ["build", "Build"],
+  ["feature", "Add"],
+  ["fix", "Fix"],
+  ["explain", "Explain"],
+  ["refactor", "Refactor"]
+];
+const PROVIDERS = {
+  openrouter: {
+    url: "https://openrouter.ai/api/v1",
+    models: [
+      ["qwen/qwen3-coder:free", "Qwen3 Coder (free)"],
+      ["openrouter/free", "Free router"],
+      ["qwen/qwen3.8-27b:free", "Qwen3.8 27B (free)"],
+      ["google/gemma-4-31b-it:free", "Gemma 4 31B (free)"],
+      ["nvidia/nemotron-3-ultra-550b-a55b:free", "Nemotron 3 Ultra (free)"]
+    ]
+  },
+  groq: {
+    url: "https://api.groq.com/openai/v1",
+    models: [
+      ["llama-3.3-70b-versatile", "Llama 3.3 70B"],
+      ["llama-3.1-8b-instant", "Llama 3.1 8B"]
+    ]
+  },
+  ollama: {
+    url: "http://127.0.0.1:11434/v1",
+    models: [
+      ["qwen2.5-coder", "qwen2.5-coder"],
+      ["qwen3-coder", "qwen3-coder"],
+      ["deepseek-coder-v2", "deepseek-coder-v2"],
+      ["codellama", "codellama"]
+    ]
+  },
+  lmstudio: {
+    url: "http://127.0.0.1:1234/v1",
+    models: [["local-model", "model loaded in LM Studio"]]
+  },
+  deepseek: {
+    url: "https://api.deepseek.com",
+    models: [["deepseek-chat", "DeepSeek chat"], ["deepseek-reasoner", "DeepSeek reasoner"]]
+  },
+  custom: {
+    url: "https://openrouter.ai/api/v1",
+    models: [["custom", "set model id below"]]
+  }
+};
+const STARTERS = [
+  ["Habit tracker", "habit tracker with streaks and local save"],
+  ["Todo", "todo list with filters"],
+  ["Notes", "notes app with search"],
+  ["Expenses", "expense tracker with totals"],
+  ["Pomodoro", "pomodoro timer"],
+  ["Quiz", "quiz app with score"],
+  ["Calculator", "calculator"],
+  ["Landing", "landing page for a product"]
+];
+
+let state = load();
+let mode = "build";
+let activeFile = "index.html";
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem("forge-v1") || "null");
+    if (s && s.files) return s;
+  } catch (e) {}
+  return {
+    name: "untitled",
+    files: { "index.html": starterPage() },
+    provider: "openrouter",
+    model: "qwen/qwen3-coder:free",
+    customModel: "",
+    baseUrl: PROVIDERS.openrouter.url,
+    apiKey: "",
+    log: ""
+  };
+}
+function save() { localStorage.setItem("forge-v1", JSON.stringify(state)); }
+function starterPage() {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>New app</title><style>body{font-family:system-ui;background:#111;color:#eee;display:grid;place-items:center;min-height:100vh;margin:0}main{max-width:28rem;padding:1.5rem}</style></head><body><main><h1>New app</h1><p>Describe it in Forge and hit Build.</p></main></body></html>`;
+}
+
+function setStatus(el, msg, err) {
+  el.textContent = msg || "";
+  el.className = "status" + (err ? " err" : "");
+}
+
+function renderModes() {
+  $("modes").innerHTML = MODES.map(([id, label]) =>
+    `<button class="btn${id===mode?" on":""}" data-mode="${id}" type="button">${label}</button>`
+  ).join("");
+}
+function renderProvider() {
+  $("provider").innerHTML = Object.keys(PROVIDERS).map(k =>
+    `<option value="${k}"${k===state.provider?" selected":""}>${k}</option>`
+  ).join("");
+  const models = PROVIDERS[state.provider].models;
+  $("model").innerHTML = models.map(([id, label]) =>
+    `<option value="${id}"${id===state.model?" selected":""}>${label}</option>`
+  ).join("");
+  $("baseUrl").value = state.baseUrl || PROVIDERS[state.provider].url;
+  $("apiKey").value = state.apiKey || "";
+  $("customModel").value = state.customModel || "";
+  const m = state.customModel || state.model;
+  $("modelChip").textContent = m.split("/").pop();
+}
+function renderFiles() {
+  const names = Object.keys(state.files);
+  if (!names.includes(activeFile)) activeFile = names[0] || "index.html";
+  $("filetabs").innerHTML = names.map(n =>
+    `<button class="filetab${n===activeFile?" on":""}" data-file="${n}" type="button">${n}</button>`
+  ).join("");
+  $("editor").value = state.files[activeFile] || "";
+  $("projName").textContent = state.name;
+}
+function renderLog() { $("log").textContent = state.log || "Nothing yet."; }
+
+function show(view) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.view === view));
+  $("view-" + view).classList.add("on");
+  if (view === "preview") renderPreview();
+  if (view === "files") renderFiles();
+}
+
+function shell(title, body, extraCss, extraJs) {
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<style>
+:root{--bg:#10141c;--card:#1a2130;--text:#f4efe6;--muted:#9aa3b5;--accent:#e7a23a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text)}
+header{padding:16px;border-bottom:1px solid #2a3142}h1{font-size:20px;margin:0}main{padding:14px;max-width:720px;margin:auto}
+.card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px}
+input,button,textarea,select{font:inherit}input,textarea,select{width:100%;padding:10px;border-radius:10px;border:1px solid #2a3142;background:#0c1018;color:var(--text)}
+button{background:var(--accent);color:#1a1204;border:0;border-radius:10px;padding:10px 12px;font-weight:700}
+.row{display:flex;gap:8px;margin-top:8px}.muted{color:var(--muted);font-size:13px}
+${extraCss || ""}
+</style></head><body>
+<header><h1>${title}</h1></header>
+<main>${body}</main>
+<script>${extraJs || ""}<\/script>
+</body></html>`;
+}
+
+function localBuild(prompt) {
+  const p = prompt.toLowerCase();
+  state.name = prompt.slice(0, 42).replace(/[^\w\s-]/g, "").trim() || "app";
+  if (/habit|streak/.test(p)) return habit();
+  if (/todo|task/.test(p)) return todo();
+  if (/note/.test(p)) return notes();
+  if (/expense|money|budget/.test(p)) return expenses();
+  if (/pomo|timer|focus/.test(p)) return pomo();
+  if (/quiz|flash/.test(p)) return quiz();
+  if (/calc/.test(p)) return calc();
+  if (/land|market|product/.test(p)) return land(prompt);
+  return generic(prompt);
+}
+function habit() {
+  return { "index.html": shell("Habits", `
+    <div class="card"><input id="name" placeholder="New habit"><div class="row"><button id="add">Add</button></div></div>
+    <div id="list"></div><p class="muted">Saved on this device.</p>`, "", `
+    const KEY="forge-habits";
+    let items=JSON.parse(localStorage.getItem(KEY)||"[]");
+    const today=new Date().toDateString();
+    function render(){
+      document.getElementById("list").innerHTML=items.map((h,i)=>'<div class="card"><b>'+h.name+'</b><p class="muted">Streak '+h.streak+'</p><button data-i="'+i+'">'+(h.last===today?"Done today":"Mark today")+'</button></div>').join("")||'<p class="muted">No habits yet.</p>';
+      document.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{
+        const h=items[+b.dataset.i]; if(h.last===today) return;
+        const y=new Date(Date.now()-86400000).toDateString();
+        h.streak = h.last===y ? h.streak+1 : 1; h.last=today; save();
+      });
+    }
+    function save(){localStorage.setItem(KEY,JSON.stringify(items));render();}
+    document.getElementById("add").onclick=()=>{const n=document.getElementById("name").value.trim(); if(!n) return; items.push({name:n,streak:0,last:""}); document.getElementById("name").value=""; save();};
+    render();
+  `)};
+}
+function todo() {
+  return { "index.html": shell("Todo", `
+    <div class="card"><input id="t" placeholder="Task"><div class="row"><button id="add">Add</button><select id="f"><option value="all">All</option><option value="open">Open</option><option value="done">Done</option></select></div></div>
+    <div id="list"></div>`, "", `
+    const KEY="forge-todo"; let items=JSON.parse(localStorage.getItem(KEY)||"[]");
+    function render(){
+      const f=document.getElementById("f").value;
+      const rows=items.filter(x=>f==="all"||(f==="done"?x.done:!x.done));
+      document.getElementById("list").innerHTML=rows.map(x=>{const i=items.indexOf(x);return '<div class="card"><label><input type="checkbox" data-i="'+i+'" '+(x.done?"checked":"")+'> '+x.text+'</label></div>';}).join("")||'<p class="muted">Empty.</p>';
+      document.querySelectorAll("[data-i]").forEach(b=>b.onchange=()=>{items[+b.dataset.i].done=b.checked; localStorage.setItem(KEY,JSON.stringify(items)); render();});
+    }
+    document.getElementById("add").onclick=()=>{const t=document.getElementById("t").value.trim(); if(!t)return; items.push({text:t,done:false}); document.getElementById("t").value=""; localStorage.setItem(KEY,JSON.stringify(items)); render();};
+    document.getElementById("f").onchange=render; render();
+  `)};
+}
+function notes() {
+  return { "index.html": shell("Notes", `
+    <div class="card"><input id="q" placeholder="Search"><textarea id="body" placeholder="Write"></textarea><div class="row"><button id="save">Save note</button></div></div>
+    <div id="list"></div>`, "", `
+    const KEY="forge-notes"; let items=JSON.parse(localStorage.getItem(KEY)||"[]");
+    function render(){const q=document.getElementById("q").value.toLowerCase();
+      document.getElementById("list").innerHTML=items.filter(n=>n.body.toLowerCase().includes(q)).map((n,i)=>'<div class="card"><p>'+n.body.replace(/</g,"<")+'</p><button data-i="'+i+'">Delete</button></div>').join("")||'<p class="muted">No notes.</p>';
+      document.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{items.splice(+b.dataset.i,1); localStorage.setItem(KEY,JSON.stringify(items)); render();});
+    }
+    document.getElementById("save").onclick=()=>{const body=document.getElementById("body").value.trim(); if(!body)return; items.unshift({body,at:Date.now()}); document.getElementById("body").value=""; localStorage.setItem(KEY,JSON.stringify(items)); render();};
+    document.getElementById("q").oninput=render; render();
+  `)};
+}
+function expenses() {
+  return { "index.html": shell("Expenses", `
+    <div class="card"><b id="total">0</b><p class="muted">Total</p><input id="label" placeholder="What"><input id="amt" type="number" placeholder="Amount" style="margin-top:8px"><div class="row"><button id="add">Add</button></div></div>
+    <div id="list"></div>`, "", `
+    const KEY="forge-exp"; let items=JSON.parse(localStorage.getItem(KEY)||"[]");
+    function render(){
+      const sum=items.reduce((a,b)=>a+Number(b.amt),0);
+      document.getElementById("total").textContent=sum.toFixed(2);
+      document.getElementById("list").innerHTML=items.map((x,i)=>'<div class="card">'+x.label+' · '+Number(x.amt).toFixed(2)+' <button data-i="'+i+'">x</button></div>').join("");
+      document.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{items.splice(+b.dataset.i,1); localStorage.setItem(KEY,JSON.stringify(items)); render();});
+    }
+    document.getElementById("add").onclick=()=>{const label=document.getElementById("label").value.trim(); const amt=document.getElementById("amt").value; if(!label||!amt)return; items.unshift({label,amt}); localStorage.setItem(KEY,JSON.stringify(items)); document.getElementById("label").value=""; document.getElementById("amt").value=""; render();};
+    render();
+  `)};
+}
+function pomo() {
+  return { "index.html": shell("Focus", `
+    <div class="card" style="text-align:center"><h2 id="clock">25:00</h2><div class="row"><button id="start">Start</button><button id="reset" style="background:#2a3142;color:#fff">Reset</button></div></div>`,
+    "h2{font-size:48px;margin:8px}", `
+    let left=25*60, t=null;
+    const el=document.getElementById("clock");
+    function draw(){const m=String(Math.floor(left/60)).padStart(2,"0"); const s=String(left%60).padStart(2,"0"); el.textContent=m+":"+s;}
+    document.getElementById("start").onclick=()=>{ if(t){clearInterval(t);t=null;document.getElementById("start").textContent="Start";return;} document.getElementById("start").textContent="Pause"; t=setInterval(()=>{left=Math.max(0,left-1); draw(); if(!left){clearInterval(t);t=null; alert("Done");}},1000); };
+    document.getElementById("reset").onclick=()=>{clearInterval(t);t=null;left=25*60;draw();document.getElementById("start").textContent="Start";};
+    draw();
+  `)};
+}
+function quiz() {
+  return { "index.html": shell("Quiz", `<div class="card" id="q"></div><p class="muted" id="score"></p>`, "", `
+    const qs=[{q:"What does HTML stand for?",a:["Hyper Text Markup Language","Hot Mail","How To Make Links"],c:0},{q:"CSS is used for?",a:["Style","Database","Server"],c:0},{q:"JS runs in?",a:["Browser","Only printers","BIOS"],c:0}];
+    let i=0, score=0;
+    function render(){
+      if(i>=qs.length){document.getElementById("q").innerHTML="<b>Score "+score+"/"+qs.length+"</b>"; return;}
+      const item=qs[i];
+      document.getElementById("q").innerHTML="<p>"+item.q+"</p>"+item.a.map((x,n)=>'<div class="row"><button data-n="'+n+'">'+x+'</button></div>').join("");
+      document.getElementById("score").textContent=(i)+"/"+qs.length;
+      document.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>{ if(+b.dataset.n===item.c) score++; i++; render(); });
+    }
+    render();
+  `)};
+}
+function calc() {
+  return { "index.html": shell("Calc", `<div class="card"><input id="out" readonly><div id="keys" class="grid"></div></div>`,
+    ".grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}button{padding:14px}", `
+    const keys=["7","8","9","/","4","5","6","*","1","2","3","-","0",".","=","+","C"];
+    document.getElementById("keys").innerHTML=keys.map(k=>'<button data-k="'+k+'">'+k+'</button>').join("");
+    const out=document.getElementById("out"); let exp="";
+    document.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{
+      const k=b.dataset.k;
+      if(k==="C"){exp=""; out.value=""; return;}
+      if(k==="="){ try{ out.value=String(Function("return ("+exp+")")()); exp=out.value; }catch(e){ out.value="err"; exp=""; } return; }
+      exp+=k; out.value=exp;
+    });
+  `)};
+}
+function land(prompt) {
+  const name = prompt.replace(/landing page( for)?/i, "").trim() || "Product";
+  return { "index.html": shell(name, `
+    <div class="card"><h2>${name}</h2><p class="muted">A small product page generated by Forge.</p><button onclick="alert('Waitlist saved locally')">Join waitlist</button></div>
+    <div class="card"><b>Why</b><p class="muted">Fast. Local. No account.</p></div>
+    <div class="card"><b>How</b><p class="muted">Open, use, export.</p></div>`, "", "") };
+}
+function generic(prompt) {
+  const safe = prompt.replace(/[<>]/g, "");
+  return { "index.html": shell("App", `
+    <div class="card"><h2>Draft</h2><p class="muted">${safe}</p><textarea id="n" placeholder="Notes"></textarea><div class="row"><button id="s">Save</button></div><p id="m" class="muted"></p></div>`, "", `
+    document.getElementById("s").onclick=()=>{ localStorage.setItem("forge-draft", document.getElementById("n").value); document.getElementById("m").textContent="Saved."; };
+    document.getElementById("n").value=localStorage.getItem("forge-draft")||"";
+  `)};
+}
+
+function currentModel() { return (state.customModel || state.model || "").trim(); }
+
+async function callModel(userText) {
+  const model = currentModel();
+  const base = (state.baseUrl || "").replace(/\/$/, "");
+  if (!base || !model) throw new Error("Set model and base URL.");
+  if (state.provider !== "ollama" && state.provider !== "lmstudio" && !state.apiKey) {
+    throw new Error("Add an API key, or use a starter (no key).");
+  }
+  const sys = mode === "explain"
+    ? "Explain the code in short plain sentences. No file dump."
+    : `You are Forge, a coding agent that builds small browser apps.
+Return files only, in this exact format, no markdown fences:
+<<<FILE path>>>
+file contents
+<<<END>>>
+Always include index.html. App must run by opening index.html. Use localStorage if it saves data. Keep CSS inside the html unless you also output style.css. No React build step.`;
+  const history = mode === "build" ? "" : "\nCurrent files:\n" + Object.entries(state.files).map(([k,v]) => "FILE "+k+"\n"+v.slice(0,6000)).join("\n");
+  const res = await fetch(base + "/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(state.apiKey ? { Authorization: "Bearer " + state.apiKey } : {}),
+      "HTTP-Referer": location.href,
+      "X-Title": "Forge"
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: mode.toUpperCase() + ": " + userText + history }
+      ]
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error?.message || data.error || ("HTTP " + res.status));
+  return data.choices?.[0]?.message?.content || "";
+}
+
+function parseFiles(text) {
+  const out = {};
+  const re = /<<<FILE\s+([^>]+)>>>\s*([\s\S]*?)<<<END>>>/g;
+  let m;
+  while ((m = re.exec(text))) out[m[1].trim()] = m[2].replace(/^\n/, "").replace(/\n$/, "");
+  if (Object.keys(out).length) return out;
+  const fence = text.match(/```(?:html)?\s*([\s\S]*?)```/);
+  if (fence && /<html/i.test(fence[1])) return { "index.html": fence[1].trim() };
+  if (/<html/i.test(text)) return { "index.html": text.trim() };
+  return null;
+}
+
+function previewHtml() {
+  let html = state.files["index.html"] || "<p>No index.html</p>";
+  const css = state.files["style.css"] || state.files["styles.css"] || "";
+  const js = state.files["script.js"] || state.files["app.js"] || "";
+  if (css && !html.includes(css.slice(0, 40))) html = html.replace("</head>", "<style>" + css + "</style></head>");
+  if (js && !html.includes(js.slice(0, 40))) html = html.replace("</body>", "<script>" + js + "<\/script></body>");
+  return html;
+}
+function renderPreview() {
+  $("preview").srcdoc = previewHtml();
+}
+
+function crc32(buf) {
+  let c, table = crc32.table;
+  if (!table) {
+    table = crc32.table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      table[n] = c >>> 0;
+    }
+  }
+  c = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) c = table[(c ^ buf[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+function downloadZip() {
+  const enc = new TextEncoder();
+  const files = Object.entries(state.files).map(([name, text]) => ({ name, data: enc.encode(text) }));
+  const parts = [];
+  const central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name);
+    const crc = crc32(f.data);
+    const local = new Uint8Array(30 + name.length);
+    const dv = new DataView(local.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(8, 0, true);
+    dv.setUint32(14, crc, true);
+    dv.setUint32(18, f.data.length, true);
+    dv.setUint32(22, f.data.length, true);
+    dv.setUint16(26, name.length, true);
+    local.set(name, 30);
+    parts.push(local, f.data);
+    const cen = new Uint8Array(46 + name.length);
+    const cv = new DataView(cen.buffer);
+    cv.setUint32(0, 0x02014b50, true);
+    cv.setUint16(8, 0, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, f.data.length, true);
+    cv.setUint32(24, f.data.length, true);
+    cv.setUint16(28, name.length, true);
+    cv.setUint32(42, offset, true);
+    cen.set(name, 46);
+    central.push(cen);
+    offset += local.length + f.data.length;
+  }
+  const cenSize = central.reduce((a, b) => a + b.length, 0);
+  const end = new Uint8Array(22);
+  const ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, cenSize, true);
+  ev.setUint32(16, offset, true);
+  const blob = new Blob([...parts, ...central, end], { type: "application/zip" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (state.name || "forge-app").replace(/\s+/g, "-") + ".zip";
+  a.click();
+}
+
+async function run() {
+  const prompt = $("prompt").value.trim();
+  if (!prompt) { setStatus($("status"), "Write what to build.", true); return; }
+  $("run").disabled = true;
+  setStatus($("status"), "Working…");
+  try {
+    const hasKey = !!state.apiKey || state.provider === "ollama" || state.provider === "lmstudio";
+    if (!hasKey || mode === "build" && !state.apiKey && state.provider !== "ollama" && state.provider !== "lmstudio") {
+      const files = localBuild(prompt);
+      state.files = files;
+      state.log = "Built locally (no model call). Connect a model in Model to generate custom code.";
+      save(); renderFiles(); renderLog(); renderPreview(); show("preview");
+      setStatus($("status"), "Local app ready. Preview opened.");
+      return;
+    }
+    const text = await callModel(prompt);
+    state.log = text.slice(0, 4000);
+    if (mode === "explain") {
+      renderLog(); show("build");
+      setStatus($("status"), "Explained.");
+    } else {
+      const files = parseFiles(text);
+      if (!files) throw new Error("Model did not return files. See Last reply.");
+      state.files = { ...state.files, ...files };
+      if (mode === "build") state.name = prompt.slice(0, 42);
+      save(); renderFiles(); renderLog(); renderPreview(); show("preview");
+      setStatus($("status"), "App updated.");
+    }
+    save();
+  } catch (err) {
+    state.log = String(err.message || err);
+    renderLog();
+    setStatus($("status"), state.log, true);
+    if (mode === "build") {
+      state.files = localBuild(prompt);
+      save(); renderFiles();
+      setStatus($("status"), "Model failed. Local starter used. " + (err.message || ""), true);
+    }
+  } finally {
+    $("run").disabled = false;
+  }
+}
+
+function boot() {
+  renderModes(); renderProvider(); renderFiles(); renderLog();
+  $("starters").innerHTML = STARTERS.map(([label, prompt], i) =>
+    `<button class="tile" type="button" data-starter="${i}"><b>${label}</b><span>${prompt}</span></button>`
+  ).join("");
+  document.querySelector("nav").onclick = (e) => {
+    const b = e.target.closest("button"); if (!b) return; show(b.dataset.view);
+  };
+  $("modes").onclick = (e) => {
+    const b = e.target.closest("button"); if (!b) return; mode = b.dataset.mode; renderModes();
+    $("run").textContent = mode === "build" ? "Build" : mode === "explain" ? "Explain" : "Run";
+  };
+  $("starters").onclick = (e) => {
+    const b = e.target.closest("[data-starter]"); if (!b) return;
+    const prompt = STARTERS[+b.dataset.starter][1];
+    $("prompt").value = prompt;
+    mode = "build"; renderModes();
+    state.files = localBuild(prompt);
+    state.log = "Starter built locally. Use Build with a model connected to customize it.";
+    save(); renderFiles(); renderLog(); renderPreview(); show("preview");
+    setStatus($("status"), "Ready.");
+  };
+  $("run").onclick = run;
+  $("clearChat").onclick = () => {
+    state.files = { "index.html": starterPage() };
+    state.name = "untitled"; state.log = "";
+    save(); renderFiles(); renderLog(); setStatus($("status"), "New project.");
+  };
+  $("modelChip").onclick = () => show("model");
+  $("provider").onchange = () => {
+    state.provider = $("provider").value;
+    state.baseUrl = PROVIDERS[state.provider].url;
+    state.model = PROVIDERS[state.provider].models[0][0];
+    renderProvider();
+  };
+  $("saveCfg").onclick = () => {
+    state.provider = $("provider").value;
+    state.model = $("model").value;
+    state.customModel = $("customModel").value.trim();
+    state.baseUrl = $("baseUrl").value.trim();
+    state.apiKey = $("apiKey").value.trim();
+    save(); renderProvider();
+    setStatus($("cfgStatus"), "Saved.");
+  };
+  $("testCfg").onclick = async () => {
+    state.provider = $("provider").value;
+    state.model = $("model").value;
+    state.customModel = $("customModel").value.trim();
+    state.baseUrl = $("baseUrl").value.trim();
+    state.apiKey = $("apiKey").value.trim();
+    save(); renderProvider();
+    setStatus($("cfgStatus"), "Testing…");
+    try {
+      const text = await callModel("Reply with exactly: ok");
+      setStatus($("cfgStatus"), "Connected. " + text.slice(0, 80));
+    } catch (err) {
+      setStatus($("cfgStatus"), err.message || String(err), true);
+    }
+  };
+  $("filetabs").onclick = (e) => {
+    const b = e.target.closest("[data-file]"); if (!b) return;
+    state.files[activeFile] = $("editor").value;
+    activeFile = b.dataset.file; save(); renderFiles();
+  };
+  $("editor").oninput = () => { state.files[activeFile] = $("editor").value; save(); };
+  $("addFile").onclick = () => {
+    const name = prompt("File name", "style.css"); if (!name) return;
+    state.files[name] = ""; activeFile = name; save(); renderFiles();
+  };
+  $("delFile").onclick = () => {
+    if (Object.keys(state.files).length < 2) return;
+    delete state.files[activeFile]; activeFile = Object.keys(state.files)[0]; save(); renderFiles();
+  };
+  $("download").onclick = downloadZip;
+  $("refreshPrev").onclick = renderPreview;
+  $("openPrev").onclick = () => {
+    const blob = new Blob([previewHtml()], { type: "text/html" });
+    window.open(URL.createObjectURL(blob), "_blank");
+  };
+}
+boot();
+</script>
+</body>
+</html>
