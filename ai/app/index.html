@@ -5,46 +5,108 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Free AI</title>
 <style>
-  :root { --bg:#0c0e12; --panel:#161b24; --line:#2a3142; --text:#eeeae3; --muted:#8e96a8; --accent:#e7a23a; --safe:env(safe-area-inset-bottom,0px); }
+  :root { --safe: env(safe-area-inset-bottom, 0px); }
   * { box-sizing: border-box; }
-  html, body { margin:0; height:100%; background:var(--bg); color:var(--text); font:16px/1.45 system-ui, sans-serif; }
-  #app { height:100%; display:flex; flex-direction:column; }
-  header { display:flex; gap:8px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--line); }
-  b { letter-spacing:.04em; }
-  select { flex:1; background:#10141c; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:8px; }
-  #log { flex:1; overflow:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
-  .msg { max-width:92%; padding:10px 12px; border-radius:14px; white-space:pre-wrap; word-break:break-word; }
-  .user { align-self:flex-end; background:#2a3344; }
-  .bot { align-self:flex-start; background:var(--panel); border:1px solid var(--line); }
-  .meta { color:var(--muted); font-size:11px; margin-bottom:4px; }
-  form { display:flex; gap:8px; padding:10px 12px calc(10px + var(--safe)); border-top:1px solid var(--line); }
-  textarea { flex:1; resize:none; min-height:46px; max-height:140px; background:#10141c; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px; font:inherit; }
-  button { background:var(--accent); color:#1a1204; border:0; border-radius:12px; padding:0 16px; font-weight:700; }
-  button:disabled { opacity:.5; }
-  .empty { color:var(--muted); text-align:center; margin-top:18vh; }
+  html, body { margin: 0; height: 100%; color: #f4f7ff; font: 16px/1.5 system-ui, sans-serif; }
+  body {
+    background:
+      radial-gradient(900px 500px at 10% -10%, #6d5efc 0%, transparent 55%),
+      radial-gradient(700px 420px at 110% 0%, #1aa6ff 0%, transparent 50%),
+      radial-gradient(800px 500px at 50% 120%, #ff4fd8 0%, transparent 46%),
+      #070b16;
+  }
+  #app { height: 100%; display: flex; flex-direction: column; }
+  header { display: flex; gap: 10px; align-items: center; padding: 12px 14px 8px; }
+  .mark {
+    width: 36px; height: 36px; border-radius: 12px; flex: none;
+    background: conic-gradient(from 120deg, #8ab4ff, #c58bff, #7dffd2, #8ab4ff);
+    animation: spin 8s linear infinite;
+  }
+  h1 { font-size: 16px; margin: 0; font-weight: 700; }
+  h1 span { display: block; font-size: 12px; font-weight: 500; color: #c9d4ee; }
+  select {
+    margin-left: auto; max-width: 46vw; background: rgba(10,16,32,.72); color: #fff;
+    border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 8px 12px;
+  }
+  #log { flex: 1; overflow: auto; padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 12px; }
+  .hello { margin: auto; text-align: center; max-width: 28rem; }
+  .hello h2 {
+    margin: 8px 0; font-size: 28px;
+    background: linear-gradient(90deg, #8ab4ff, #d7b4ff, #7dffd2);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hello p { color: #c5d0e8; margin: 0; }
+  .msg { max-width: 92%; padding: 12px 14px; border-radius: 18px; white-space: pre-wrap; word-break: break-word; }
+  .user { align-self: flex-end; background: linear-gradient(135deg, #4c6fff, #7a4dff); }
+  .bot { align-self: flex-start; background: rgba(16,22,40,.78); border: 1px solid rgba(255,255,255,.1); }
+  .meta { font-size: 11px; color: #b7c4e2; margin-bottom: 4px; }
+  .orb { display: flex; gap: 6px; align-items: center; height: 22px; }
+  .orb i {
+    width: 8px; height: 8px; border-radius: 50%; display: block;
+    background: linear-gradient(180deg, #9ec1ff, #d9b6ff);
+    animation: bounce 1s infinite ease-in-out;
+  }
+  .orb i:nth-child(2) { animation-delay: .15s; }
+  .orb i:nth-child(3) { animation-delay: .3s; }
+  form {
+    display: flex; gap: 8px; padding: 10px 12px calc(12px + var(--safe));
+  }
+  .box {
+    flex: 1; display: flex; gap: 8px; align-items: flex-end;
+    background: rgba(12,18,34,.86); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 22px; padding: 8px 8px 8px 14px;
+    box-shadow: 0 10px 40px rgba(80,90,255,.18);
+  }
+  textarea {
+    flex: 1; resize: none; border: 0; outline: none; background: transparent; color: #fff;
+    font: inherit; min-height: 24px; max-height: 120px; padding: 8px 0;
+  }
+  button {
+    border: 0; border-radius: 16px; padding: 10px 14px; font-weight: 700; color: #08101f;
+    background: linear-gradient(135deg, #9ec1ff, #d7b4ff 55%, #7dffd2);
+    min-width: 72px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  button:disabled { opacity: .8; }
+  .spin {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(8,16,31,.25); border-top-color: #08101f;
+    animation: spin .7s linear infinite; display: none;
+  }
+  button.loading .spin { display: block; }
+  button.loading .label { display: none; }
+  @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: .45; } 40% { transform: translateY(-6px); opacity: 1; } }
+  @keyframes spin { to { transform: rotate(1turn); } }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <b>FREE AI</b>
+    <div class="mark"></div>
+    <h1>Free AI<span>No key. Just ask.</span></h1>
     <select id="model" aria-label="model"></select>
   </header>
-  <div id="log"><div class="empty">Ask anything. No key. No signup.</div></div>
+  <div id="log">
+    <div class="hello">
+      <h2>Ask anything</h2>
+      <p>Open models answer here. If one is busy, another takes the turn.</p>
+    </div>
+  </div>
   <form id="box">
-    <textarea id="q" rows="1" placeholder="Message"></textarea>
-    <button id="send" type="submit">Send</button>
+    <div class="box">
+      <textarea id="q" rows="1" placeholder="Message Free AI"></textarea>
+      <button id="send" type="submit">Send</button>
+    </div>
   </form>
 </div>
 <script>
 const MODELS = [
-  { id: "DeepSeek-V4-Flash-0731", label: "DeepSeek Flash", kind: "llm7" },
-  { id: "GLM-5.3-Flash", label: "GLM 5.3 Flash", kind: "llm7" },
+  { id: "DeepSeek-V4-Flash-0731", label: "DeepSeek", kind: "llm7" },
+  { id: "GLM-5.3-Flash", label: "GLM", kind: "llm7" },
   { id: "codestral-latest", label: "Codestral", kind: "llm7" },
-  { id: "minimax-m2.7", label: "Minimax", kind: "llm7" },
-  { id: "mistral-Nemo-Instruct-2407", label: "Mistral Nemo", kind: "llm7" },
-  { id: "nemotron-3-nano:30b", label: "Nemotron Nano", kind: "llm7" },
-  { id: "openai-fast", label: "GPT-OSS 20B", kind: "pollinations" }
+  { id: "mistral-Nemo-Instruct-2407", label: "Mistral", kind: "llm7" },
+  { id: "Qwen3.5-9B", label: "Qwen 9B", kind: "ovh" },
+  { id: "gpt-oss-20b", label: "GPT-OSS", kind: "ovh" },
+  { id: "Meta-Llama-3_3-70B-Instruct", label: "Llama 70B", kind: "ovh" }
 ];
 const log = document.getElementById("log");
 const q = document.getElementById("q");
@@ -53,91 +115,131 @@ const sendBtn = document.getElementById("send");
 let history = [];
 
 sel.innerHTML = MODELS.map((m, i) => `<option value="${i}">${m.label}</option>`).join("");
-const saved = localStorage.getItem("freeai-model");
-if (saved) sel.value = saved;
+sel.value = localStorage.getItem("freeai-model") || "0";
 sel.onchange = () => localStorage.setItem("freeai-model", sel.value);
 
-function add(role, text, meta) {
-  const empty = log.querySelector(".empty");
-  if (empty) empty.remove();
+function add(role, node) {
+  const hello = log.querySelector(".hello");
+  if (hello) hello.remove();
   const el = document.createElement("div");
-  el.className = "msg " + (role === "user" ? "user" : "bot");
-  el.innerHTML = (meta ? `<div class="meta"></div>` : "") + "";
-  if (meta) el.querySelector(".meta").textContent = meta;
-  const body = document.createElement("div");
-  body.textContent = text;
-  el.appendChild(body);
+  el.className = "msg " + role;
+  el.appendChild(node);
   log.appendChild(el);
   log.scrollTop = log.scrollHeight;
-  return body;
+  return el;
+}
+function textMsg(role, text, meta) {
+  const wrap = document.createElement("div");
+  if (meta) {
+    const m = document.createElement("div");
+    m.className = "meta";
+    m.textContent = meta;
+    wrap.appendChild(m);
+  }
+  const body = document.createElement("div");
+  body.textContent = text;
+  wrap.appendChild(body);
+  return add(role, wrap);
 }
 
-async function ask(model, messages) {
-  if (model.kind === "llm7") {
-    const res = await fetch("https://api.llm7.io/v1/chat/completions", {
+async function post(url, body, headers, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer unused" },
-      body: JSON.stringify({ model: model.id, messages, temperature: 0.7 })
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error?.message || ("HTTP " + res.status));
+    if (!res.ok) throw new Error(data.error?.message || data.message || ("HTTP " + res.status));
     const text = data.choices?.[0]?.message?.content;
     if (!text) throw new Error("Empty reply");
-    return text;
+    return text.trim();
+  } finally {
+    clearTimeout(t);
   }
-  const res = await fetch("https://text.pollinations.ai/openai", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: model.id, messages, stream: false })
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error?.message || ("HTTP " + res.status));
-  const text = data.choices?.[0]?.message?.content;
-  if (!text) throw new Error("Empty reply");
-  return text;
+}
+function llm7(model, messages) {
+  return post("https://api.llm7.io/v1/chat/completions", {
+    model, messages, temperature: 0.6, max_tokens: 800
+  }, { Authorization: "Bearer unused" }, 28000);
+}
+function ovh(model, messages) {
+  return post("https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions", {
+    model, messages, temperature: 0.6, max_tokens: 700
+  }, {}, 22000);
+}
+async function pollinations(prompt) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 18000);
+  try {
+    const res = await fetch("https://text.pollinations.ai/" + encodeURIComponent(prompt.slice(0, 1200)) + "?nocache=" + Date.now(), { signal: ctrl.signal });
+    const text = await res.text();
+    if (!res.ok || /api key|budget|error/i.test(text.slice(0, 180))) throw new Error("Pollinations busy");
+    return text.trim();
+  } finally { clearTimeout(t); }
 }
 
-async function fallbackGet(prompt) {
-  const res = await fetch("https://text.pollinations.ai/" + encodeURIComponent(prompt.slice(0, 1500)));
-  if (!res.ok) throw new Error("All models failed");
-  return await res.text();
+async function answer(messages, prompt) {
+  const start = Number(sel.value) || 0;
+  const order = MODELS.map((_, i) => MODELS[(start + i) % MODELS.length]);
+  let last = "no reply";
+  for (const model of order) {
+    try {
+      const text = model.kind === "llm7" ? await llm7(model.id, messages) : await ovh(model.id, messages);
+      return { text, label: model.label };
+    } catch (err) {
+      last = err.name === "AbortError" ? model.label + " timed out" : (err.message || String(err));
+      if (/429|concurrent|rate/i.test(last)) {
+        await new Promise(r => setTimeout(r, 1500));
+        try {
+          const text = model.kind === "llm7" ? await llm7(model.id, messages) : await ovh(model.id, messages);
+          return { text, label: model.label };
+        } catch (err2) {
+          last = err2.message || last;
+        }
+      }
+    }
+  }
+  try {
+    return { text: await pollinations(prompt), label: "Open text" };
+  } catch (err) {
+    throw new Error(last + ". " + (err.message || ""));
+  }
 }
 
 document.getElementById("box").onsubmit = async (e) => {
   e.preventDefault();
   const text = q.value.trim();
-  if (!text) return;
+  if (!text || sendBtn.disabled) return;
   q.value = "";
-  add("user", text);
+  textMsg("user", text);
   history.push({ role: "user", content: text });
-  const start = Number(sel.value) || 0;
-  const order = MODELS.map((_, i) => MODELS[(start + i) % MODELS.length]);
+  const orb = document.createElement("div");
+  orb.className = "orb";
+  orb.innerHTML = "<i></i><i></i><i></i>";
+  const pending = add("bot", orb);
   sendBtn.disabled = true;
-  const body = add("bot", "…", order[0].label);
   try {
-    let answer = "", used = order[0].label, err = "";
-    for (const model of order) {
-      try {
-        body.parentElement.querySelector(".meta").textContent = model.label;
-        answer = await ask(model, history.slice(-10));
-        used = model.label;
-        break;
-      } catch (ex) {
-        err = ex.message || String(ex);
-      }
-    }
-    if (!answer) answer = await fallbackGet(text);
-    body.textContent = answer;
-    body.parentElement.querySelector(".meta").textContent = used;
-    history.push({ role: "assistant", content: answer });
-  } catch (ex) {
-    body.textContent = "Failed. " + (ex.message || ex);
+    const res = await answer(history.slice(-8), text);
+    pending.remove();
+    textMsg("bot", res.text, res.label);
+    history.push({ role: "assistant", content: res.text });
+  } catch (err) {
+    pending.remove();
+    textMsg("bot", "Could not reach a free model. Tap Send again.\n" + (err.message || err), "retry");
+    history.pop();
   } finally {
     sendBtn.disabled = false;
+    sendBtn.classList.remove("loading");
     q.focus();
   }
 };
-q.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("box").requestSubmit(); } };
+q.onkeydown = (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("box").requestSubmit(); }
+};
 </script>
 </body>
 </html>
