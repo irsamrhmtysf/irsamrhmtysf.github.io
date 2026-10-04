@@ -7,10 +7,7 @@
 <style>
   :root { --safe: env(safe-area-inset-bottom, 0px); }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; color: #f5f8ff; font: 16px/1.5 system-ui, sans-serif; overflow: hidden; }
-  body {
-    background: #070b16;
-  }
+  html, body { margin: 0; height: 100%; color: #f5f8ff; font: 16px/1.5 system-ui, sans-serif; overflow: hidden; background: #070b16; }
   .mesh {
     position: fixed; inset: -20%; z-index: 0; pointer-events: none;
     background:
@@ -19,26 +16,23 @@
       radial-gradient(40% 40% at 70% 90%, #ff4fd8, transparent 55%),
       radial-gradient(30% 30% at 10% 80%, #3dffe0, transparent 50%);
     filter: blur(8px); animation: drift 16s ease-in-out infinite alternate;
-    transition: transform .6s, filter .6s, opacity .6s;
   }
-  body.thinking .mesh { animation-duration: 4s; filter: blur(4px) brightness(1.25); transform: scale(1.05); }
+  body.thinking .mesh { animation-duration: 4s; filter: blur(4px) brightness(1.25); }
   body.reply .mesh { filter: blur(2px) brightness(1.45); }
   #app { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
   header { display: flex; gap: 10px; align-items: center; padding: 12px 14px 8px; }
   .mark {
     width: 36px; height: 36px; border-radius: 12px; flex: none;
     background: conic-gradient(from 120deg, #8ab4ff, #c58bff, #7dffd2, #8ab4ff);
-    box-shadow: 0 0 18px rgba(140,160,255,.55);
-    animation: spin 8s linear infinite;
+    box-shadow: 0 0 18px rgba(140,160,255,.55); animation: spin 8s linear infinite;
   }
   body.thinking .mark { animation-duration: 1.1s; }
   h1 { font-size: 16px; margin: 0; font-weight: 700; }
   h1 span { display: block; font-size: 12px; font-weight: 500; color: #c9d4ee; }
-  select, .icon {
-    background: rgba(10,16,32,.72); color: #fff; border: 1px solid rgba(255,255,255,.16); border-radius: 999px;
+  .icon {
+    margin-left: auto; width: 36px; height: 36px; padding: 0; border-radius: 999px;
+    background: rgba(10,16,32,.72); color: #fff; border: 1px solid rgba(255,255,255,.16);
   }
-  select { margin-left: auto; max-width: 38vw; padding: 8px 12px; }
-  .icon { width: 36px; height: 36px; padding: 0; }
   #log { flex: 1; overflow: auto; padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 12px; }
   .hello { margin: auto; text-align: center; max-width: 28rem; }
   .hello h2 {
@@ -47,22 +41,16 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .hello p { color: #c5d0e8; margin: 0; }
-  .msg {
-    max-width: 92%; padding: 12px 14px; border-radius: 18px; white-space: pre-wrap; word-break: break-word;
-    animation: pop .35s cubic-bezier(.2,1.2,.3,1);
-  }
+  .bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.12); margin: 14px auto 0; max-width: 220px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #8ab4ff, #7dffd2); }
+  .msg { max-width: 92%; padding: 12px 14px; border-radius: 18px; white-space: pre-wrap; word-break: break-word; animation: pop .35s cubic-bezier(.2,1.2,.3,1); }
   .user { align-self: flex-end; background: linear-gradient(135deg, #4c6fff, #7a4dff); box-shadow: 0 8px 24px rgba(80,90,255,.28); }
   .bot { align-self: flex-start; background: rgba(16,22,40,.78); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); }
   .bot.fresh { box-shadow: 0 0 0 1px rgba(160,220,255,.45), 0 0 32px rgba(120,160,255,.35); }
   .meta { font-size: 11px; color: #b7c4e2; margin-bottom: 4px; }
   .orb { display: flex; gap: 6px; align-items: center; height: 22px; }
-  .orb i {
-    width: 8px; height: 8px; border-radius: 50%; display: block;
-    background: linear-gradient(180deg, #9ec1ff, #d9b6ff);
-    animation: bounce 1s infinite ease-in-out;
-  }
-  .orb i:nth-child(2) { animation-delay: .15s; }
-  .orb i:nth-child(3) { animation-delay: .3s; }
+  .orb i { width: 8px; height: 8px; border-radius: 50%; display: block; background: linear-gradient(180deg, #9ec1ff, #d9b6ff); animation: bounce 1s infinite ease-in-out; }
+  .orb i:nth-child(2) { animation-delay: .15s; } .orb i:nth-child(3) { animation-delay: .3s; }
   form { display: flex; gap: 8px; padding: 10px 12px calc(12px + var(--safe)); }
   .box {
     flex: 1; display: flex; gap: 8px; align-items: flex-end;
@@ -70,30 +58,18 @@
     border-radius: 22px; padding: 8px; backdrop-filter: blur(16px);
     box-shadow: 0 10px 40px rgba(80,90,255,.18);
   }
-  textarea {
-    flex: 1; resize: none; border: 0; outline: none; background: transparent; color: #fff;
-    font: inherit; min-height: 24px; max-height: 120px; padding: 8px 6px;
-  }
+  textarea { flex: 1; resize: none; border: 0; outline: none; background: transparent; color: #fff; font: inherit; min-height: 24px; max-height: 120px; padding: 8px 6px; }
   button {
     border: 0; border-radius: 16px; padding: 10px 14px; font-weight: 700; color: #08101f;
     background: linear-gradient(135deg, #9ec1ff, #d7b4ff 55%, #7dffd2);
     min-width: 72px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   }
-  button.icon { min-width: 36px; background: rgba(10,16,32,.72); color: #fff; }
   button:disabled { opacity: .8; }
-  .spin {
-    width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid rgba(8,16,31,.25); border-top-color: #08101f;
-    animation: spin .7s linear infinite; display: none;
-  }
-  button.loading .spin { display: block; }
-  button.loading .label { display: none; }
-  .flash {
-    position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
-    background: radial-gradient(circle at 50% 80%, rgba(180,220,255,.35), transparent 55%);
-  }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(8,16,31,.25); border-top-color: #08101f; animation: spin .7s linear infinite; display: none; }
+  button.loading .spin { display: block; } button.loading .label { display: none; }
+  .flash { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 80%, rgba(180,220,255,.35), transparent 55%); }
   body.reply .flash { animation: flash .7s ease; }
-  @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: .45; } 40% { transform: translateY(-6px); opacity: 1; } }
+  @keyframes bounce { 0%,80%,100% { transform: translateY(0); opacity: .45; } 40% { transform: translateY(-6px); opacity: 1; } }
   @keyframes spin { to { transform: rotate(1turn); } }
   @keyframes drift { to { transform: translate3d(3%, -2%, 0) scale(1.08); } }
   @keyframes pop { from { transform: translateY(10px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -106,14 +82,14 @@
 <div id="app">
   <header>
     <div class="mark"></div>
-    <h1>Free AI<span id="state">Ready</span></h1>
+    <h1>Free AI<span id="state">Loading open model…</span></h1>
     <button class="icon" id="sound" type="button" aria-label="sound">♪</button>
-    <select id="model" aria-label="model"></select>
   </header>
   <div id="log">
     <div class="hello">
-      <h2>Ask anything</h2>
-      <p>One chat. No other app. Sound and light mark each reply.</p>
+      <h2>On this phone</h2>
+      <p>Open model, no key, no server limit. First open downloads it once, then it stays.</p>
+      <div class="bar"><i id="bar"></i></div>
     </div>
   </div>
   <form id="box">
@@ -123,143 +99,87 @@
     </div>
   </form>
 </div>
-<script>
-const MODELS = [
-  { id: "mistral-Nemo-Instruct-2407", label: "Mistral" },
-  { id: "codestral-latest", label: "Codestral" },
-  { id: "GLM-5.3-Flash", label: "GLM" },
-  { id: "DeepSeek-V4-Flash-0731", label: "DeepSeek" },
-  { id: "nemotron-3-nano:30b", label: "Nemotron" },
-  { id: "minimax-m2.7", label: "Minimax" }
-];
+<script type="module">
+import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1";
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+const MODEL = "HuggingFaceTB/SmolLM2-135M-Instruct";
 const log = document.getElementById("log");
 const q = document.getElementById("q");
-const sel = document.getElementById("model");
 const sendBtn = document.getElementById("send");
 const state = document.getElementById("state");
+const bar = document.getElementById("bar");
 let history = [];
+let generator = null;
+let loading = null;
 let soundOn = localStorage.getItem("freeai-sound") !== "0";
 let audio, pulse;
 
-sel.innerHTML = MODELS.map((m, i) => `<option value="${i}">${m.label}</option>`).join("");
-sel.value = localStorage.getItem("freeai-model") || "0";
-sel.onchange = () => localStorage.setItem("freeai-model", sel.value);
 document.getElementById("sound").textContent = soundOn ? "♪" : "×";
 document.getElementById("sound").onclick = () => {
   soundOn = !soundOn;
   localStorage.setItem("freeai-sound", soundOn ? "1" : "0");
   document.getElementById("sound").textContent = soundOn ? "♪" : "×";
-  if (!soundOn) stopPulse();
-  else blip(520, .06);
+  if (!soundOn) stopPulse(); else blip(520, .06);
 };
-
-function ctx() {
-  audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-  if (audio.state === "suspended") audio.resume();
-  return audio;
-}
+function ctx() { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); return audio; }
 function tone(freq, dur, type, gain) {
   if (!soundOn) return;
-  const a = ctx();
-  const o = a.createOscillator();
-  const g = a.createGain();
-  o.type = type || "sine";
-  o.frequency.value = freq;
+  const a = ctx(); const o = a.createOscillator(); const g = a.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
   g.gain.setValueAtTime(gain || .05, a.currentTime);
   g.gain.exponentialRampToValueAtTime(.001, a.currentTime + dur);
-  o.connect(g); g.connect(a.destination);
-  o.start(); o.stop(a.currentTime + dur);
+  o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + dur);
 }
 function blip(f, d) { tone(f, d || .08, "triangle", .04); }
 function startPulse() {
-  if (!soundOn) return;
-  stopPulse();
-  const a = ctx();
-  pulse = a.createOscillator();
-  const g = a.createGain();
-  pulse.type = "sine";
-  pulse.frequency.value = 180;
-  g.gain.value = .03;
-  pulse.connect(g); g.connect(a.destination);
-  pulse.start();
-  pulse._g = g;
+  if (!soundOn || pulse) return;
+  const a = ctx(); pulse = a.createOscillator(); const g = a.createGain();
+  pulse.type = "sine"; pulse.frequency.value = 180; g.gain.value = .03;
+  pulse.connect(g); g.connect(a.destination); pulse.start();
 }
-function stopPulse() {
-  if (!pulse) return;
-  try { pulse.stop(); } catch (e) {}
-  pulse = null;
-}
-function replySound() {
-  blip(660, .09);
-  setTimeout(() => blip(880, .12), 90);
-  if (navigator.vibrate) navigator.vibrate(18);
-}
+function stopPulse() { if (!pulse) return; try { pulse.stop(); } catch (e) {} pulse = null; }
+function replySound() { blip(660, .09); setTimeout(() => blip(880, .12), 90); if (navigator.vibrate) navigator.vibrate(18); }
 
 function add(role, node) {
-  const hello = log.querySelector(".hello");
-  if (hello) hello.remove();
-  const el = document.createElement("div");
-  el.className = "msg " + role;
-  el.appendChild(node);
-  log.appendChild(el);
-  log.scrollTop = log.scrollHeight;
-  return el;
+  const hello = log.querySelector(".hello"); if (hello) hello.remove();
+  const el = document.createElement("div"); el.className = "msg " + role; el.appendChild(node);
+  log.appendChild(el); log.scrollTop = log.scrollHeight; return el;
 }
 function textMsg(role, text, meta) {
   const wrap = document.createElement("div");
-  if (meta) {
-    const m = document.createElement("div");
-    m.className = "meta";
-    m.textContent = meta;
-    wrap.appendChild(m);
-  }
-  const body = document.createElement("div");
-  body.textContent = text;
-  wrap.appendChild(body);
-  const el = add(role, wrap);
-  if (role === "bot") el.classList.add("fresh");
-  return body;
+  if (meta) { const m = document.createElement("div"); m.className = "meta"; m.textContent = meta; wrap.appendChild(m); }
+  const body = document.createElement("div"); body.textContent = text; wrap.appendChild(body);
+  const el = add(role, wrap); if (role === "bot") el.classList.add("fresh"); return body;
 }
 
-async function ask(model, messages) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 26000);
-  try {
-    const res = await fetch("https://api.llm7.io/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer unused" },
-      body: JSON.stringify({ model: model.id, messages, temperature: 0.6, max_tokens: 700 }),
-      signal: ctrl.signal
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = data.error?.message || ("HTTP " + res.status);
-      const err = new Error(msg);
-      err.skip = /quota|429|unavailable|rate/i.test(msg);
-      throw err;
+function loadModel() {
+  if (generator) return Promise.resolve(generator);
+  if (loading) return loading;
+  loading = pipeline("text-generation", MODEL, {
+    dtype: "q4",
+    device: "wasm",
+    progress_callback(p) {
+      if (p.status === "progress" && p.progress) {
+        bar.style.width = Math.round(p.progress) + "%";
+        state.textContent = "Download " + Math.round(p.progress) + "%";
+      } else if (p.status === "ready" || p.status === "done") {
+        bar.style.width = "100%";
+        state.textContent = "On device";
+      }
     }
-    const text = data.choices?.[0]?.message?.content;
-    if (!text) throw new Error("Empty reply");
-    return text.trim();
-  } finally { clearTimeout(t); }
+  }).then((g) => { generator = g; state.textContent = "On device"; bar.style.width = "100%"; return g; });
+  return loading;
 }
+loadModel().catch((err) => { state.textContent = "Need network once"; console.error(err); });
 
-async function answer(messages) {
-  const start = Number(sel.value) || 0;
-  const order = MODELS.map((_, i) => MODELS[(start + i) % MODELS.length]);
-  let last = "no reply";
-  for (const model of order) {
-    state.textContent = model.label + "…";
-    try {
-      const text = await ask(model, messages);
-      sel.value = String(MODELS.indexOf(model));
-      return { text, label: model.label };
-    } catch (err) {
-      last = err.name === "AbortError" ? model.label + " slow" : (err.message || String(err));
-      if (!err.skip && !/abort|slow/i.test(last)) continue;
-    }
-  }
-  throw new Error(last);
+async function localAnswer(messages) {
+  const g = await loadModel();
+  const out = await g(messages, { max_new_tokens: 160, temperature: 0.7, do_sample: true, top_p: 0.9 });
+  const last = out?.[0]?.generated_text;
+  if (Array.isArray(last)) return (last.at(-1).content || "").trim();
+  return String(last || "").trim();
 }
 
 document.getElementById("box").onsubmit = async (e) => {
@@ -270,50 +190,35 @@ document.getElementById("box").onsubmit = async (e) => {
   blip(420, .07);
   textMsg("user", text);
   history.push({ role: "user", content: text });
-  const orb = document.createElement("div");
-  orb.className = "orb";
-  orb.innerHTML = "<i></i><i></i><i></i>";
+  const orb = document.createElement("div"); orb.className = "orb"; orb.innerHTML = "<i></i><i></i><i></i>";
   const pending = add("bot", orb);
-  sendBtn.disabled = true;
-  sendBtn.classList.add("loading");
-  document.body.classList.add("thinking");
-  startPulse();
-  state.textContent = "Thinking";
+  sendBtn.disabled = true; sendBtn.classList.add("loading");
+  document.body.classList.add("thinking"); startPulse();
+  state.textContent = generator ? "Thinking" : "Preparing model";
   try {
-    const res = await answer(history.slice(-8));
-    pending.remove();
-    stopPulse();
-    document.body.classList.remove("thinking");
-    document.body.classList.add("reply");
+    const msgs = [{ role: "system", content: "You are a helpful assistant. Answer clearly and short." }, ...history.slice(-6)];
+    const reply = await localAnswer(msgs);
+    if (!reply) throw new Error("empty");
+    pending.remove(); stopPulse();
+    document.body.classList.remove("thinking"); document.body.classList.add("reply");
     replySound();
-    const body = textMsg("bot", "", res.label);
+    const body = textMsg("bot", "", "On device · SmolLM2");
     let i = 0;
-    const step = () => {
-      i += Math.max(2, Math.ceil(res.text.length / 40));
-      body.textContent = res.text.slice(0, i);
-      log.scrollTop = log.scrollHeight;
-      if (i < res.text.length) requestAnimationFrame(step);
-    };
+    const step = () => { i += Math.max(2, Math.ceil(reply.length / 30)); body.textContent = reply.slice(0, i); log.scrollTop = log.scrollHeight; if (i < reply.length) requestAnimationFrame(step); };
     step();
-    history.push({ role: "assistant", content: res.text });
-    state.textContent = res.label;
+    history.push({ role: "assistant", content: reply });
+    state.textContent = "On device";
     setTimeout(() => document.body.classList.remove("reply"), 700);
   } catch (err) {
-    pending.remove();
-    stopPulse();
-    document.body.classList.remove("thinking");
-    textMsg("bot", "Busy. Tap Send again.\n" + (err.message || err), "retry");
+    pending.remove(); stopPulse(); document.body.classList.remove("thinking");
+    textMsg("bot", "Model still loading. Wait for 100%, then send again.", "local");
     history.pop();
-    state.textContent = "Retry";
+    state.textContent = "Loading";
   } finally {
-    sendBtn.disabled = false;
-    sendBtn.classList.remove("loading");
-    q.focus();
+    sendBtn.disabled = false; sendBtn.classList.remove("loading"); q.focus();
   }
 };
-q.onkeydown = (e) => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("box").requestSubmit(); }
-};
+q.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("box").requestSubmit(); } };
 </script>
 </body>
 </html>
