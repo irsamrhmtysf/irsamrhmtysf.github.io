@@ -23,7 +23,7 @@
   .hello h2 { margin: 8px 0; font-size: 30px; background: linear-gradient(90deg, #8ab4ff, #d7b4ff, #7dffd2); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .hello p { color: #c5d0e8; margin: 0; }
   .msg { max-width: 92%; padding: 12px 14px; border-radius: 18px; white-space: pre-wrap; word-break: break-word; animation: pop .35s cubic-bezier(.2,1.2,.3,1); }
-  .user { align-self: flex-end; background: linear-gradient(135deg, #4c6fff, #7a4dff); box-shadow: 0 8px 24px rgba(80,90,255,.28); }
+  .user { align-self: flex-end; background: linear-gradient(135deg, #4c6fff, #7a4dff); }
   .bot { align-self: flex-start; background: rgba(16,22,40,.78); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); }
   .bot.fresh { box-shadow: 0 0 0 1px rgba(160,220,255,.45), 0 0 32px rgba(120,160,255,.35); }
   .meta { font-size: 11px; color: #b7c4e2; margin-bottom: 4px; }
@@ -31,7 +31,7 @@
   .orb i { width: 8px; height: 8px; border-radius: 50%; display: block; background: linear-gradient(180deg, #9ec1ff, #d9b6ff); animation: bounce 1s infinite ease-in-out; }
   .orb i:nth-child(2) { animation-delay: .15s; } .orb i:nth-child(3) { animation-delay: .3s; }
   form { padding: 10px 12px calc(12px + var(--safe)); }
-  .box { display: flex; gap: 8px; align-items: flex-end; background: rgba(12,18,34,.86); border: 1px solid rgba(255,255,255,.14); border-radius: 22px; padding: 8px; backdrop-filter: blur(16px); box-shadow: 0 10px 40px rgba(80,90,255,.18); }
+  .box { display: flex; gap: 8px; align-items: flex-end; background: rgba(12,18,34,.86); border: 1px solid rgba(255,255,255,.14); border-radius: 22px; padding: 8px; backdrop-filter: blur(16px); }
   textarea { flex: 1; resize: none; border: 0; outline: none; background: transparent; color: #fff; font: inherit; min-height: 24px; max-height: 120px; padding: 8px 6px; }
   button { border: 0; border-radius: 16px; padding: 10px 14px; font-weight: 700; color: #08101f; background: linear-gradient(135deg, #9ec1ff, #d7b4ff 55%, #7dffd2); min-width: 72px; display: inline-flex; align-items: center; justify-content: center; }
   button:disabled { opacity: .8; }
@@ -58,7 +58,7 @@
   <div id="log">
     <div class="hello">
       <h2>Ask anything</h2>
-      <p>Open knowledge first, so an answer lands fast. A free model fills in when it is free. No account.</p>
+      <p>First live open model wins. Notes are added only if they arrive in time.</p>
     </div>
   </div>
   <form id="box">
@@ -69,37 +69,39 @@
   </form>
 </div>
 <script>
-const MODELS = ["mistral-Nemo-Instruct-2407", "codestral-latest", "GLM-5.3-Flash", "nemotron-3-nano:30b"];
+const MODELS = [
+  ["mistral-Nemo-Instruct-2407", "Mistral"],
+  ["codestral-latest", "Codestral"],
+  ["DeepSeek-V4-Flash-0731", "DeepSeek"],
+  ["GLM-5.3-Flash", "GLM"]
+];
 const log = document.getElementById("log");
 const q = document.getElementById("q");
 const sendBtn = document.getElementById("send");
 const state = document.getElementById("state");
-const cache = JSON.parse(localStorage.getItem("freeai-cache") || "{}");
+const cache = JSON.parse(localStorage.getItem("freeai-cache3") || "{}");
 let history = [];
 let soundOn = localStorage.getItem("freeai-sound") !== "0";
-let audio, pulse, turn = 0;
+let audio, pulse;
 
 document.getElementById("sound").textContent = soundOn ? "♪" : "×";
 document.getElementById("sound").onclick = () => {
   soundOn = !soundOn;
   localStorage.setItem("freeai-sound", soundOn ? "1" : "0");
   document.getElementById("sound").textContent = soundOn ? "♪" : "×";
-  if (!soundOn) stopPulse(); else blip(520, .06);
+  if (!soundOn) stopPulse(); else tone(520, .06);
 };
 function ctx() { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); return audio; }
-function tone(freq, dur, gain) {
+function tone(freq, dur) {
   if (!soundOn) return;
   const a = ctx(); const o = a.createOscillator(); const g = a.createGain();
-  o.type = "sine"; o.frequency.value = freq;
-  g.gain.setValueAtTime(gain || .04, a.currentTime);
+  o.frequency.value = freq; g.gain.setValueAtTime(.04, a.currentTime);
   g.gain.exponentialRampToValueAtTime(.001, a.currentTime + dur);
   o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + dur);
 }
-function blip(f, d) { tone(f, d || .08, .04); }
 function startPulse() { if (!soundOn || pulse) return; const a = ctx(); pulse = a.createOscillator(); const g = a.createGain(); pulse.frequency.value = 180; g.gain.value = .025; pulse.connect(g); g.connect(a.destination); pulse.start(); }
 function stopPulse() { if (!pulse) return; try { pulse.stop(); } catch (e) {} pulse = null; }
-function replySound() { tone(660, .09, .05); setTimeout(() => tone(880, .12, .05), 90); if (navigator.vibrate) navigator.vibrate(16); }
-
+function replySound() { tone(660, .09); setTimeout(() => tone(880, .12), 90); if (navigator.vibrate) navigator.vibrate(16); }
 function add(role, node) {
   const hello = log.querySelector(".hello"); if (hello) hello.remove();
   const el = document.createElement("div"); el.className = "msg " + role; el.appendChild(node);
@@ -113,95 +115,94 @@ function textMsg(role, text, meta) {
 }
 function typeInto(body, text) {
   let i = 0;
-  const step = () => { i += Math.max(3, Math.ceil(text.length / 24)); body.textContent = text.slice(0, i); log.scrollTop = log.scrollHeight; if (i < text.length) requestAnimationFrame(step); };
+  const step = () => { i += Math.max(4, Math.ceil(text.length / 20)); body.textContent = text.slice(0, i); log.scrollTop = log.scrollHeight; if (i < text.length) requestAnimationFrame(step); };
   step();
 }
-function saveCache(key, val) {
-  cache[key] = val;
-  const keys = Object.keys(cache);
-  if (keys.length > 40) delete cache[keys[0]];
-  localStorage.setItem("freeai-cache", JSON.stringify(cache));
+function good(text) {
+  if (!text || text.length < 8) return false;
+  if (/^the user asks/i.test(text)) return false;
+  return true;
 }
-
-async function wiki(query) {
+async function facts(query) {
   const lang = /[^\x00-\x7F]/.test(query) ? "id" : "en";
-  const search = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&namespace=0&format=json&origin=*`);
-  const found = await search.json();
-  const title = found?.[1]?.[0];
-  if (!title) return "";
-  const sum = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
-  if (!sum.ok) return "";
-  const data = await sum.json();
-  if (!data.extract) return "";
-  return data.extract + (data.content_urls?.desktop?.page ? "\n\n" + data.content_urls.desktop.page : "");
-}
-async function model(query) {
-  const id = MODELS[turn++ % MODELS.length];
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 9000);
+  const t = setTimeout(() => ctrl.abort(), 1200);
+  try {
+    const search = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&namespace=0&format=json&origin=*`, { signal: ctrl.signal });
+    const title = (await search.json())?.[1]?.[0];
+    if (!title) return "";
+    const sum = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { signal: ctrl.signal });
+    return ((await sum.json()).extract || "").slice(0, 500);
+  } catch (e) { return ""; }
+  finally { clearTimeout(t); }
+}
+async function ask(id, label, messages) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
   try {
     const res = await fetch("https://api.llm7.io/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer unused" },
       signal: ctrl.signal,
-      body: JSON.stringify({
-        model: id,
-        max_tokens: 280,
-        temperature: 0.4,
-        messages: [{ role: "system", content: "Answer in plain short sentences. No preamble." }, { role: "user", content: query }]
-      })
+      body: JSON.stringify({ model: id, messages, max_tokens: 380, temperature: 0.4 })
     });
-    if (!res.ok) return "";
-    const data = await res.json();
-    return (data.choices?.[0]?.message?.content || "").trim();
-  } catch (e) { return ""; }
-  finally { clearTimeout(timer); }
+    if (!res.ok) throw new Error("skip");
+    const msg = (await res.json()).choices?.[0]?.message || {};
+    const text = (msg.content || "").trim();
+    if (!good(text)) throw new Error("skip");
+    return { text, label };
+  } finally { clearTimeout(t); }
 }
 async function answer(query) {
   const key = query.toLowerCase().trim();
   if (cache[key]) return cache[key];
-  const [open, ai] = await Promise.all([wiki(query).catch(() => ""), model(query)]);
-  let text = "";
-  let via = "Open knowledge";
-  if (ai && ai.length > 40) { text = ai; via = "Open model"; }
-  else if (open && ai) { text = ai + "\n\n" + open; via = "Open model + knowledge"; }
-  else if (open) { text = open; via = "Open knowledge"; }
-  else if (ai) { text = ai; via = "Open model"; }
-  if (!text) return null;
-  const packed = { text, via };
-  saveCache(key, packed);
-  return packed;
+  const notes = await Promise.race([facts(query), new Promise(r => setTimeout(() => r(""), 700))]);
+  const messages = [
+    { role: "system", content: "You are a general assistant. Answer directly in short clear paragraphs. Use NOTES only if relevant." },
+    ...history.slice(-6),
+    { role: "user", content: notes ? query + "\n\nNOTES:\n" + notes : query }
+  ];
+  try {
+    const hit = await Promise.any(MODELS.map(([id, label]) => ask(id, label, messages)));
+    cache[key] = hit;
+    const keys = Object.keys(cache);
+    if (keys.length > 24) delete cache[keys[0]];
+    localStorage.setItem("freeai-cache3", JSON.stringify(cache));
+    return hit;
+  } catch (e) {
+    return notes ? { text: notes, label: "Open notes" } : null;
+  }
 }
-
 document.getElementById("box").onsubmit = async (e) => {
   e.preventDefault();
   const text = q.value.trim();
   if (!text || sendBtn.disabled) return;
   q.value = "";
-  blip(420, .07);
+  tone(420, .07);
   textMsg("user", text);
-  history.push(text);
   const orb = document.createElement("div"); orb.className = "orb"; orb.innerHTML = "<i></i><i></i><i></i>";
   const pending = add("bot", orb);
   sendBtn.disabled = true; sendBtn.classList.add("loading");
   document.body.classList.add("thinking"); startPulse();
-  state.textContent = "Looking";
-  const packed = await answer(text);
+  state.textContent = "Thinking";
+  const hit = await answer(text);
   pending.remove(); stopPulse();
   document.body.classList.remove("thinking");
   document.body.classList.add("reply");
   replySound();
-  if (packed) {
-    typeInto(textMsg("bot", "", packed.via), packed.text);
-    state.textContent = packed.via;
+  if (hit) {
+    typeInto(textMsg("bot", "", hit.label), hit.text);
+    history.push({ role: "user", content: text }, { role: "assistant", content: hit.text });
+    if (history.length > 8) history = history.slice(-8);
+    state.textContent = hit.label;
   } else {
-    textMsg("bot", "No open source answered this one. Ask it a different way.", "retry");
+    textMsg("bot", "Send it once more.", "retry");
     state.textContent = "Ready";
   }
   setTimeout(() => document.body.classList.remove("reply"), 700);
   sendBtn.disabled = false; sendBtn.classList.remove("loading"); q.focus();
 };
-q.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("box").requestSubmit(); } };
+q.onkeydown = (ev) => { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); document.getElementById("box").requestSubmit(); } };
 </script>
 </body>
 </html>
