@@ -1,1 +1,5 @@
-["welcome.md","Introduction.md"]
+[
+  "Introduction.md",
+  "Testing.md",
+  "welcome.md"
+]
