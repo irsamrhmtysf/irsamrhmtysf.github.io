@@ -1,1 +1,153 @@
-html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Free AI</title>
+<style>
+  :root { --safe: env(safe-area-inset-bottom, 0px); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; color: #f5f8ff; font: 16px/1.5 system-ui, sans-serif; overflow: hidden; background: #070b16; }
+  .mesh { position: fixed; inset: -20%; z-index: 0; pointer-events: none; background: radial-gradient(40% 40% at 20% 20%, #6d5efc, transparent 60%), radial-gradient(35% 35% at 85% 10%, #1aa6ff, transparent 55%), radial-gradient(40% 40% at 70% 90%, #ff4fd8, transparent 55%); filter: blur(8px); animation: drift 16s ease-in-out infinite alternate; }
+  body.thinking .mesh { animation-duration: 4s; filter: blur(4px) brightness(1.25); }
+  body.reply .mesh { filter: blur(2px) brightness(1.45); }
+  #app { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+  header { display: flex; gap: 8px; align-items: center; padding: 12px 14px 8px; }
+  .mark { width: 34px; height: 34px; border-radius: 12px; flex: none; background: conic-gradient(from 120deg, #8ab4ff, #c58bff, #7dffd2, #8ab4ff); animation: spin 8s linear infinite; }
+  body.thinking .mark { animation-duration: 1.1s; }
+  h1 { font-size: 16px; margin: 0; }
+  h1 span { display: block; font-size: 12px; color: #c9d4ee; font-weight: 500; }
+  #log { flex: 1; overflow: auto; padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 12px; }
+  .hello { margin: auto; text-align: center; max-width: 28rem; }
+  .hello h2 { margin: 8px 0; font-size: 28px; background: linear-gradient(90deg, #8ab4ff, #d7b4ff, #7dffd2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hello p { color: #c5d0e8; margin: 0; }
+  .msg { max-width: 92%; padding: 12px 14px; border-radius: 18px; white-space: pre-wrap; word-break: break-word; animation: pop .35s cubic-bezier(.2,1.2,.3,1); }
+  .user { align-self: flex-end; background: linear-gradient(135deg, #4c6fff, #7a4dff); }
+  .bot { align-self: flex-start; background: rgba(16,22,40,.78); border: 1px solid rgba(255,255,255,.12); }
+  .bot.fresh { box-shadow: 0 0 0 1px rgba(160,220,255,.45), 0 0 28px rgba(120,160,255,.35); }
+  .meta { font-size: 11px; color: #b7c4e2; margin-bottom: 4px; }
+  .orb { display: flex; gap: 6px; height: 22px; align-items: center; }
+  .orb i { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(#9ec1ff, #d9b6ff); animation: bounce 1s infinite; }
+  .orb i:nth-child(2) { animation-delay: .15s; } .orb i:nth-child(3) { animation-delay: .3s; }
+  form, .server { padding: 0 12px; }
+  .server { display: flex; gap: 8px; padding-bottom: 8px; }
+  .server input { flex: 1; background: rgba(12,18,34,.86); color: #fff; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px; }
+  .box { display: flex; gap: 8px; align-items: flex-end; background: rgba(12,18,34,.86); border: 1px solid rgba(255,255,255,.14); border-radius: 22px; padding: 8px; margin-bottom: calc(10px + var(--safe)); }
+  textarea { flex: 1; resize: none; border: 0; outline: none; background: transparent; color: #fff; font: inherit; min-height: 24px; max-height: 120px; padding: 8px 6px; }
+  button { border: 0; border-radius: 14px; padding: 10px 14px; font-weight: 700; color: #08101f; background: linear-gradient(135deg, #9ec1ff, #d7b4ff 55%, #7dffd2); min-width: 72px; display: inline-flex; align-items: center; justify-content: center; }
+  button:disabled { opacity: .75; }
+  .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(8,16,31,.25); border-top-color: #08101f; animation: spin .7s linear infinite; display: none; }
+  button.loading .spin { display: block; } button.loading .label { display: none; }
+  .flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 80%, rgba(180,220,255,.35), transparent 55%); }
+  body.reply .flash { animation: flash .7s ease; }
+  @keyframes bounce { 0%,80%,100% { transform: translateY(0); opacity: .4; } 40% { transform: translateY(-6px); opacity: 1; } }
+  @keyframes spin { to { transform: rotate(1turn); } }
+  @keyframes drift { to { transform: translate3d(3%, -2%, 0) scale(1.08); } }
+  @keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes flash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="mesh"></div>
+<div class="flash"></div>
+<div id="app">
+  <header>
+    <div class="mark"></div>
+    <h1>Free AI<span id="state">Paste Colab URL</span></h1>
+  </header>
+  <div id="log">
+    <div class="hello">
+      <h2>Your server</h2>
+      <p>Open the notebook on Colab T4, run all, paste the trycloudflare URL. Model is Qwen2.5 Coder 14B. No card.</p>
+    </div>
+  </div>
+  <div class="server">
+    <input id="base" placeholder="https://xxxx.trycloudflare.com" />
+    <button id="save" type="button">Save</button>
+  </div>
+  <form id="box">
+    <div class="box">
+      <textarea id="q" rows="1" placeholder="Build me an app…"></textarea>
+      <button id="send" type="submit"><span class="spin"></span><span class="label">Send</span></button>
+    </div>
+  </form>
+</div>
+<script>
+const log = document.getElementById("log");
+const q = document.getElementById("q");
+const sendBtn = document.getElementById("send");
+const state = document.getElementById("state");
+const base = document.getElementById("base");
+let history = [];
+let audio;
+base.value = localStorage.getItem("freeai-base") || "";
+if (base.value) state.textContent = "Coder 14B";
+document.getElementById("save").onclick = () => {
+  localStorage.setItem("freeai-base", base.value.trim().replace(/\/$/, ""));
+  state.textContent = "Saved";
+};
+function tone(f, d) {
+  audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+  if (audio.state === "suspended") audio.resume();
+  const o = audio.createOscillator(); const g = audio.createGain();
+  o.frequency.value = f; g.gain.setValueAtTime(.04, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + d);
+  o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + d);
+}
+function add(role, node) {
+  const hello = log.querySelector(".hello"); if (hello) hello.remove();
+  const el = document.createElement("div"); el.className = "msg " + role; el.appendChild(node);
+  log.appendChild(el); log.scrollTop = log.scrollHeight; return el;
+}
+function textMsg(role, text, meta) {
+  const wrap = document.createElement("div");
+  if (meta) { const m = document.createElement("div"); m.className = "meta"; m.textContent = meta; wrap.appendChild(m); }
+  const body = document.createElement("div"); body.textContent = text; wrap.appendChild(body);
+  if (role === "bot") add(role, wrap).classList.add("fresh"); else add(role, wrap);
+  return body;
+}
+document.getElementById("box").onsubmit = async (e) => {
+  e.preventDefault();
+  const text = q.value.trim();
+  const root = (base.value || localStorage.getItem("freeai-base") || "").trim().replace(/\/$/, "");
+  if (!text || !root) { state.textContent = "Need Colab URL"; return; }
+  q.value = ""; tone(420, .07); textMsg("user", text);
+  history.push({ role: "user", content: text });
+  const orb = document.createElement("div"); orb.className = "orb"; orb.innerHTML = "<i></i><i></i><i></i>";
+  const pending = add("bot", orb);
+  sendBtn.disabled = true; sendBtn.classList.add("loading");
+  document.body.classList.add("thinking"); state.textContent = "Coding";
+  try {
+    const res = await fetch(root + "/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer ollama" },
+      body: JSON.stringify({
+        model: "qwen2.5-coder:14b",
+        messages: [{ role: "system", content: "You are a coding assistant. Build working browser apps. Be direct." }, ...history.slice(-8)],
+        temperature: 0.3
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || data.error || ("HTTP " + res.status));
+    const reply = data.choices?.[0]?.message?.content || "";
+    if (!reply) throw new Error("Empty reply");
+    pending.remove();
+    document.body.classList.remove("thinking"); document.body.classList.add("reply");
+    tone(660, .09); setTimeout(() => tone(880, .12), 90);
+    textMsg("bot", reply, "Qwen2.5 Coder 14B");
+    history.push({ role: "assistant", content: reply });
+    state.textContent = "Coder 14B";
+    setTimeout(() => document.body.classList.remove("reply"), 700);
+  } catch (err) {
+    pending.remove(); document.body.classList.remove("thinking");
+    textMsg("bot", "Server not reachable. Keep the Colab tab open and paste a fresh URL.\n" + (err.message || err), "retry");
+    history.pop();
+    state.textContent = "Offline";
+  } finally {
+    sendBtn.disabled = false; sendBtn.classList.remove("loading");
+  }
+};
+q.onkeydown = (ev) => { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); document.getElementById("box").requestSubmit(); } };
+</script>
+</body>
+</html>
