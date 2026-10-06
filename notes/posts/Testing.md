@@ -1,2 +1,4 @@
-$ TESTING
+TESTING
+
+manual test
 
