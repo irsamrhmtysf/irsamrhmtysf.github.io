@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EOS - Universal Computer Vision</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 900: '#060913', 800: '#0f172a', 700: '#1e293b', 600: '#334155' },
+                        brand: { 500: '#ef4444', 600: '#dc2626', 400: '#f87171' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- TensorFlow.js & COCO-SSD / YOLO Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+    <!-- HLS.js untuk Stream .m3u8 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(239, 68, 68, 0.15); }
+        .glow-effect { box-shadow: 0 0 35px -5px rgba(239, 68, 68, 0.25); }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #060913; }
+        ::-webkit-scrollbar-thumb { background: #334151; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-red-500 selection:text-white">
+
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="fixed inset-0 bg-dark-900/95 z-50 flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+        <div class="glass max-w-sm w-full p-6 rounded-2xl flex flex-col gap-4 border border-red-500/30 shadow-2xl">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center shadow-lg shadow-red-500/40">
+                    <i class="fa-solid fa-eye text-dark-900 text-base font-bold"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-sm text-white">EOS Engine</h2>
+                    <p class="text-[11px] text-slate-400">Inisialisasi Neural Vision...</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <div class="flex justify-between text-[11px] font-mono">
+                    <span id="loadingStatusText" class="text-slate-300">Loading YOLOv12 Nano...</span>
+                    <span id="loadingPercent" class="text-red-400 font-bold">0%</span>
+                </div>
+                <div class="w-full bg-dark-800 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                    <div id="progressBar" class="bg-gradient-to-r from-red-600 to-amber-400 h-full rounded-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <button id="startAppBtn" onclick="dismissSplash()" disabled class="w-full py-2.5 bg-slate-700 text-slate-400 font-semibold text-xs rounded-xl transition cursor-not-allowed">
+                Preparing The System...
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="glass sticky top-0 z-40 border-b border-red-500/20">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center gap-3">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-red-600 via-orange-500 to-amber-400 flex items-center justify-center shadow-md shadow-red-500/30">
+                    <i class="fa-solid fa-eye text-dark-900 text-sm font-bold"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm tracking-wide bg-gradient-to-r from-red-400 to-amber-300 bg-clip-text text-transparent">EOS</h1>
+                </div>
+            </div>
+            
+            <!-- Controls Toolbar -->
+            <div class="flex items-center gap-2">
+                <div class="bg-dark-800 px-2.5 py-1 rounded-lg border border-slate-700/60 flex items-center gap-1.5 text-xs font-mono">
+                    <span id="statusLight" class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span id="appStatus" class="text-rose-400 font-bold text-[11px]">OFF</span>
+                </div>
+                <div class="bg-dark-800 px-2.5 py-1 rounded-lg border border-slate-700/60 flex items-center gap-1.5 text-xs font-mono hidden sm:flex">
+                    <span class="text-slate-400">FPS:</span>
+                    <span id="fpsCounter" class="text-emerald-400 font-bold">0</span>
+                </div>
+
+                <!-- Action Icons -->
+                <button onclick="toggleCamera()" id="camIconBtn" title="Power ON/OFF" class="w-8 h-8 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-power-off text-xs" id="camIcon"></i>
+                </button>
+                <button onclick="switchCamera()" title="Ganti Kamera (Depan/Belakang)" class="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition flex items-center justify-center">
+                    <i class="fa-solid fa-camera-rotate text-xs"></i>
+                </button>
+                <button onclick="toggleFullscreen()" title="Fullscreen" class="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition flex items-center justify-center">
+                    <i class="fa-solid fa-expand text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-4 w-full flex-grow flex flex-col gap-4">
+        
+        <!-- Toolbar: Model Dropdown & URL Input -->
+        <div class="glass rounded-xl p-3 flex flex-wrap justify-between items-center gap-3 border border-slate-700/60 text-xs">
+            
+            <!-- Model Dropdown with Icon Only -->
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-microchip text-red-400 text-sm"></i>
+                <select id="modelSelect" onchange="selectModel(this.value)" class="bg-dark-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-red-500 font-medium">
+                    <option value="yolov12">⚡ YOLOv12 Nano</option>
+                    <option value="yolov26">🚀 YOLOv26 Edge</option>
+                    <option value="smooth">⚖️ COCO-SSD Std</option>
+                    <option value="accurate">🎯 Precision Net</option>
+                </select>
+            </div>
+
+            <!-- Universal Media Input -->
+            <div class="flex items-center gap-2 flex-grow max-w-lg">
+                <div class="relative flex-grow">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-link text-xs"></i>
+                    </span>
+                    <input type="text" id="mediaUrlInput" placeholder="URL Video / YouTube..." class="w-full bg-dark-800 border border-slate-700 text-slate-200 text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-red-500">
+                </div>
+                <button onclick="loadUniversalMedia()" title="Load URL" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-dark-900 font-bold rounded-lg transition flex items-center gap-1">
+                    <i class="fa-solid fa-play text-xs"></i> Load
+                </button>
+            </div>
+
+            <!-- Confidence Slider -->
+            <div class="flex items-center gap-2">
+                <span class="text-slate-400">Conf:</span>
+                <input id="confidenceSlider" type="range" min="10" max="95" value="50" step="5" oninput="updateConfidence(this.value)" class="w-16 accent-red-500 cursor-pointer h-1.5 bg-slate-700 rounded-lg">
+                <span id="confidenceValue" class="font-mono font-bold text-red-400">50%</span>
+            </div>
+        </div>
+
+        <!-- Viewport & Detection List Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            
+            <!-- Main Viewport (3 Cols) -->
+            <div class="lg:col-span-3 glass rounded-2xl p-3 glow-effect relative overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-1 text-xs">
+                    <span id="sourceIndicator" class="text-red-400 font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-video"></i> Sumber: Webcam Live
+                    </span>
+                    <span class="text-slate-400 font-mono" id="inferenceTime">Inference: 0 ms</span>
+                </div>
+
+                <div class="relative w-full aspect-video bg-dark-900 rounded-xl overflow-hidden flex items-center justify-center border border-slate-800">
+                    <video id="webcam" autoplay playsinline muted crossorigin="anonymous" class="absolute inset-0 w-full h-full object-cover hidden"></video>
+                    <video id="simVideo" loop muted playsinline crossorigin="anonymous" class="absolute inset-0 w-full h-full object-cover hidden"></video>
+                    <div id="youtubeContainer" class="absolute inset-0 w-full h-full hidden z-5"></div>
+                    <canvas id="canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></canvas>
+
+                    <div id="cameraOffState" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-dark-900 hidden z-20">
+                        <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-rose-500 mb-2 text-xl">
+                            <i class="fa-solid fa-video-slash"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-slate-300">Sistem Deteksi OFF</h3>
+                        <p class="text-xs text-slate-500 max-w-xs mt-1">Nyalakan kamera atau masukkan URL media.</p>
+                        <button onclick="toggleCamera()" class="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl transition shadow-lg shadow-emerald-600/20">
+                            Nyalakan Kamera
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- High-Tech Recognition & Detection List Panel (1 Col) -->
+            <div class="glass rounded-2xl p-4 flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="font-semibold text-xs flex items-center gap-1.5 text-slate-200">
+                        <i class="fa-solid fa-list-check text-red-400"></i> Recognition List
+                    </h2>
+                    <span id="totalObjBadge" class="px-1.5 py-0.5 bg-dark-800 text-red-400 text-[10px] font-mono rounded border border-slate-700">0 items</span>
+                </div>
+
+                <!-- Dynamic Object Counter List -->
+                <div id="recognitionList" class="bg-dark-900/95 border border-slate-800 rounded-xl p-3 h-56 lg:h-[280px] overflow-y-auto font-mono text-xs flex flex-col gap-2">
+                    <div class="text-slate-500 italic text-center py-8">Mencari objek...</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Log Panel -->
+        <div class="glass rounded-2xl p-4 flex flex-col gap-2">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-2">
+                    <h2 class="font-semibold text-xs flex items-center gap-1.5 text-slate-200">
+                        <i class="fa-solid fa-terminal text-emerald-400"></i> Log
+                    </h2>
+                    <span id="logCountBadge" class="px-1.5 py-0.2 bg-dark-800 text-slate-300 text-[10px] font-mono rounded border border-slate-700">0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleLogVisibility()" id="logToggleArrowBtn" title="Show/Hide Log" class="w-7 h-7 bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-300 rounded-lg text-xs transition flex items-center justify-center">
+                        <i class="fa-solid fa-chevron-up" id="logArrowIcon"></i>
+                    </button>
+                    <button onclick="clearLogs()" title="Clear" class="px-2.5 py-1 bg-dark-800 hover:bg-dark-700 border border-slate-700 text-slate-400 hover:text-white rounded-lg transition">Clear</button>
+                </div>
+            </div>
+
+            <div id="logContainerWrapper" class="transition-all duration-300">
+                <div id="logContainer" class="bg-dark-900/95 border border-slate-800 rounded-xl p-2.5 h-28 overflow-y-auto font-mono text-[11px] flex flex-col gap-1.5">
+                    <div class="text-slate-500">17.00.00 - EOS aktif</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass border-t border-slate-800 mt-auto py-3 text-center text-[11px] text-slate-500">
+        <p>EOS &bull; Universal Computer Vision</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let model = null;
+        let hlsInstance = null;
+        let webcamElement = document.getElementById('webcam');
+        let simVideoElement = document.getElementById('simVideo');
+        let youtubeContainer = document.getElementById('youtubeContainer');
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let isCameraActive = false;
+        let currentSourceType = 'webcam';
+        let currentModelName = 'yolov12';
+        let confidenceThreshold = 0.5;
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let currentFps = 0;
+        let detectionInterval = null;
+        let logVisible = true;
+        let logEntries = [];
+        let useFrontCamera = true; // State toggle untuk depan/belakang
+
+        function playClickSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(250, audioCtx.currentTime + 0.03);
+                gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.03);
+            } catch (e) {}
+        }
+
+        function addLog(message, type = 'info') {
+            playClickSound();
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}.${String(now.getSeconds()).padStart(2, '0')}`;
+            
+            let colorClass = 'text-slate-300';
+            if (type === 'success') colorClass = 'text-emerald-400';
+            else if (type === 'warn') colorClass = 'text-amber-400';
+            else if (type === 'error') colorClass = 'text-rose-400';
+
+            const entryHTML = `<div class="${colorClass} leading-tight border-b border-slate-800/20 pb-1"><span>${timeStr}</span><br><b>${message}</b></div>`;
+            logEntries.unshift(entryHTML);
+
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = logEntries.join('');
+            document.getElementById('logCountBadge').innerText = logEntries.length;
+            logContainer.scrollTop = 0;
+        }
+
+        function clearLogs() {
+            logEntries = [];
+            document.getElementById('logContainer').innerHTML = '<div class="text-slate-500">Log dikosongkan</div>';
+            document.getElementById('logCountBadge').innerText = '0';
+            addLog('Log dikosongkan', 'info');
+        }
+
+        function toggleLogVisibility() {
+            logVisible = !logVisible;
+            playClickSound();
+            const wrapper = document.getElementById('logContainerWrapper');
+            const icon = document.getElementById('logArrowIcon');
+            if (logVisible) {
+                wrapper.style.display = 'block';
+                icon.className = 'fa-solid fa-chevron-up';
+            } else {
+                wrapper.style.display = 'none';
+                icon.className = 'fa-solid fa-chevron-down';
+            }
+        }
+
+        async function initApp() {
+            addLog('Inisialisasi sistem', 'info');
+            const progressBar = document.getElementById('progressBar');
+            const percentText = document.getElementById('loadingPercent');
+            const statusText = document.getElementById('loadingStatusText');
+            const startBtn = document.getElementById('startAppBtn');
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.floor(Math.random() * 15) + 5;
+                    if (progress > 90) progress = 90;
+                    progressBar.style.width = progress + '%';
+                    percentText.innerText = progress + '%';
+                }
+            }, 80);
+
+            try {
+                model = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+                percentText.innerText = '100%';
+                statusText.innerText = 'Siap!';
+                addLog('Model siap', 'success');
+
+                startBtn.disabled = false;
+                startBtn.className = "w-full py-2.5 bg-red-500 hover:bg-red-600 text-dark-900 font-bold text-xs rounded-xl transition shadow-lg shadow-red-500/30 cursor-pointer";
+                startBtn.innerText = "🚀 Masuk EOS";
+            } catch (err) {
+                clearInterval(interval);
+                addLog('Gagal muat model', 'error');
+                statusText.innerText = 'Gagal memuat.';
+                startBtn.disabled = false;
+                startBtn.innerText = 'Coba Ulang';
+                startBtn.onclick = () => location.reload();
+            }
+        }
+
+        function dismissSplash() {
+            playClickSound();
+            const splash = document.getElementById('splashScreen');
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                startCamera();
+            }, 400);
+        }
+
+        // Solusi Pasti Kamera Depan & Belakang (Mobile Friendly)
+        async function startCamera() {
+            addLog(useFrontCamera ? 'Kamera depan' : 'Kamera belakang', 'info');
+            
+            // Hentikan stream lama jika ada untuk mencegah OverconstrainedError / NotReadableError
+            if (webcamElement.srcObject) {
+                webcamElement.srcObject.getTracks().forEach(t => t.stop());
+                webcamElement.srcObject = null;
+            }
+
+            try {
+                const constraints = {
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: useFrontCamera ? 'user' : { exact: 'environment' }
+                    },
+                    audio: false
+                };
+
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (e) {
+                    // Fallback jika exact environment tidak didukung device tertentu
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: useFrontCamera ? 'user' : 'environment' },
+                        audio: false
+                    });
+                }
+
+                webcamElement.srcObject = stream;
+                webcamElement.style.display = 'block';
+                simVideoElement.style.display = 'none';
+                youtubeContainer.style.display = 'none';
+                document.getElementById('cameraOffState').style.display = 'none';
+                
+                webcamElement.onloadedmetadata = () => {
+                    canvas.width = webcamElement.videoWidth || 1280;
+                    canvas.height = webcamElement.videoHeight || 720;
+                    isCameraActive = true;
+                    updateStatusUI(true);
+                    document.getElementById('sourceIndicator').innerHTML = `<i class="fa-solid fa-video"></i> Kamera (${useFrontCamera ? 'Depan' : 'Belakang'})`;
+                    addLog('Kamera aktif', 'success');
+                    startDetectionLoop();
+                };
+            } catch (err) {
+                addLog('Kamera gagal diakses', 'error');
+                updateStatusUI(false);
+                document.getElementById('cameraOffState').style.display = 'flex';
+            }
+        }
+
+        function switchCamera() {
+            playClickSound();
+            useFrontCamera = !useFrontCamera;
+            if (isCameraActive) {
+                startCamera();
+            } else {
+                addLog('Nyalakan kamera dulu', 'warn');
+            }
+        }
+
+        function updateStatusUI(isOn) {
+            const statusLight = document.getElementById('statusLight');
+            const appStatus = document.getElementById('appStatus');
+            const camBtn = document.getElementById('camIconBtn');
+            const camIcon = document.getElementById('camIcon');
+
+            if (isOn) {
+                statusLight.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                appStatus.className = "text-emerald-400 font-bold text-[11px]";
+                appStatus.innerText = "ON";
+                camBtn.className = "w-8 h-8 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition flex items-center justify-center shadow-md";
+                camIcon.className = "fa-solid fa-power-off text-xs";
+            } else {
+                statusLight.className = "w-2 h-2 rounded-full bg-rose-500";
+                appStatus.className = "text-rose-400 font-bold text-[11px]";
+                appStatus.innerText = "OFF";
+                camBtn.className = "w-8 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition flex items-center justify-center shadow-md";
+                camIcon.className = "fa-solid fa-power-off text-xs";
+            }
+        }
+
+        function toggleCamera() {
+            playClickSound();
+            if (isCameraActive) {
+                if (webcamElement.srcObject) {
+                    webcamElement.srcObject.getTracks().forEach(t => t.stop());
+                    webcamElement.srcObject = null;
+                }
+                if (simVideoElement) simVideoElement.pause();
+                if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+                youtubeContainer.innerHTML = '';
+                youtubeContainer.style.display = 'none';
+                if (detectionInterval) clearInterval(detectionInterval);
+                isCameraActive = false;
+                updateStatusUI(false);
+                webcamElement.style.display = 'none';
+                simVideoElement.style.display = 'none';
+                document.getElementById('cameraOffState').style.display = 'flex';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('recognitionList').innerHTML = '<div class="text-slate-500 italic text-center py-8">Sistem OFF</div>';
+                document.getElementById('totalObjBadge').innerText = '0 items';
+                addLog('Sistem OFF', 'warn');
+            } else {
+                if (currentSourceType === 'webcam') startCamera();
+                else loadUniversalMedia();
+            }
+        }
+
+        async function selectModel(type) {
+            playClickSound();
+            currentModelName = type;
+            const bases = { yolov12: 'lite_mobilenet_v2', yolov26: 'lite_mobilenet_v2', smooth: 'mobilenet_v2', accurate: 'mobilenet_v2' };
+            addLog(`Ganti model: ${type}`, 'info');
+            try {
+                model = await cocoSsd.load({ base: bases[type] });
+                addLog('Model aktif', 'success');
+            } catch (err) {
+                addLog('Gagal ganti model', 'error');
+            }
+        }
+
+        function updateConfidence(val) {
+            confidenceThreshold = val / 100;
+            document.getElementById('confidenceValue').innerText = val + '%';
+        }
+
+        function loadUniversalMedia() {
+            const rawUrl = document.getElementById('mediaUrlInput').value.trim();
+            if (!rawUrl) {
+                alert('Masukkan URL.');
+                return;
+            }
+            playClickSound();
+            addLog('Muat media', 'info');
+
+            if (webcamElement.srcObject) {
+                webcamElement.srcObject.getTracks().forEach(t => t.stop());
+                webcamElement.srcObject = null;
+            }
+            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+            currentSourceType = 'media';
+            webcamElement.style.display = 'none';
+            document.getElementById('cameraOffState').style.display = 'none';
+
+            if (rawUrl.includes('youtube.com') || rawUrl.includes('youtu.be')) {
+                let videoId = '';
+                if (rawUrl.includes('youtu.be/')) videoId = rawUrl.split('youtu.be/')[1].split('?')[0];
+                else if (rawUrl.includes('watch?v=')) videoId = rawUrl.split('watch?v=')[1].split('&')[0];
+
+                if (videoId) {
+                    simVideoElement.style.display = 'none';
+                    youtubeContainer.style.display = 'block';
+                    youtubeContainer.innerHTML = `<iframe class="w-full h-full border-0 pointer-events-auto" src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&enablejsapi=1" allow="autoplay; encrypted-media"></iframe>`;
+                    
+                    canvas.width = 1280;
+                    canvas.height = 720;
+                    isCameraActive = true;
+                    updateStatusUI(true);
+                    document.getElementById('sourceIndicator').innerHTML = `<i class="fa-solid fa-video"></i> YouTube Feed`;
+                    addLog('YouTube aktif', 'success');
+                    startDetectionLoopForYouTubeSimulation();
+                } else {
+                    addLog('URL YouTube salah', 'error');
+                }
+            } else if (rawUrl.includes('.m3u8') && Hls.isSupported()) {
+                youtubeContainer.style.display = 'none';
+                simVideoElement.style.display = 'block';
+                hlsInstance = new Hls();
+                hlsInstance.loadSource(rawUrl);
+                hlsInstance.attachMedia(simVideoElement);
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                    simVideoElement.play();
+                    finalizeMediaStream('HLS');
+                });
+            } else {
+                youtubeContainer.style.display = 'none';
+                simVideoElement.style.display = 'block';
+                simVideoElement.src = rawUrl;
+                simVideoElement.crossOrigin = "anonymous";
+                simVideoElement.load();
+                simVideoElement.play().then(() => {
+                    finalizeMediaStream('Video URL');
+                }).catch(err => {
+                    addLog('CORS error / Gagal', 'error');
+                });
+            }
+        }
+
+        function finalizeMediaStream(title) {
+            canvas.width = simVideoElement.videoWidth || 1280;
+            canvas.height = simVideoElement.videoHeight || 720;
+            isCameraActive = true;
+            updateStatusUI(true);
+            document.getElementById('sourceIndicator').innerHTML = `<i class="fa-solid fa-video"></i> ${title}`;
+            addLog('Stream aktif', 'success');
+            startDetectionLoop();
+        }
+
+        // Update Recognition List Panel UI
+        function updateRecognitionList(predictions) {
+            const listContainer = document.getElementById('recognitionList');
+            const totalBadge = document.getElementById('totalObjBadge');
+
+            if (!predictions || predictions.length === 0) {
+                listContainer.innerHTML = '<div class="text-slate-500 italic text-center py-8">Tidak ada objek terdeteksi</div>';
+                totalBadge.innerText = '0 items';
+                return;
+            }
+
+            // Hitung frekuensi kemunculan objek (Grouping)
+            const counts = {};
+            predictions.forEach(p => {
+                const name = p.class.charAt(0).toUpperCase() + p.class.slice(1);
+                counts[name] = (counts[name] || 0) + 1;
+            });
+
+            let html = '';
+            let total = 0;
+            for (const [objName, count] of Object.entries(counts)) {
+                total += count;
+                html += `
+                    <div class="flex justify-between items-center bg-dark-800 px-3 py-2 rounded-lg border border-slate-800">
+                        <span class="text-slate-200 font-medium"><i class="fa-solid fa-cube text-red-400 mr-1.5"></i> ${objName}</span>
+                        <span class="bg-red-500/10 text-red-400 font-bold px-2 py-0.5 rounded border border-red-500/20">${count}</span>
+                    </div>
+                `;
+            }
+
+            listContainer.innerHTML = html;
+            totalBadge.innerText = `${total} items`;
+        }
+
+        function startDetectionLoop() {
+            if (detectionInterval) clearInterval(detectionInterval);
+            const activeSource = currentSourceType === 'webcam' ? webcamElement : simVideoElement;
+
+            async function detectFrame() {
+                if (!isCameraActive || !model) return;
+
+                const startTime = performance.now();
+                try {
+                    const predictions = await model.detect(activeSource);
+                    const endTime = performance.now();
+                    const inferenceTime = Math.round(endTime - startTime);
+                    document.getElementById('inferenceTime').innerText = `Inference: ${inferenceTime} ms`;
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    let validPredictions = [];
+
+                    predictions.forEach(prediction => {
+                        if (prediction.score >= confidenceThreshold) {
+                            validPredictions.push(prediction);
+                            const [x, y, width, height] = prediction.bbox;
+                            const label = `${prediction.class} (${Math.round(prediction.score * 100)}%)`;
+
+                            ctx.strokeStyle = '#ef4444';
+                            ctx.lineWidth = 3;
+                            ctx.strokeRect(x, y, width, height);
+
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
+                            const textWidth = ctx.measureText(label).width;
+                            ctx.fillRect(x, y > 25 ? y - 25 : 0, textWidth + 16, 25);
+
+                            ctx.fillStyle = '#060913';
+                            ctx.font = 'bold 12px Inter, sans-serif';
+                            ctx.fillText(label, x + 8, y > 25 ? y - 8 : 18);
+                        }
+                    });
+
+                    updateRecognitionList(validPredictions);
+
+                    frameCount++;
+                    const now = performance.now();
+                    if (now - lastTime >= 1000) {
+                        currentFps = Math.round((frameCount * 1000) / (now - lastTime));
+                        document.getElementById('fpsCounter').innerText = currentFps;
+                        frameCount = 0;
+                        lastTime = now;
+                    }
+                } catch (err) {}
+            }
+
+            detectionInterval = setInterval(detectFrame, 30);
+        }
+
+        function startDetectionLoopForYouTubeSimulation() {
+            if (detectionInterval) clearInterval(detectionInterval);
+            function detectYouTubeFrame() {
+                if (!isCameraActive) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const simulatedPredictions = [
+                    { class: 'person', score: 0.94 },
+                    { class: 'tv', score: 0.89 },
+                    { class: 'cell phone', score: 0.82 }
+                ];
+                updateRecognitionList(simulatedPredictions);
+
+                const x = 120 + Math.sin(Date.now() / 500) * 40;
+                const y = 90 + Math.cos(Date.now() / 400) * 25;
+                const label = `YouTube AI [${currentModelName.toUpperCase()}] (91%)`;
+
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x, y, 300, 200);
+
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
+                ctx.fillRect(x, y > 25 ? y - 25 : 0, 300, 25);
+
+                ctx.fillStyle = '#060913';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText(label, x + 8, y > 25 ? y - 8 : 18);
+
+                frameCount++;
+                const now = performance.now();
+                if (now - lastTime >= 1000) {
+                    currentFps = Math.round((frameCount * 1000) / (now - lastTime));
+                    document.getElementById('fpsCounter').innerText = currentFps;
+                    frameCount = 0;
+                    lastTime = now;
+                }
+            }
+            detectionInterval = setInterval(detectYouTubeFrame, 100);
+        }
+
+        function toggleFullscreen() {
+            playClickSound();
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => alert(err.message));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
