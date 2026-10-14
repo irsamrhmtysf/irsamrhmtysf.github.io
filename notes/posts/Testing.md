@@ -1,4 +1,0 @@
-TESTING
-
-manual test
-
