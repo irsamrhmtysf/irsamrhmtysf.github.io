@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5Q30V1EW8H"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-5Q30V1EW8H');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps Showcase | Irsam Rahmat Yusuf</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0a0a0c',
+                        cardBg: 'rgba(18, 18, 22, 0.75)',
+                        borderGlow: 'rgba(16, 185, 129, 0.25)',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0c;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(18, 18, 22, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.2);
+            transform: translateY(-2px);
+        }
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        /* Hide scrollbars for clean look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950">
+
+    <!-- Particle Constellation Background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-40 glass-nav">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="https://irsamrhmtysf.github.io/" class="flex items-center space-x-2.5 group">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-105 transition">
+                        <span class="text-slate-950 font-extrabold text-xs">IR</span>
+                    </div>
+                    <div>
+                        <span class="font-bold text-white tracking-tight text-sm block">Web Apps Showcase</span>
+                        <span class="text-[11px] text-emerald-400 font-medium flex items-center">
+                            <i class="fas fa-arrow-left mr-1 text-[9px]"></i> irsamrhmtysf.github.io
+                        </span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <span class="text-xs text-slate-400 font-mono hidden sm:inline">16 Apps Live</span>
+                <a href="https://github.com/irsamrhmtysf" target="_blank" class="w-9 h-9 rounded-xl glass-card flex items-center justify-center text-slate-300 hover:text-white hover:border-emerald-500 transition">
+                    <i class="fab fa-github text-sm"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Header & Search -->
+    <section class="relative z-10 pt-10 pb-6 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full text-center">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            App <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">Ecosystem</span>
+        </h1>
+        <p class="mt-2 text-xs sm:text-sm text-slate-400 max-w-xl mx-auto font-normal">
+            # Ease Our Life
+        </p>
+
+        <!-- Search Bar -->
+        <div class="mt-6 max-w-xl mx-auto">
+            <div class="glass-card rounded-xl px-4 py-2 flex items-center shadow-lg">
+                <i class="fas fa-search text-slate-400 text-sm mr-3"></i>
+                <input type="text" id="app-search" placeholder="Search apps..." class="w-full bg-transparent border-none text-white placeholder-slate-500 focus:outline-none text-sm">
+                <span id="match-count" class="text-xs text-slate-500 font-mono pl-2">16</span>
+            </div>
+        </div>
+
+        <!-- Smooth Scrollable Category Filter Pills (No bar lines) -->
+        <div class="mt-5 max-w-4xl mx-auto overflow-x-auto no-scrollbar py-1">
+            <div class="flex items-center justify-start sm:justify-center gap-2 px-2 text-xs font-medium whitespace-nowrap">
+                <button onclick="filterApps('all')" class="filter-btn px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 transition font-semibold shadow-sm">All</button>
+                <button onclick="filterApps('ai')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">AI</button>
+                <button onclick="filterApps('news')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">News</button>
+                <button onclick="filterApps('utility')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">Tools</button>
+                <button onclick="filterApps('edu')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">Education</button>
+                <button onclick="filterApps('games')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">Games</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Compact Apps List/Grid -->
+    <main class="relative z-10 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full flex-grow">
+        <div id="apps-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5">
+            
+            <!-- 1. Batam News Info -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="news" data-name="batam news info regional portal local community">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-newspaper text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Batam News Info</h3>
+                        <p class="text-xs text-slate-400 truncate">Regional portal & community updates</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Batam News Info', 'https://irsamrhmtysf-batamnewinfo.grok.me/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf-batamnewinfo.grok.me/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 2. Voi.id -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="news" data-name="voi id news portal information current events">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-globe text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">VOI.ID</h3>
+                        <p class="text-xs text-slate-400 truncate">News & current affairs portal</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Voi.id', 'https://voi.id')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://voi.id" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3. Era.id -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="news" data-name="era id news portal media independent">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-bullhorn text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">ERA.ID</h3>
+                        <p class="text-xs text-slate-400 truncate">Independent news & media network</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Era.id', 'https://era.id')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://era.id" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 4. Heliocentric -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="heliocentric science simulation astronomical planetary orbit">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-sun text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Heliocentric</h3>
+                        <p class="text-xs text-slate-400 truncate">3D planetary orbit simulation</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Heliocentric', 'https://irsamrhmtysf-heliocentric.grok.me/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf-heliocentric.grok.me/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 5. Explorer -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="explorer discovery spatial navigational tool">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-compass text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Explorer</h3>
+                        <p class="text-xs text-slate-400 truncate">Interactive discovery & spatial tool</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Explorer', 'https://irsamrhmtysf-explorer.grok.me/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf-explorer.grok.me/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 6. AI Assistant -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="ai assistant intelligence chatbot tool">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-brain text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">AI Assistant</h3>
+                        <p class="text-xs text-slate-400 truncate">Intelligent web assistant tool</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('AI Assistant', 'https://irsamrhmtysf-ai.grok.me/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf-ai.grok.me/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 7. Image Processor -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="image processor imgproc photo editor canvas">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-image text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Image Processor</h3>
+                        <p class="text-xs text-slate-400 truncate">Browser-based photo editing & filters</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Image Processor', 'https://irsamrhmtysf.github.io/imgproc/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/imgproc/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 8. Vou -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="vou your voice understood translator speech">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-microphone-lines text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">V.O.U</h3>
+                        <p class="text-xs text-slate-400 truncate">Your voice, understood.</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Vou', 'https://irsamrhmtysf.github.io/vou')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/vou" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 9. Weather App -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="weather app climate forecast meteorological">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-cloud-sun text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Weather App</h3>
+                        <p class="text-xs text-slate-400 truncate">Real-time climate & forecasts</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Weather App', 'https://irsamrhmtysf.github.io/weather')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/weather" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 10. Edu Hub -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="edu hub education learning platform">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-graduation-cap text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Edu Hub</h3>
+                        <p class="text-xs text-slate-400 truncate">Interactive education platform</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Edu Hub', 'https://irsamrhmtysf.github.io/edu')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/edu" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 11. PAUD Games -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="games" data-name="paud games kids children learning interactive">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-shapes text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">PAUD</h3>
+                        <p class="text-xs text-slate-400 truncate">Kids interactive learning games</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('PAUD Games', 'https://irsamrhmtysf.github.io/game/paud')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/game/paud" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 12. Ular Tangga Game -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="games" data-name="ular tangga snake ladder board game">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-dice text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Ular Tangga</h3>
+                        <p class="text-xs text-slate-400 truncate">Classic snakes & ladders board game</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Ular Tangga Game', 'https://irsamrhmtysf.github.io/game/ulartangga')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/game/ulartangga" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 13. AI CCTV -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="ai ctv camera security vision detection">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-video text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">AI CCTV</h3>
+                        <p class="text-xs text-slate-400 truncate">Smart video surveillance & detection</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('AI CCTV', 'https://irsamrhmtysf.github.io/ai/cctv/index.html')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/ai/cctv/index.html" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 14. Speech AI -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="speech ai audio recognition voice demo">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-microphone text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Speech AI</h3>
+                        <p class="text-xs text-slate-400 truncate">Audio recognition & voice demo</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Speech AI', 'https://irsamrhmtysf.github.io/edu/demos/speech.html')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/edu/demos/speech.html" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 15. Vision AI -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="vision ai image computer object detection demo">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-eye text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Vision AI</h3>
+                        <p class="text-xs text-slate-400 truncate">Computer vision & object recognition</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Vision AI', 'https://irsamrhmtysf.github.io/edu/demos/vision.html')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/edu/demos/vision.html" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 16. Chatbot AI -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="chatbot ai conversational agent demo">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-comments text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Chatbot AI</h3>
+                        <p class="text-xs text-slate-400 truncate">Conversational AI agent demo</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('Chatbot AI', 'https://irsamrhmtysf.github.io/edu/demos/chatbot.html')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/edu/demos/chatbot.html" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Quick View / Live Preview Modal -->
+    <div id="preview-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-card rounded-3xl w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="modal-container">
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <h3 id="modal-title" class="text-sm sm:text-base font-bold text-white">App Preview</h3>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="copyModalUrl()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition flex items-center space-x-1.5">
+                        <i class="fas fa-copy text-emerald-400"></i> <span id="copy-text">Copy URL</span>
+                    </button>
+                    <a id="modal-external-link" href="#" target="_blank" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-semibold transition flex items-center space-x-1.5">
+                        <span>Full Screen</span> <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                    <button onclick="closePreview()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Modal Body (Iframe) -->
+            <div class="flex-grow relative bg-slate-950">
+                <div id="iframe-loader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-950 z-10">
+                    <div class="w-8 h-8 border-3 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-3"></div>
+                    <p class="text-xs font-mono">Loading live application preview...</p>
+                </div>
+                <iframe id="modal-iframe" src="" class="w-full h-full border-none"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 mt-auto border-t border-slate-800/80 bg-slate-950/60 py-6 px-4 text-center text-xs text-slate-500">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p>&copy; 2026 Irsam Rahmat Yusuf. Web Apps Showcase.</p>
+            <a href="https://irsamrhmtysf.github.io/" class="text-emerald-400 hover:underline font-medium">Return to Main Portfolio</a>
+        </div>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // Particle Constellation Animation
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let particlesArray = [];
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.4;
+                this.speedX = (Math.random() - 0.5) * 0.25;
+                this.speedY = (Math.random() - 0.5) * 0.25;
+                this.opacity = Math.random() * 0.35 + 0.15;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX;
+                if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(16, 185, 129, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particlesArray = [];
+            const count = Math.floor((canvas.width * canvas.height) / 22000);
+            for (let i = 0; i < count; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // Search and Filter Logic
+        const searchInput = document.getElementById('app-search');
+        const appCards = document.querySelectorAll('#apps-grid > div');
+        const matchCountEl = document.getElementById('match-count');
+
+        function filterApps(category) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition';
+            });
+            event.target.className = 'filter-btn px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 transition font-semibold shadow-sm';
+
+            let count = 0;
+            appCards.forEach(card => {
+                const matches = category === 'all' || card.getAttribute('data-category') === category;
+                if (matches) {
+                    card.style.display = 'flex';
+                    count++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            matchCountEl.textContent = count;
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            let count = 0;
+            appCards.forEach(card => {
+                const name = card.getAttribute('data-name');
+                const text = card.textContent.toLowerCase();
+                if (name.includes(query) || text.includes(query)) {
+                    card.style.display = 'flex';
+                    count++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            matchCountEl.textContent = count;
+        });
+
+        // Modal Preview Logic
+        const modal = document.getElementById('preview-modal');
+        const modalContainer = document.getElementById('modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalIframe = document.getElementById('modal-iframe');
+        const modalExternalLink = document.getElementById('modal-external-link');
+        const iframeLoader = document.getElementById('iframe-loader');
+        let currentUrl = '';
+
+        function openPreview(title, url) {
+            modalTitle.textContent = title + ' - Live Preview';
+            currentUrl = url;
+            modalExternalLink.href = url;
+            iframeLoader.style.display = 'flex';
+            modalIframe.src = url;
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContainer.classList.remove('scale-95');
+            modalContainer.classList.add('scale-100');
+
+            modalIframe.onload = () => {
+                iframeLoader.style.display = 'none';
+            };
+        }
+
+        function closePreview() {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContainer.classList.remove('scale-100');
+            modalContainer.classList.add('scale-95');
+            modalIframe.src = '';
+        }
+
+        function copyModalUrl() {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(currentUrl).then(() => {
+                    const copyText = document.getElementById('copy-text');
+                    copyText.textContent = 'Copied!';
+                    setTimeout(() => copyText.textContent = 'Copy URL', 2000);
+                });
+            } else {
+                document.execCommand('copy');
+            }
+        }
+
+        // Close modal on escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePreview();
+        });
+    </script>
+</body>
+</html>
