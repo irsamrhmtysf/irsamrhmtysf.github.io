@@ -1,1 +1,517 @@
-html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sholat Translator PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --text: #e0e0e0;
+            --text-muted: #9e9e9e;
+            --border: #2c2c2c;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        .light-mode {
+            --bg: #f4f4f0;
+            --surface: #ffffff;
+            --text: #222222;
+            --text-muted: #666666;
+            --border: #e0e0dc;
+            --primary: #2563eb;
+            --success: #059669;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            padding-bottom: 120px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h2 {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .theme-toggle-btn {
+            background: var(--border);
+            color: var(--text);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s ease;
+        }
+
+        .theme-toggle-btn:active { transform: scale(0.92); }
+
+        .status-box {
+            padding: 14px;
+            background: var(--bg);
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--text-muted);
+            color: var(--text);
+        }
+
+        /* Voice Wave Animation */
+        .wave-container {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            height: 32px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-top: -8px;
+        }
+
+        .wave-container.active {
+            display: flex;
+        }
+
+        .wave-bar {
+            width: 4px;
+            height: 10px;
+            background: var(--success);
+            border-radius: 2px;
+            animation: wavePulse 1s infinite ease-in-out alternate;
+        }
+
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.6s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.8s; }
+
+        @keyframes wavePulse {
+            0% { height: 6px; opacity: 0.4; }
+            100% { height: 26px; opacity: 1; }
+        }
+
+        /* Uniform Record Card */
+        .record-card {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            animation: fadeIn 0.25s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header {
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            margin-bottom: 8px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .arabic {
+            font-size: 1.4rem;
+            font-weight: bold;
+            direction: rtl;
+            text-align: right;
+            margin-bottom: 8px;
+            font-family: 'Traditional Arabic', 'Amiri', serif;
+            color: var(--text);
+        }
+
+        .translation {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 30px 0;
+            font-style: italic;
+        }
+
+        /* Bottom Thumb-Zone Circular Dock - Matched with surface background */
+        .bottom-dock {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
+
+        .dock-inner {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Circular Recorder Button */
+        .circle-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease, background 0.3s ease;
+        }
+
+        .circle-btn:active { transform: scale(0.94); }
+
+        .btn-start {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-stop {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.25);
+            animation: pulseGlow 1.5s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .side-action-group {
+            position: absolute;
+            display: none;
+            gap: 8px;
+        }
+
+        .side-action-group.show {
+            display: flex;
+        }
+
+        .left-actions { left: 0; }
+        .right-actions { right: 0; }
+
+        .small-btn {
+            background: var(--border);
+            color: var(--text);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .small-btn:active { transform: scale(0.96); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-header">
+        <h2>Sholat Translator</h2>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn" title="Ganti Tema">🌙</button>
+    </div>
+
+    <div class="status-box" id="statusText">
+        Status: Standby. Tekan tombol hijau di bawah untuk mulai.
+    </div>
+
+    <!-- Voice Wave Animation -->
+    <div class="wave-container" id="waveContainer">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+    </div>
+
+    <div id="resultsContainer">
+        <div class="empty-state">Belum ada rekaman terjemahan.</div>
+    </div>
+</div>
+
+<!-- Bottom Clean Thumb-Zone Dock -->
+<div class="bottom-dock">
+    <div class="dock-inner">
+        <div class="side-action-group left-actions" id="leftActions">
+            <button class="small-btn" onclick="saveData()">Simpan</button>
+        </div>
+
+        <button id="toggleBtn" class="circle-btn btn-start" onclick="toggleApp()" title="Mulai / Berhenti">
+            🎙️
+        </button>
+
+        <div class="side-action-group right-actions" id="rightActions">
+            <button class="small-btn" onclick="resetData()" style="color: var(--danger);">Reset</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isAppOn = false;
+    let isRecording = false;
+    let recognition = null;
+    let currentSegment = "";
+    let sessionRecords = [];
+
+    const translationDictionary = {
+        "bismillah": "Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang.",
+        "alhamdulillah": "Segala puji bagi Allah, Tuhan semesta alam.",
+        "ar rahman": "Yang Maha Pengasih lagi Maha Penyayang.",
+        "maliki yawmid din": "Yang menguasai hari pembalasan.",
+        "iyyaka na'budu": "Hanya kepada Engkaulah kami menyembah dan hanya kepada Engkaulah kami mohon pertolongan.",
+        "ihdinas siratal mustaqim": "Tunjukilah kami jalan yang lurus.",
+        "allahu akbar": "Allah Maha Besar.",
+        "sami'allahu liman hamidah": "Allah mendengar orang yang memuji-Nya.",
+        "rabbana walakal hamd": "Ya Tuhan kami, bagi-Mu segala puji.",
+        "subhana rabbiyal adzimi": "Maha Suci Tuhanku Yang Maha Agung.",
+        "subhana rabbiyal a'la": "Maha Suci Tuhanku Yang Maha Tinggi."
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('sholat_data_v4');
+        if (saved) {
+            try { 
+                sessionRecords = JSON.parse(saved); 
+                renderResults(); 
+            } catch(e) {}
+        }
+        
+        const savedTheme = localStorage.getItem('sholat_theme');
+        if (savedTheme === 'light') enableLightMode();
+    });
+
+    function toggleTheme() {
+        const body = document.body;
+        if (body.classList.contains('light-mode')) {
+            body.classList.remove('light-mode');
+            document.getElementById('themeBtn').innerText = "🌙";
+            localStorage.setItem('sholat_theme', 'dark');
+        } else {
+            enableLightMode();
+            localStorage.setItem('sholat_theme', 'light');
+        }
+    }
+
+    function enableLightMode() {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeBtn').innerText = "☀️";
+    }
+
+    function toggleApp() {
+        isAppOn = !isAppOn;
+        const btn = document.getElementById("toggleBtn");
+        const statusBox = document.getElementById("statusText");
+        const wave = document.getElementById("waveContainer");
+
+        if (isAppOn) {
+            btn.className = "circle-btn btn-stop";
+            btn.innerHTML = "⏹️";
+            statusBox.innerText = "Mendengarkan... Ucapkan 'Aamiin' untuk rekam ayat.";
+            wave.classList.add("active");
+            startListeningEngine();
+        } else {
+            btn.className = "circle-btn btn-start";
+            btn.innerHTML = "🎙️";
+            statusBox.innerText = "Status: Standby.";
+            wave.classList.remove("active");
+            if (recognition) {
+                recognition.onend = null;
+                recognition.stop();
+            }
+        }
+    }
+
+    function startListeningEngine() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Browser Anda tidak mendukung pengenalan suara. Gunakan Google Chrome atau Safari.");
+            toggleApp();
+            return;
+        }
+
+        try {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ar-SA';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = function(event) {
+                if (!isAppOn) return;
+
+                let transcript = "";
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    transcript += event.results[i][0].transcript;
+                }
+                let cleanTranscript = transcript.toLowerCase().trim();
+
+                if (!isRecording && (cleanTranscript.includes("aamiin") || cleanTranscript.includes("amin"))) {
+                    isRecording = true;
+                    currentSegment = "";
+                    document.getElementById("statusText").innerText = "🔴 Merekam ayat... Ucapkan 'Allahu Akbar' untuk simpan.";
+                    return;
+                }
+
+                if (isRecording) {
+                    currentSegment = transcript;
+                    if (cleanTranscript.includes("allahu akbar") || cleanTranscript.includes("allah akbar")) {
+                        isRecording = false;
+                        processAndStoreRecord(currentSegment);
+                        currentSegment = "";
+                        document.getElementById("statusText").innerText = "✅ Tersimpan! Menunggu 'Aamiin' berikutnya...";
+                    }
+                }
+            };
+
+            recognition.onend = function() {
+                if (isAppOn) {
+                    try { recognition.start(); } catch(e) {}
+                }
+            };
+
+            recognition.start();
+        } catch(err) {
+            console.error("Speech recognition error:", err);
+        }
+    }
+
+    function processAndStoreRecord(text) {
+        let arabicText = text.replace(/allahu akbar/gi, "").replace(/allah akbar/gi, "").trim();
+        if (!arabicText) return;
+
+        let lowerKey = arabicText.toLowerCase();
+        let matchedTranslation = "Terjemahan otomatis: Bacaan sholat/ayat Al-Quran.";
+
+        for (let key in translationDictionary) {
+            if (lowerKey.includes(key)) {
+                matchedTranslation = translationDictionary[key];
+                break;
+            }
+        }
+
+        sessionRecords.unshift({ 
+            ar: arabicText, 
+            id: matchedTranslation,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        localStorage.setItem('sholat_data_v4', JSON.stringify(sessionRecords));
+        renderResults();
+    }
+
+    function renderResults() {
+        const container = document.getElementById("resultsContainer");
+        const leftActions = document.getElementById("leftActions");
+        const rightActions = document.getElementById("rightActions");
+
+        if (sessionRecords.length === 0) {
+            container.innerHTML = `<div class="empty-state">Belum ada rekaman terjemahan.</div>`;
+            leftActions.classList.remove("show");
+            rightActions.classList.remove("show");
+            return;
+        }
+
+        leftActions.classList.add("show");
+        rightActions.classList.add("show");
+
+        container.innerHTML = "";
+        sessionRecords.forEach((rec, index) => {
+            container.innerHTML += `
+                <div class="record-card">
+                    <div class="card-header">
+                        <span>Record #${sessionRecords.length - index} • ${rec.time}</span>
+                        <span style="cursor: pointer; color: var(--primary);" onclick="navigator.clipboard.writeText('${encodeURIComponent(rec.ar)}')">Salin</span>
+                    </div>
+                    <div class="arabic">${rec.ar}</div>
+                    <div class="translation">ID: "${rec.id}"</div>
+                </div>
+            `;
+        });
+    }
+
+    function saveData() {
+        if (sessionRecords.length === 0) return;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionRecords, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "sholat_translation_session.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function resetData() {
+        if (confirm("Hapus seluruh riwayat terjemahan sesi ini?")) {
+            sessionRecords = [];
+            localStorage.removeItem('sholat_data_v4');
+            renderResults();
+            document.getElementById("statusText").innerText = "Status: Standby.";
+        }
+    }
+</script>
+</body>
+</html>
