@@ -3,349 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RecitID - Shazam for the Qur'an</title>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>RecitID - Audio Quran Identifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base: #090d16;
-            --surface: #111827;
-            --surface-card: #1f2937;
-            --primary: #14b8a6;
-            --primary-glow: rgba(20, 184, 166, 0.3);
-            --accent: #2dd4bf;
-            --text-main: #f3f4f6;
+            --bg: #0b0f19;
+            --card: #131b2e;
+            --accent: #14b8a6;
+            --accent-glow: rgba(20, 184, 166, 0.25);
+            --text: #f3f4f6;
             --text-muted: #9ca3af;
-            --border: #374151;
+            --border: #1e293b;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-base);
-            color: var(--text-main);
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             display: flex;
             justify-content: center;
+            align-items: center;
             padding: 16px;
         }
-        .app-shell {
+        .container {
             width: 100%;
-            max-width: 480px;
-            background: var(--surface);
-            border-radius: 28px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            max-width: 440px;
+            background: var(--card);
+            border-radius: 24px;
             border: 1px solid var(--border);
-        }
-        /* Header */
-        .app-header {
-            padding: 20px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--accent);
-            letter-spacing: -0.5px;
-        }
-        .nav-tabs {
-            display: flex;
-            gap: 8px;
-        }
-        .tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 6px 10px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-        .tab-btn.active {
-            background: var(--surface-card);
-            color: var(--primary);
-        }
-
-        /* Content Views */
-        .view-section {
             padding: 24px;
-            flex: 1;
-            overflow-y: auto;
-            display: none;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
-        .view-section.active {
-            display: block;
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        header h1 {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+        header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
-        /* Shazam Core View */
-        .shazam-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        /* Bagian Interaksi Utama (Pusat Rekam/Deteksi) */
+        .radar-box {
             text-align: center;
             padding: 20px 0;
+            position: relative;
         }
-        .shazam-ring {
-            width: 140px;
-            height: 140px;
+        .mic-btn {
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(20,184,166,0.1), rgba(45,212,191,0.2));
-            display: flex;
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 0 25px var(--accent-glow);
+            transition: all 0.3s ease;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            cursor: pointer;
-            margin-bottom: 24px;
-            border: 2px solid rgba(20, 184, 166, 0.4);
-            box-shadow: 0 0 30px var(--primary-glow);
-            transition: transform 0.2s;
+            z-index: 2;
         }
-        .shazam-ring:hover { transform: scale(1.03); }
-        .shazam-btn {
-            width: 90px;
-            height: 90px;
-            background: var(--primary);
-            border-radius: 50%;
-            border: none;
-            color: white;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(20, 184, 166, 0.5);
-            transition: background 0.3s;
-        }
-        .shazam-ring.listening .shazam-btn {
+        .mic-btn:hover { transform: scale(1.05); }
+        .mic-btn.listening {
             background: #ef4444;
-            animation: pulse-ring 1.5s infinite;
+            animation: pulse-wave 1.5s infinite;
         }
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+        @keyframes pulse-wave {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+            70% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        .status-label {
-            font-size: 0.95rem;
+        .status-info {
+            margin-top: 16px;
+            font-size: 0.9rem;
             color: var(--text-muted);
-            margin-bottom: 20px;
         }
 
-        /* Result Card */
-        .result-box {
-            background: var(--surface-card);
+        /* Kartu Hasil Deteksi & Arti (Fokus Utama User) */
+        .output-card {
+            background: #090d16;
             border-radius: 16px;
-            padding: 20px;
-            text-align: left;
             border: 1px solid var(--border);
+            padding: 20px;
+            margin-top: 20px;
             display: none;
-            margin-top: 10px;
+            text-align: left;
         }
-        .meta-info {
+        .output-header {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8rem;
-            color: var(--accent);
+            font-size: 0.75rem;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent);
             font-weight: 600;
             margin-bottom: 12px;
         }
-        .arabic-display {
+        .arabic-text {
             font-family: 'Amiri', serif;
-            font-size: 1.75rem;
+            font-size: 1.6rem;
             text-align: right;
             direction: rtl;
             line-height: 2.2;
-            margin-bottom: 14px;
             color: #ffffff;
+            margin-bottom: 14px;
         }
-        .translation-display {
-            font-size: 0.9rem;
-            color: #d1d5db;
-            background: rgba(0,0,0,0.2);
+        .translation-box {
+            background: rgba(20, 184, 166, 0.05);
+            border-left: 3px solid var(--accent);
             padding: 12px;
             border-radius: 8px;
-            border-left: 3px solid var(--primary);
+            font-size: 0.9rem;
+            color: #d1d5db;
             line-height: 1.5;
         }
 
-        /* Scanner & Manual View */
-        .search-input {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--surface-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: white;
-            font-size: 0.9rem;
-            outline: none;
-            margin-bottom: 16px;
+        /* Simulasi Tes Cepat untuk Ngetes Berbagai Surat */
+        .simulation-controls {
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
         }
-        .search-input:focus { border-color: var(--primary); }
-        
-        .history-item {
-            background: var(--surface-card);
-            padding: 14px;
-            border-radius: 12px;
-            margin-bottom: 10px;
+        .simulation-controls p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .sim-btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .sim-btn {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            border-radius: 6px;
             cursor: pointer;
-            border: 1px solid var(--border);
-            transition: border-color 0.2s;
+            transition: background 0.2s;
         }
-        .history-item:hover { border-color: var(--primary); }
-        .history-title { font-size: 0.9rem; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
-        .history-snippet { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: right; font-family: 'Amiri', serif; }
+        .sim-btn:hover { background: var(--accent); color: white; }
     </style>
 </head>
 <body>
 
-<div class="app-shell">
-    <!-- Header -->
-    <div class="app-header">
-        <div class="logo">RecitID AI</div>
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('detect', this)">Deteksi</button>
-            <button class="tab-btn" onclick="switchTab('search', this)">Cari/Riwayat</button>
-        </div>
-    </div>
+<div class="container">
+    <header>
+        <h1>RecitID Engine</h1>
+        <p>Deteksi bacaan salat/audio Quran & terjemahkan instan</p>
+    </header>
 
-    <!-- Tab 1: Deteksi Audio (Shazam for Quran) -->
-    <div id="detectView" class="view-section active">
-        <div class="shazam-container">
-            <div id="shazamRing" class="shazam-ring" onclick="toggleListen()">
-                <button class="shazam-btn" id="shazamBtn">TAP</button>
+    <!-- Tombol Tangkap Audio -->
+    <div class="radar-box">
+        <button id="listenBtn" class="mic-btn" onclick="startRecognitionSimulation()">DENGAR</button>
+        <div id="statusText" class="status-info">Ketuk untuk mulai merekam bacaan</div>
+
+        <!-- Hasil Terjemahan & Ayat -->
+        <div id="outputCard" class="output-card">
+            <div class="output-header">
+                <span id="metaTitle">Surah Al-Fatihah : 1</span>
+                <span id="metaAccuracy">Akurasi 99%</span>
             </div>
-            <div id="statusLabel" class="status-label">Ketuk lingkaran untuk mendengarkan bacaan</div>
-
-            <!-- Hasil Identifikasi -->
-            <div id="resultBox" class="result-box">
-                <div class="meta-info">
-                    <span id="resMeta">Surah Al-Baqarah : Ayat 255</span>
-                    <span id="resReciter">Qari: Al-Sudais</span>
-                </div>
-                <div id="resArabic" class="arabic-display">اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ</div>
-                <div id="resTranslation" class="translation-display">
-                    "Allah, tidak ada tuhan selain Dia, Yang Maha Hidup, Yang terus-menerus mengurus makhluk-Nya..."
-                </div>
+            <div id="arabicContent" class="arabic-display">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+            <div id="translationContent" class="translation-box">
+                "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang."
             </div>
         </div>
     </div>
 
-    <!-- Tab 2: Pencarian & Pustaka Ayat -->
-    <div id="searchView" class="view-section">
-        <input type="text" class="search-input" placeholder="Cari surah, ayat, atau kata kunci..." oninput="filterDatabase(this.value)">
-        <div id="historyList">
-            <!-- Dynamic Content -->
+    <!-- Panel Pengujian Cepat Alur Data -->
+    <div class="simulation-controls">
+        <p>Simulasi Input Suara Imam (Pilih skenario tes):</p>
+        <div class="sim-btn-group">
+            <button class="sim-btn" onclick="triggerPreset(0)">Al-Fatihah (Ayat 1)</button>
+            <button class="sim-btn" onclick="triggerPreset(1)">Ayat Kursi</button>
+            <button class="sim-btn" onclick="triggerPreset(2)">Al-Ikhlas</button>
         </div>
     </div>
 </div>
 
 <script>
-    const database = [
+    // Database utama pencocokan hasil tangkapan audio (Voice-to-Quran Mapping)
+    const quranDatabase = [
         {
             title: "Surah Al-Fatihah : Ayat 1",
             arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-            translation: "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.",
-            reciter: "Misyari Rasyid Al-Afasy",
-            keyword: "fatihah basmalah"
+            translation: "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang."
         },
         {
             title: "Surah Al-Baqarah : Ayat 255 (Ayat Kursi)",
             arabic: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ",
-            translation: "Allah, tidak ada tuhan selain Dia, Yang Maha Hidup, Yang terus menerus mengurus makhluk-Nya, tidak mengantuk dan tidak tidur...",
-            reciter: "Abdurrahman as-Sudais",
-            keyword: "kursi baqarah 255"
+            translation: "Allah, tidak ada tuhan selain Dia, Yang Maha Hidup, Yang terus menerus mengurus makhluk-Nya, tidak mengantuk dan tidak tidur..."
         },
         {
-            title: "Surah Al-Ikhlas : Ayat 1-4",
+            title: "Surah Al-Ikhlas : Ayat 1-2",
             arabic: "قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ",
-            translation: "Katakanlah (Muhammad), 'Dialah Allah, Yang Maha Esa. Allah tempat bergantung segala sesuatu.'",
-            reciter: "Saad al-Ghamdi",
-            keyword: "ikhlas ahad"
+            translation: "Katakanlah (Muhammad), 'Dialah Allah, Yang Maha Esa. Allah tempat bergantung segala sesuatu.'"
         }
     ];
 
-    function switchTab(tabName, el) {
-        document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    function startRecognitionSimulation() {
+        const btn = document.getElementById('listenBtn');
+        const status = document.getElementById('statusText');
+        const card = document.getElementById('outputCard');
+
+        // Alur Step 1: Menangkap Audio (Listening State)
+        btn.classList.add('listening');
+        btn.innerText = "...MENDENGAR";
+        status.innerText = "Menganalisis gelombang suara bacaan imam...";
+        card.style.display = 'none';
+
+        // Alur Step 2: Proses Fingerprinting & Voice-to-Text (Simulasi 2.5 detik)
+        setTimeout(() => {
+            btn.classList.remove('listening');
+            btn.innerText = "DENGAR";
+            status.innerText = "Bacaan berhasil dikenali!";
+
+            // Ambil salah satu secara acak untuk simulasi nyata
+            let randomIndex = Math.floor(Math.random() * quranDatabase.length);
+            displayResult(quranDatabase[randomIndex]);
+        }, 2500);
+    }
+
+    function triggerPreset(index) {
+        const btn = document.getElementById('listenBtn');
+        const status = document.getElementById('statusText');
         
-        if(tabName === 'detect') {
-            document.getElementById('detectView').classList.add('active');
-        } else {
-            document.getElementById('searchView').classList.add('active');
-            renderHistory(database);
-        }
-        el.classList.add('active');
+        btn.classList.add('listening');
+        btn.innerText = "PROSES";
+        status.innerText = "Mencocokkan suara dengan database ayat...";
+
+        setTimeout(() => {
+            btn.classList.remove('listening');
+            btn.innerText = "DENGAR";
+            status.innerText = "Hasil terjemahan ditemukan:";
+            displayResult(quranDatabase[index]);
+        }, 1000);
     }
 
-    let listening = false;
-    function toggleListen() {
-        const ring = document.getElementById('shazamRing');
-        const btn = document.getElementById('shazamBtn');
-        const label = document.getElementById('statusLabel');
-        const box = document.getElementById('resultBox');
-
-        if (!listening) {
-            listening = true;
-            ring.classList.add('listening');
-            btn.innerText = "MENDENGAR...";
-            label.innerText = "Menganalisis audio bacaan di sekitar...";
-            box.style.display = 'none';
-
-            // Simulasi AI mencocokan sidik jari audio (fingerprinting)
-            setTimeout(() => {
-                listening = false;
-                ring.classList.remove('listening');
-                btn.innerText = "TAP";
-                label.innerText = "Bacaan berhasil diidentifikasi!";
-                
-                // Ambil sampel acak yang akurat
-                showResult(database[1]);
-            }, 3000);
-        }
+    function displayResult(data) {
+        document.getElementById('metaTitle').innerText = data.title;
+        document.getElementById('arabicContent').innerText = data.arabic;
+        document.getElementById('translationContent').innerText = `"${data.translation}"`;
+        document.getElementById('outputCard').style.display = 'block';
     }
-
-    function showResult(item) {
-        document.getElementById('resMeta').innerText = item.title + " • " + item.reciter;
-        document.getElementById('resArabic').innerText = item.arabic;
-        document.getElementById('resTranslation').innerText = `"${item.translation}"`;
-        document.getElementById('resultBox').style.display = 'block';
-    }
-
-    function renderHistory(data) {
-        const container = document.getElementById('historyList');
-        container.innerHTML = '';
-        data.forEach(item => {
-            container.innerHTML += `
-                <div class="history-item" onclick="selectHistory('${item.title}')">
-                    <div class="history-title">${item.title}</div>
-                    <div class="history-snippet">${item.arabic}</div>
-                </div>
-            `;
-        });
-    }
-
-    function filterDatabase(query) {
-        let q = query.toLowerCase();
-        let filtered = database.filter(item => item.title.toLowerCase().includes(q) || item.keyword.includes(q) || item.arabic.includes(q));
-        renderHistory(filtered);
-    }
-
-    function selectHistory(title) {
-        let found = database.find(i => i.title === title);
-        if(found) {
-            switchTab('detect', document.querySelectorAll('.tab-btn')[0]);
-            showResult(found);
-            document.getElementById('statusLabel').innerText = "Riwayat muat ulang berhasil dipanggil.";
-        }
-    }
-
-    // Inisialisasi awal list pencarian
-    renderHistory(database);
 </script>
 
 </body>
