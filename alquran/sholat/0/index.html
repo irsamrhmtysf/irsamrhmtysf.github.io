@@ -1,110 +1,258 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sholat Surah Meaning Finder</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>RecitID Clone - Pengenal Bacaan Al-Qur'an</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #14b8a6;
+            --primary-hover: #0d9488;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #2dd4bf;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin: 0 0 8px 0;
+        }
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        /* Bagian Utama / Tombol Deteksi Ala Shazam */
+        .detect-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px 0;
+            background: rgba(20, 184, 166, 0.05);
+            border: 2px dashed rgba(20, 184, 166, 0.3);
+            border-radius: 20px;
+        }
+        .listen-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .listen-btn:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.05);
+        }
+        .listen-btn.listening {
+            animation: pulse 1.5s infinite;
+            background-color: #ef4444;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.08); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .status-text {
+            margin-top: 15px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Kotak Hasil Identifikasi */
+        .result-card {
+            background: #0f172a;
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+        }
+        .surah-info {
+            font-size: 0.95rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .arabic-text {
+            font-family: 'Amiri', 'Traditional Arabic', serif;
+            font-size: 1.8rem;
+            text-align: right;
+            direction: rtl;
+            margin-bottom: 15px;
+            line-height: 2.2;
+            color: #ffffff;
+        }
+        .translation-text {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Simulasi Database Cepat untuk Demo */
+        .manual-search {
+            margin-top: 20px;
+        }
+        .manual-search input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: white;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .manual-search input:focus {
+            border-color: var(--primary);
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans p-4 sm:p-8">
+<body>
 
-    <div class="max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <!-- Header -->
-        <div class="text-center mb-6">
-            <h1 class="text-xl font-bold text-emerald-800">Sholat Surah & Meaning Guide</h1>
-            <p class="text-xs text-slate-500 mt-1">Instant lookup for common prayer recitations. No waiting, no backend server.</p>
+<div class="app-container">
+    <header>
+        <h1>RecitID Web</h1>
+        <p>Kenali bacaan ayat yang kamu dengar seketika</p>
+    </header>
+
+    <!-- Tombol Deteksi Suara Ala Shazam -->
+    <div class="detect-section">
+        <button id="listenBtn" class="listen-btn" onclick="toggleListen()">TAP</button>
+        <div id="statusText" class="status-text">Ketuk untuk mendengarkan bacaan</div>
+    </div>
+
+    <!-- Hasil Deteksi / Pencarian -->
+    <div id="resultCard" class="result-card">
+        <div class="surah-info">
+            <span id="surahTitle">Al-Fatihah : Ayat 1</span>
+            <span id="reciterName" style="color: var(--text-muted);">Qari: Misyari Rasyid</span>
         </div>
-
-        <!-- Quick Selector for Common Sholat Surahs -->
-        <div class="mb-6">
-            <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Select Surah Read in Sholat:</label>
-            <select id="surahSelect" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
-                <option value="">-- Choose Surah --</option>
-                <option value="1">Al-Fatihah (The Opening)</option>
-                <option value="112">Al-Ikhlas (The Sincerity)</option>
-                <option value="113">Al-Falaq (The Daybreak)</option>
-                <option value="114">An-Nas (Mankind)</option>
-                <option value="109">Al-Kafirun (The Disbelievers)</option>
-                <option value="110">An-Nasr (The Divine Support)</option>
-            </select>
-        </div>
-
-        <!-- Upload Audio Option (If they have a recorded MP3 file) -->
-        <div class="mb-6 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-center">
-            <span class="block text-xs font-semibold text-slate-600 mb-2">Or Upload Sholat MP3 Recording</span>
-            <input type="file" id="audioUpload" accept="audio/*" class="text-xs w-full file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
-            <p id="uploadStatus" class="text-[11px] text-slate-400 mt-2">Upload a file to match with Quran database instantly.</p>
-        </div>
-
-        <!-- Result Box -->
-        <div id="resultBox" class="hidden space-y-4 pt-4 border-t border-slate-100">
-            <div class="bg-emerald-50/60 border border-emerald-100 p-4 rounded-xl space-y-3">
-                <div class="flex justify-between items-center">
-                    <span id="resSurahName" class="text-sm font-bold text-emerald-900">-</span>
-                    <span id="resAyahNum" class="text-xs bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full font-medium">-</span>
-                </div>
-                <div>
-                    <p id="resArabic" class="text-2xl text-right font-serif text-slate-900 leading-loose">-</p>
-                </div>
-                <div>
-                    <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">Indonesian Meaning (Arti):</span>
-                    <p id="resTranslation" class="text-xs text-slate-700 italic leading-relaxed">-</p>
-                </div>
-            </div>
+        <div id="arabicText" class="arabic-text">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div id="translationText" class="translation-text">
+            "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang."
         </div>
     </div>
 
-    <script>
-        const surahSelect = document.getElementById('surahSelect');
-        const resultBox = document.getElementById('resultBox');
-        const resSurahName = document.getElementById('resSurahName');
-        const resAyahNum = document.getElementById('resAyahNum');
-        const resArabic = document.getElementById('resArabic');
-        const resTranslation = document.getElementById('resTranslation');
-        const audioUpload = document.getElementById('audioUpload');
-        const uploadStatus = document.getElementById('uploadStatus');
+    <!-- Pencarian Cepat Teks -->
+    <div class="manual-search">
+        <input type="text" id="searchInput" placeholder="Atau cari surat/ayat (cth: Al-Fatihah, Kursi)..." oninput="searchVerse(this.value)">
+    </div>
+</div>
 
-        // Fetch Surah data instantly from free public API when selected from dropdown
-        surahSelect.addEventListener('change', async (e) => {
-            const surahNumber = e.target.value;
-            if (!surahNumber) {
-                resultBox.classList.add('hidden');
-                return;
-            }
+<script>
+    // Data tiruan database ayat untuk simulasi instan
+    const sampleDatabase = [
+        {
+            keyword: "fatihah",
+            title: "Surah Al-Fatihah : Ayat 1",
+            arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+            translation: "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.",
+            reciter: "Misyari Rasyid"
+        },
+        {
+            keyword: "kursi",
+            title: "Surah Al-Baqarah : Ayat 255 (Ayat Kursi)",
+            arabic: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
+            translation: "Allah, tidak ada tuhan selain Dia, Yang Maha Hidup, Yang terus menerus mengurus makhluk-Nya...",
+            reciter: "Abdurrahman as-Sudais"
+        },
+        {
+            keyword: "ikhlas",
+            title: "Surah Al-Ikhlas : Ayat 1",
+            arabic: "قُلْ هُوَ اللَّهُ أَحَدٌ",
+            translation: "Katakanlah (Muhammad), 'Huwallahu ahad' (Allah itu Esa).",
+            reciter: "Saad al-Ghamdi"
+        }
+    ];
 
-            resultBox.classList.remove('hidden');
-            resSurahName.textContent = "Loading...";
-            resArabic.textContent = "...";
-            resTranslation.textContent = "...";
+    let isListening = false;
 
-            try {
-                // Fetching from Al-Quran Cloud API (Fast & Reliable)
-                const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,id.indonesian`);
-                const data = await res.json();
+    function toggleListen() {
+        const btn = document.getElementById('listenBtn');
+        const status = document.getElementById('statusText');
+        const card = document.getElementById('resultCard');
 
-                if (data.code === 200) {
-                    const arabicEdition = data.data[0];
-                    const indonesianEdition = data.data[1];
+        if (!isListening) {
+            isListening = true;
+            btn.classList.add('listening');
+            btn.innerText = "MENDENGAR...";
+            status.innerText = "Mendengarkan bacaan di sekitar...";
+            card.style.display = 'none';
 
-                    // Let's display the first ayah (or full surah summary)
-                    resSurahName.textContent = `${arabicEdition.englishName} (${arabicEdition.name})`;
-                    resAyahNum.textContent = `Total Ayah: ${arabicEdition.numberOfAyahs}`;
-                    resArabic.textContent = arabicEdition.ayahs[0].text; // First ayah sample
-                    resTranslation.textContent = `"${indonesianEdition.ayahs[0].text}"`;
-                }
-            } catch (err) {
-                resSurahName.textContent = "Error loading data";
-            }
-        });
+            // Simulasi proses pencocokan AI dalam 3 detik
+            setTimeout(() => {
+                isListening = false;
+                btn.classList.remove('listening');
+                btn.innerText = "TAP";
+                status.innerText = "Ketuk untuk mendengarkan bacaan";
+                
+                // Tampilkan hasil acak/contoh (misal: Ayat Kursi)
+                showResult(sampleDatabase[1]);
+            }, 3000);
+        }
+    }
 
-        // Handle Audio Upload simulation (lightweight processing)
-        audioUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                uploadStatus.textContent = `File "${file.name}" selected. (Static mode: Please use the dropdown above for instant meaning lookup).`;
-                // You can point users to select the surah they recorded to see its meaning right away!
-            }
-        });
-    </script>
+    function showResult(data) {
+        document.getElementById('surahTitle').innerText = data.title;
+        document.getElementById('reciterName').innerText = "Qari: " + data.reciter;
+        document.getElementById('arabicText').innerText = data.arabic;
+        document.getElementById('translationText').innerText = `"${data.translation}"`;
+        document.getElementById('resultCard').style.display = 'block';
+    }
+
+    function searchVerse(query) {
+        let q = query.toLowerCase().trim();
+        if (q === "") {
+            document.getElementById('resultCard').style.display = 'none';
+            return;
+        }
+
+        let found = sampleDatabase.find(item => item.keyword.includes(q) || item.title.toLowerCase().includes(q));
+        if (found) {
+            showResult(found);
+        }
+    }
+</script>
+
 </body>
 </html>
