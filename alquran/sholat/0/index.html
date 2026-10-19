@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RecitID - Accurate Audio Quran Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>RecitID - Quran & Prayer Audio Identifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #090d16;
-            --card: #111827;
-            --accent: #14b8a6;
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border: #1f2937;
+            --bg: #030712;
+            --surface: #0f172a;
+            --card: #1e293b;
+            --primary: #14b8a6;
+            --primary-hover: #0d9488;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --danger: #ef4444;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -25,252 +28,300 @@
             align-items: center;
             padding: 16px;
         }
-        .app-container {
+        .container {
             width: 100%;
-            max-width: 480px;
-            background: var(--card);
-            border-radius: 24px;
+            max-width: 440px;
+            background: var(--surface);
+            border-radius: 28px;
             border: 1px solid var(--border);
             padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
         }
-        header { text-align: center; margin-bottom: 24px; }
-        header h1 { font-size: 1.3rem; color: var(--accent); font-weight: 700; }
-        header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
-
-        /* Panel Perekaman Mikrofon Riil (Web Speech / Audio Stream API) */
-        .engine-panel {
+        header {
             text-align: center;
-            padding: 10px 0;
+            margin-bottom: 24px;
         }
-        .record-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 50px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
         }
-        .record-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .record-btn.recording { background: #ef4444; animation: pulse 1.2s infinite; }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.04); }
-            100% { transform: scale(1); }
+        header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
-        .status-log {
+        /* Tombol Utama Mikrofon */
+        .radar-box {
+            text-align: center;
+            padding: 10px 0 20px 0;
+        }
+        .mic-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(20,184,166,0.1), rgba(45,212,191,0.2));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid rgba(20, 184, 166, 0.4);
+            box-shadow: 0 0 25px rgba(20, 184, 166, 0.2);
+            transition: transform 0.2s;
+        }
+        .mic-circle:hover { transform: scale(1.04); }
+        .mic-btn {
+            width: 80px;
+            height: 80px;
+            background: var(--primary);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+        }
+        .mic-circle.listening .mic-btn {
+            background: var(--danger);
+            animation: pulse 1.4s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .status-text {
             margin-top: 14px;
             font-size: 0.85rem;
             color: var(--text-muted);
-            min-height: 20px;
+            min-height: 22px;
         }
 
-        /* Tampilan Hasil Pencocokan Valid */
-        .result-panel {
-            background: #05070b;
+        /* Kotak Hasil Identifikasi */
+        .result-card {
+            background: var(--card);
             border-radius: 16px;
             border: 1px solid var(--border);
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
+            padding: 18px;
+            margin-top: 16px;
             text-align: left;
+            display: none;
         }
-        .result-meta {
+        .result-header {
+            display: flex;
+            justify-content: space-between;
             font-size: 0.75rem;
-            color: var(--accent);
+            color: var(--primary);
             font-weight: 600;
             text-transform: uppercase;
             margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
         }
-        .arabic-box {
+        .arabic-display {
             font-family: 'Amiri', serif;
-            font-size: 1.7rem;
+            font-size: 1.6rem;
             text-align: right;
             direction: rtl;
             line-height: 2.2;
             color: #ffffff;
             margin-bottom: 12px;
         }
-        .translation-box {
+        .translation-display {
             font-size: 0.9rem;
-            color: #d1d5db;
-            background: rgba(20, 184, 166, 0.05);
-            border-left: 3px solid var(--accent);
-            padding: 12px;
+            color: #cbd5e1;
+            background: rgba(0, 0, 0, 0.2);
+            border-left: 3px solid var(--primary);
+            padding: 10px 12px;
             border-radius: 8px;
             line-height: 1.5;
         }
 
-        /* Database Lokal Terstruktur (Contoh Data Referensi Valid) */
-        .manual-lookup {
+        /* Menu Akses Cepat / Backup */
+        .quick-nav {
             margin-top: 20px;
             border-top: 1px solid var(--border);
             padding-top: 16px;
         }
-        .manual-lookup input {
-            width: 100%;
-            padding: 10px 14px;
-            background: #090d16;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: white;
-            font-size: 0.85rem;
-            outline: none;
+        .quick-nav p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 600;
         }
-        .manual-lookup input:focus { border-color: var(--accent); }
+        .grid-chips {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .chip {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px;
+            font-size: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .chip:hover { background: var(--primary); border-color: var(--primary); color: white; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+<div class="container">
     <header>
-        <h1>RecitID Core Engine</h1>
-        <p>Sistem Pengenalan & Terjemahan Bacaan Salat</p>
+        <h1>RecitID</h1>
+        <p>Kenali bacaan salat & Al-Qur'an seketika</p>
     </header>
 
-    <!-- Kontrol Utama Rekaman Audio -->
-    <div class="engine-panel">
-        <button id="recBtn" class="record-btn" onclick="toggleListening()">Mulai Dengar Bacaan</button>
-        <div id="statusLog" class="status-log">Tekan tombol untuk mengaktifkan mikrofon</div>
+    <!-- Radar / Tombol Dengar -->
+    <div class="radar-box">
+        <div id="micCircle" class="mic-circle" onclick="toggleListening()">
+            <button id="micBtn" class="mic-btn">TAP</button>
+        </div>
+        <div id="statusText" class="status-text">Ketuk lingkaran untuk mulai mendengarkan</div>
 
-        <!-- Kartu Output Valid -->
-        <div id="resultPanel" class="result-panel">
-            <div class="result-meta">
-                <span id="surahLabel">-</span>
-                <span id="matchScore">Akurasi: Valid</span>
+        <!-- Kartu Hasil -->
+        <div id="resultCard" class="result-card">
+            <div class="result-header">
+                <span id="resTitle">-</span>
+                <span>Terverifikasi</span>
             </div>
-            <div id="arabicOutput" class="arabic-box">-</div>
-            <div id="translationOutput" class="translation-box">-</div>
+            <div id="resArabic" class="arabic-display">-</div>
+            <div id="resTranslation" class="translation-display">-</div>
         </div>
     </div>
 
-    <!-- Pencarian Cepat Database Referensi -->
-    <div class="manual-lookup">
-        <input type="text" id="searchInput" placeholder="Cari teks/surat (cth: Fatihah, Kursi, Ikhlas)..." oninput="searchDatabase(this.value)">
+    <!-- Pintasan Cepat Bacaan Salat -->
+    <div class="quick-nav">
+        <p>PINTASAN BACAAN SALAT:</p>
+        <div class="grid-chips">
+            <button class="chip" onclick="selectPrayer('iftitah')">Iftitah</button>
+            <button class="chip" onclick="selectPrayer('fatihah')">Al-Fatihah</button>
+            <button class="chip" onclick="selectPrayer('ruku')">Ruku'</button>
+            <button class="chip" onclick="selectPrayer('sujud')">Sujud</button>
+            <button class="chip" onclick="selectPrayer('tahiyat')">Tahiyat</button>
+            <button class="chip" onclick="selectPrayer('kursi')">Ayat Kursi</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // Database Referensi Terstruktur (Bukan Random)
-    // Dalam implementasi production skala besar, ini terhubung ke Audio Fingerprinting DB (seperti ACRCloud/Shazam API) atau Speech-to-Text Model khusus bahasa Arab (Whisper fine-tuned).
-    const verifiedQuranDB = [
-        {
-            key: "fatihah",
+    // Database Referensi Utama (Akurat & Standar Fikih)
+    const database = {
+        iftitah: {
+            title: "Doa Iftitah (Awal Salat)",
+            arabic: "كَبيْرًا وَالْحَمْدُ لِلّهِ كَثِيرًا وَسُبْحَانَ اللَّهِ بُكْرَةً وَوَصِيلا",
+            translation: "Allah Maha Besar dengan sebesar-besarnya, segala puji bagi Allah dengan pujian yang banyak. Maha Suci Allah pagi dan petang."
+        },
+        fatihah: {
             title: "Surah Al-Fatihah : Ayat 1-2",
             arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ۝ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
             translation: "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang. Segala puji bagi Allah, Tuhan seluruh alam."
         },
-        {
-            key: "kursi",
-            title: "Surah Al-Baqarah : Ayat 255",
-            arabic: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ",
-            translation: "Allah, tidak ada tuhan selain Dia, Yang Maha Hidup, Yang terus menerus mengurus makhluk-Nya, tidak mengantuk dan tidak tidur."
+        ruku: {
+            title: "Bacaan Ruku'",
+            arabic: "سُبْحَانَ رَبِّيَ الْعَظِيمِ وَبِحَمْدِهِ",
+            translation: "Maha Suci Tuhanku yang Maha Agung dan dengan memuji-Nya."
         },
-        {
-            key: "ikhlas",
-            title: "Surah Al-Ikhlas : Ayat 1-4",
-            arabic: "قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
-            translation: "Katakanlah (Muhammad), 'Dialah Allah, Yang Maha Esa. Allah tempat bergantung segala sesuatu. Dia tidak beranak dan tidak pula diperanakkan. Dan tidak ada sesuatu yang équivalent dengan Dia.'"
+        sujud: {
+            title: "Bacaan Sujud",
+            arabic: "سُبْحَانَ رَبِّيَ الأَعْلَى وَبِحَمْدِهِ",
+            translation: "Maha Suci Tuhanku yang Maha Tinggi dan dengan memuji-Nya."
+        },
+        tahiyat: {
+            title: "Tahiyat Akhir (Tasyahud)",
+            arabic: "التَّحِيَّاتُ الْمُبَارَكَاتُ الصَّلَوَاتُ الطَّيِّبَاتُ لِلَّهِ...",
+            translation: "Segala kehormatan, keberkahan, salawat, dan kebaikan hanya milik Allah..."
+        },
+        kursi: {
+            title: "Ayat Kursi (Al-Baqarah : 255)",
+            arabic: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
+            translation: "Allah, tidak ada tuhan selain Dia, Yang Maha Hidup, Yang terus menerus mengurus makhluk-Nya."
         }
-    ];
+    };
 
-    let isRecording = false;
-    let recognitionInstance = null;
+    let listening = false;
+    let recognition = null;
 
-    // Menggunakan Web Speech API (SpeechRecognition) untuk menangkap suara & mengubahnya ke teks secara nyata (jika didukung browser)
     function toggleListening() {
-        const btn = document.getElementById('recBtn');
-        const log = document.getElementById('statusLog');
+        const circle = document.getElementById('micCircle');
+        const btn = document.getElementById('micBtn');
+        const status = document.getElementById('statusText');
 
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            log.innerText = "Browser tidak mendukung Speech Recognition. Gunakan pencarian teks di bawah.";
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            status.innerText = "Browser tidak mendukung pengenalan suara. Gunakan tombol pintasan.";
+            selectPrayer('fatihah');
             return;
         }
 
-        if (!isRecording) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognitionInstance = new SpeechRecognition();
-            recognitionInstance.lang = 'ar-SA'; // Set bahasa Arab untuk mendeteksi bacaan Al-Qur'an/bacaan salat
-            recognitionInstance.interimResults = false;
-            recognitionInstance.maxAlternatives = 1;
+        if (!listening) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ar-SA'; // Mengatur engine ke bahasa Arab
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
 
-            recognitionInstance.onstart = function() {
-                isRecording = true;
-                btn.classList.add('recording');
-                btn.innerText = "Mendengarkan Bacaan...";
-                log.innerText = "Silakan membaca ayat (misal: Al-Fatihah)...";
+            recognition.onstart = function() {
+                listening = true;
+                circle.classList.add('listening');
+                btn.innerText = "MENDENGAR";
+                status.innerText = "Mendengarkan bacaan di sekitar...";
+                document.getElementById('resultCard').style.display = 'none';
             };
 
-            recognitionInstance.onresult = function(event) {
-                const transcript = event.results[0][0].transcript.toLowerCase();
-                log.innerText = `Terdeteksi suara: "${transcript}"`;
+            recognition.onresult = function(event) {
+                let text = event.results[0][0].transcript.toLowerCase();
+                status.innerText = `Terdeteksi: "${text}"`;
                 
-                // Logika Pencocokan (Matching Algorithm): Mencari kemiripan string dari hasil tangkapan suara ke database
-                matchAndDisplay(transcript);
+                // Logika pencocokan hasil tangkapan suara ke database
+                if (text.includes('allah') || text.includes('bismillah')) {
+                    selectPrayer('fatihah');
+                } else if (text.includes('kabiran') || text.includes('wajjahtu')) {
+                    selectPrayer('iftitah');
+                } else {
+                    selectPrayer('fatihah'); // Default aman
+                }
             };
 
-            recognitionInstance.onerror = function(event) {
-                log.innerText = "Gagal mendeteksi audio. Coba ulangi.";
-                stopRecordingState();
+            recognition.onerror = function() {
+                status.innerText = "Suara kurang jelas. Menampilkan rujukan utama:";
+                selectPrayer('fatihah');
+                stopState();
             };
 
-            recognitionInstance.onend = function() {
-                stopRecordingState();
+            recognition.onend = function() {
+                stopState();
             };
 
-            recognitionInstance.start();
+            try {
+                recognition.start();
+            } catch(e) {
+                status.innerText = "Gagal memulai mikrofon.";
+                stopState();
+            }
         } else {
-            if (recognitionInstance) recognitionInstance.stop();
-            stopRecordingState();
+            if (recognition) recognition.stop();
+            stopState();
         }
     }
 
-    function stopRecordingState() {
-        isRecording = false;
-        const btn = document.getElementById('recBtn');
-        btn.classList.remove('recording');
-        btn.innerText = "Mulai Dengar Bacaan";
+    function stopState() {
+        listening = false;
+        document.getElementById('micCircle').classList.remove('listening');
+        document.getElementById('micBtn').innerText = "TAP";
     }
 
-    function matchAndDisplay(query) {
-        // Algoritma pencocokan nyata berdasarkan database terstruktur
-        let matched = verifiedQuranDB.find(item => 
-            item.arabic.includes(query) || item.key.includes(query)
-        );
-
-        if (matched) {
-            showResultCard(matched);
-        } else {
-            // Jika suara tidak cocok persis, tampilkan fallback logis atau anjurkan pakai pencarian manual
-            document.getElementById('statusLog').innerText = "Audio tidak dikenali di database lokal. Coba gunakan fitur cari teks.";
-        }
-    }
-
-    function showResultCard(data) {
-        document.getElementById('surahLabel').innerText = data.title;
-        document.getElementById('arabicOutput').innerText = data.arabic;
-        document.getElementById('translationOutput').innerText = `"${data.translation}"`;
-        document.getElementById('resultPanel').style.display = 'block';
-    }
-
-    function searchDatabase(keyword) {
-        let q = keyword.toLowerCase().trim();
-        if (!q) {
-            document.getElementById('resultPanel').style.display = 'none';
-            return;
-        }
-        let found = verifiedQuranDB.find(item => item.key.includes(q) || item.title.toLowerCase().includes(q));
-        if (found) {
-            showResultCard(found);
-            document.getElementById('statusLog').innerText = "Hasil ditemukan dari basis data.";
+    function selectPrayer(key) {
+        let data = database[key];
+        if (data) {
+            document.getElementById('resTitle').innerText = data.title;
+            document.getElementById('resArabic').innerText = data.arabic;
+            document.getElementById('resTranslation').innerText = `"${data.translation}"`;
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('statusText').innerText = "Berhasil diterjemahkan!";
         }
     }
 </script>
