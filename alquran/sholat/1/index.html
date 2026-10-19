@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Sholat Real-Time Identifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans p-6">
+
+    <div class="max-w-xl mx-auto bg-white rounded-xl shadow border p-6">
+        <h1 class="text-xl font-bold text-center text-emerald-800 mb-1">Quran Sholat Audio Identifier</h1>
+        <p class="text-xs text-gray-500 text-center mb-6">Runs 100% in your browser. Record sholat audio or upload an MP3 file.</p>
+
+        <!-- Controls -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="p-3 border rounded bg-gray-50 text-center">
+                <span class="text-xs font-semibold block mb-2">Live Recording</span>
+                <button id="btnStart" class="bg-emerald-600 text-white text-xs py-1.5 px-3 rounded w-full mb-1">Start Recording</button>
+                <button id="btnStop" disabled class="bg-gray-300 text-white text-xs py-1.5 px-3 rounded w-full cursor-not-allowed">Stop & Process</button>
+            </div>
+            <div class="p-3 border rounded bg-gray-50 text-center flex flex-col justify-between">
+                <span class="text-xs font-semibold block mb-1">Upload MP3</span>
+                <input type="file" id="audioFile" accept="audio/*" class="text-[10px] w-full mb-1">
+                <button id="btnUpload" class="bg-blue-600 text-white text-xs py-1.5 px-3 rounded w-full">Upload & Process</button>
+            </div>
+        </div>
+
+        <div id="status" class="text-center text-xs font-medium text-blue-600 mb-3 min-h-[20px]">Ready. (First load might take a moment to download browser AI model).</div>
+
+        <!-- Result Box -->
+        <div id="resultContainer" class="hidden border-t pt-3 space-y-2 text-sm">
+            <div class="bg-emerald-50 p-3 rounded border border-emerald-200 space-y-2">
+                <div>
+                    <span class="text-[10px] font-bold text-emerald-800 uppercase">Surah & Ayah:</span>
+                    <p id="resSurah" class="font-bold text-emerald-900 text-base">-</p>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-emerald-800 uppercase">Transcribed Arabic:</span>
+                    <p id="resArabic" class="text-lg text-right font-serif">-</p>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-emerald-800 uppercase">Indonesian Meaning (Arti):</span>
+                    <p id="resTranslation" class="italic text-gray-800 text-xs">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Browser-based Whisper AI -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
