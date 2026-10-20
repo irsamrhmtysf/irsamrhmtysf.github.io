@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Velocity — Spectrum Speedometer with Audio</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700;850&display=swap" rel="stylesheet">
+    <style>
+        .font-speed { font-family: 'JetBrains Mono', monospace; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .zen-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .dynamic-theme {
+            transition: color 0.4s ease, text-shadow 0.4s ease, border-color 0.4s ease, background-color 0.4s ease;
+        }
+    </style>
+</head>
+<body class="bg-[#030712] text-slate-100 min-h-screen flex flex-col justify-between selection:bg-white selection:text-slate-950 antialiased overflow-x-hidden">
+
+    <!-- Top Minimalist Bar -->
+    <header class="w-full max-w-md mx-auto px-6 pt-6 pb-2 flex items-center justify-between z-10">
+        <div class="flex items-center space-x-2">
+            <span id="signal-dot" class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <span id="signal-text" class="text-xs font-medium text-slate-400">Searching Signal</span>
+        </div>
+        
+        <!-- Unit Toggle & Audio Mute Switch -->
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleAudio()" id="audio-btn" class="zen-card px-2.5 py-1.5 rounded-full text-xs font-semibold text-emerald-400 hover:text-white transition flex items-center space-x-1" title="Toggle Sound">
+                🔊 <span id="audio-status">Sound On</span>
+            </button>
+            <div class="zen-card p-1 rounded-full flex space-x-1">
+                <button onclick="setUnit('kmh')" id="btn-kmh" class="px-3 py-1 rounded-full text-xs font-semibold bg-white text-slate-950 transition-all">KM/H</button>
+                <button onclick="setUnit('mph')" id="btn-mph" class="px-3 py-1 rounded-full text-xs font-semibold text-slate-400 hover:text-white transition-all">MPH</button>
+                <button onclick="setUnit('knot')" id="btn-knot" class="px-3 py-1 rounded-full text-xs font-semibold text-slate-400 hover:text-white transition-all">Knot</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Clean Display with Dynamic Spectrum -->
+    <main class="w-full max-w-md mx-auto px-6 flex flex-col items-center justify-center my-auto space-y-8">
+        
+        <!-- Main Dial with Spectrum Glow -->
+        <div id="spectrum-card" class="relative w-76 h-76 rounded-full zen-card border border-white/10 flex flex-col items-center justify-center p-8 shadow-2xl dynamic-theme">
+            
+            <!-- Ambient Glow Aura -->
+            <div id="spectrum-glow" class="absolute inset-4 rounded-full bg-white/5 blur-3xl pointer-events-none dynamic-theme"></div>
+
+            <!-- Speed Display -->
+            <div class="relative z-10 flex flex-col items-center text-center">
+                <div id="speed-display" class="font-speed text-7xl font-extrabold tracking-tighter text-white dynamic-theme">0.0</div>
+                <div id="unit-label" class="text-xs font-semibold tracking-widest uppercase text-slate-400 mt-2 dynamic-theme">Kilometers per Hour</div>
+            </div>
+
+            <!-- Spectrum Status Badge -->
+            <div class="absolute bottom-6 z-10 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[10px] font-bold tracking-wider uppercase text-slate-300 dynamic-theme" id="spectrum-badge">
+                Status: Stationary
+            </div>
+        </div>
+
+        <!-- Bento Grid Statistics -->
+        <div class="w-full grid grid-cols-3 gap-3">
+            <div class="zen-card p-4 rounded-3xl flex flex-col justify-between">
+                <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Distance</span>
+                <div class="flex items-baseline space-x-1 mt-2">
+                    <span id="info-distance" class="text-lg font-bold text-white font-speed">0.00</span>
+                    <span class="text-[10px] text-slate-400">km</span>
+                </div>
+            </div>
+            <div class="zen-card p-4 rounded-3xl flex flex-col justify-between">
+                <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Top Speed</span>
+                <div class="flex items-baseline space-x-1 mt-2">
+                    <span id="info-max" class="text-lg font-bold text-white font-speed">0.0</span>
+                    <span id="max-unit" class="text-[10px] text-slate-400">km/h</span>
+                </div>
+            </div>
+            <div class="zen-card p-4 rounded-3xl flex flex-col justify-between">
+                <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Time</span>
+                <div class="flex items-baseline space-x-1 mt-2">
+                    <span id="info-time" class="text-lg font-bold text-white font-speed">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary GPS Info -->
+        <div class="text-xs text-slate-500 font-medium tracking-wide">
+            Accuracy: <span id="info-accuracy" class="text-slate-300">-</span>m &bull; Altitude: <span id="info-altitude" class="text-slate-300">-</span>m
+        </div>
+    </main>
+
+    <!-- Bottom Action Button -->
+    <footer class="w-full max-w-md mx-auto px-6 py-8">
+        <button id="toggle-btn" onclick="toggleTracking()" class="w-full py-4 rounded-2xl font-bold text-sm tracking-wide bg-white hover:bg-slate-200 text-slate-950 active:scale-[0.98] transition-all flex items-center justify-center space-x-2 shadow-xl">
+            <span id="toggle-text">Start Trip</span>
+        </button>
+    </footer>
+
+    <!-- Logic Engine & Web Audio API Integration -->
+    <script>
+        let watchId = null;
+        let isTracking = false;
+        let currentUnit = 'kmh';
+        let isAudioEnabled = true;
+
+        let rawSpeedMS = 0;
+        let maxSpeedMS = 0;
+        let totalDistanceMeters = 0;
+        let lastPosition = null;
+        
+        let tripSeconds = 0;
+        let timerInterval = null;
+        let audioBeepInterval = null;
+
+        const speedDisplay = document.getElementById('speed-display');
+        const unitLabel = document.getElementById('unit-label');
+        const maxSpeedDisplay = document.getElementById('info-max');
+        const maxUnitLabel = document.getElementById('max-unit');
+        const infoDistance = document.getElementById('info-distance');
+        const infoTime = document.getElementById('info-time');
+        const infoAccuracy = document.getElementById('info-accuracy');
+        const infoAltitude = document.getElementById('info-altitude');
+        
+        const signalDot = document.getElementById('signal-dot');
+        const signalText = document.getElementById('signal-text');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const toggleText = document.getElementById('toggle-text');
+        const spectrumCard = document.getElementById('spectrum-card');
+        const spectrumGlow = document.getElementById('spectrum-glow');
+        const spectrumBadge = document.getElementById('spectrum-badge');
+        const audioStatus = document.getElementById('audio-status');
+
+        // Web Audio Context Generator for Beeps
+        let audioCtx = null;
+        function playBeep(frequency = 440, duration = 0.08) {
+            if (!isAudioEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = frequency;
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log("Audio not supported or blocked by browser policy");
+            }
+        }
+
+        function toggleAudio() {
+            isAudioEnabled = !isAudioEnabled;
+            audioStatus.textContent = isAudioEnabled ? "Sound On" : "Muted";
+            document.getElementById('audio-btn').style.opacity = isAudioEnabled ? "1" : "0.5";
+        }
+
+        function toggleTracking() {
+            if (!isTracking) {
+                if ("geolocation" in navigator) {
+                    const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+                    toggleText.textContent = "Connecting...";
+                    watchId = navigator.geolocation.watchPosition(successCallback, errorCallback, options);
+                    startDynamicBeepLoop();
+                } else {
+                    alert("Your browser does not support geolocation.");
+                }
+            } else {
+                stopTracking();
+            }
+        }
+
+        function successCallback(position) {
+            if (!isTracking) {
+                isTracking = true;
+                toggleBtn.className = "w-full py-4 rounded-2xl font-bold text-sm tracking-wide bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 active:scale-[0.98] transition-all flex items-center justify-center space-x-2";
+                toggleText.textContent = "End Trip";
+                startTimer();
+            }
+
+            const currentLat = position.coords.latitude;
+            const currentLon = position.coords.longitude;
+
+            if (lastPosition) {
+                const dist = calculateDistance(lastPosition.lat, lastPosition.lon, currentLat, currentLon);
+                if (dist < 120) totalDistanceMeters += dist;
+            }
+            lastPosition = { lat: currentLat, lon: currentLon };
+
+            rawSpeedMS = position.coords.speed !== null && !isNaN(position.coords.speed) ? position.coords.speed : 0;
+            if (rawSpeedMS > maxSpeedMS) maxSpeedMS = rawSpeedMS;
+
+            updateSpeedView();
+
+            const accuracy = position.coords.accuracy;
+            const altitude = position.coords.altitude !== null ? Math.round(position.coords.altitude) : 0;
+
+            infoAccuracy.textContent = Math.round(accuracy);
+            infoAltitude.textContent = altitude;
+            infoDistance.textContent = (totalDistanceMeters / 1000).toFixed(2);
+
+            if (accuracy <= 6) {
+                signalDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                signalText.textContent = "GPS Ready";
+            } else if (accuracy <= 20) {
+                signalDot.className = "w-2 h-2 rounded-full bg-amber-400";
+                signalText.textContent = "GPS Stable";
+            } else {
+                signalDot.className = "w-2 h-2 rounded-full bg-rose-400";
+                signalText.textContent = "Acquiring Accuracy...";
+            }
+        }
+
+        function errorCallback(error) {
+            alert("Failed to access GPS. Please check location permissions.");
+            stopTracking();
+        }
+
+        function stopTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            stopTimer();
+            stopDynamicBeepLoop();
+
+            isTracking = false;
+            rawSpeedMS = 0;
+            maxSpeedMS = 0;
+            totalDistanceMeters = 0;
+            lastPosition = null;
+            tripSeconds = 0;
+
+            speedDisplay.textContent = "0.0";
+            maxSpeedDisplay.textContent = "0.0";
+            infoDistance.textContent = "0.00";
+            infoTime.textContent = "00:00";
+            applySpectrumTheme(0);
+
+            toggleBtn.className = "w-full py-4 rounded-2xl font-bold text-sm tracking-wide bg-white hover:bg-slate-200 text-slate-950 active:scale-[0.98] transition-all flex items-center justify-center space-x-2 shadow-xl";
+            toggleText.textContent = "Start Trip";
+
+            signalDot.className = "w-2 h-2 rounded-full bg-rose-500";
+            signalText.textContent = "Searching Signal";
+            infoAccuracy.textContent = "-";
+            infoAltitude.textContent = "-";
+        }
+
+        function setUnit(unit) {
+            currentUnit = unit;
+            ['kmh', 'mph', 'knot'].forEach(u => {
+                const btn = document.getElementById(`btn-${u}`);
+                if (u === unit) {
+                    btn.className = "px-3 py-1 rounded-full text-xs font-semibold bg-white text-slate-950 transition-all";
+                } else {
+                    btn.className = "px-3 py-1 rounded-full text-xs font-semibold text-slate-400 hover:text-white transition-all";
+                }
+            });
+
+            const unitTextMap = { kmh: 'km/h', mph: 'mph', knot: 'knot' };
+            const labelTextMap = { kmh: 'Kilometers per Hour', mph: 'Miles per Hour', knot: 'Knot (Nautical)' };
+
+            unitLabel.textContent = labelTextMap[unit];
+            maxUnitLabel.textContent = unitTextMap[unit];
+            updateSpeedView();
+        }
+
+        function updateSpeedView() {
+            let mult = 3.6;
+            if (currentUnit === 'mph') mult = 2.23694;
+            else if (currentUnit === 'knot') mult = 1.94384;
+
+            let currentSpeed = rawSpeedMS * mult;
+            speedDisplay.textContent = currentSpeed.toFixed(1);
+            maxSpeedDisplay.textContent = (maxSpeedMS * mult).toFixed(1);
+
+            applySpectrumTheme(currentSpeed);
+        }
+
+        // Dynamic Speed Spectrum Color Mapping & Audio Beep Rules
+        function applySpectrumTheme(speed) {
+            let textColor = "text-white";
+            let glowColor = "bg-white/10";
+            let borderColor = "border-white/15";
+            let badgeText = "Safe • Stable";
+            let badgeClass = "text-slate-300 border-white/10 bg-black/40";
+
+            if (speed > 0 && speed <= 5) {
+                textColor = "text-white";
+                glowColor = "bg-white/10";
+                borderColor = "border-white/20";
+                badgeText = "Safe (1-5)";
+                badgeClass = "text-white border-white/20 bg-white/5";
+            } else if (speed > 5 && speed <= 10) {
+                textColor = "text-lime-300";
+                glowColor = "bg-lime-500/20";
+                borderColor = "border-lime-500/40";
+                badgeText = "Relaxed (5-10)";
+                badgeClass = "text-lime-300 border-lime-500/40 bg-lime-500/10";
+            } else if (speed > 10 && speed <= 15) {
+                textColor = "text-emerald-400";
+                glowColor = "bg-emerald-500/20";
+                borderColor = "border-emerald-500/40";
+                badgeText = "Normal (10-15)";
+                badgeClass = "text-emerald-400 border-emerald-500/40 bg-emerald-500/10";
+            } else if (speed > 15 && speed <= 20) {
+                textColor = "text-green-600";
+                glowColor = "bg-green-700/20";
+                borderColor = "border-green-600/40";
+                badgeText = "Steady (15-20)";
+                badgeClass = "text-green-500 border-green-600/40 bg-green-900/20";
+            } else if (speed > 20 && speed <= 30) {
+                textColor = "text-cyan-400";
+                glowColor = "bg-cyan-500/20";
+                borderColor = "border-cyan-500/40";
+                badgeText = "Fast (20-30)";
+                badgeClass = "text-cyan-400 border-cyan-500/40 bg-cyan-500/10";
+            } else if (speed > 30 && speed <= 50) {
+                textColor = "text-blue-500";
+                glowColor = "bg-blue-600/20";
+                borderColor = "border-blue-500/40";
+                badgeText = "Swift (30-50)";
+                badgeClass = "text-blue-400 border-blue-500/40 bg-blue-900/20";
+            } else if (speed > 50 && speed <= 100) {
+                textColor = "text-rose-400";
+                glowColor = "bg-rose-500/25";
+                borderColor = "border-rose-500/50";
+                badgeText = "Caution / High (>50)";
+                badgeClass = "text-rose-400 border-rose-500/50 bg-rose-500/15";
+            } else if (speed > 100) {
+                textColor = "text-red-500 animate-pulse";
+                glowColor = "bg-red-600/40 animate-pulse";
+                borderColor = "border-red-500";
+                badgeText = "⚠️ DANGER / EXTREME (100++)";
+                badgeClass = "text-red-400 border-red-500 bg-red-950/50 animate-bounce";
+            }
+
+            speedDisplay.className = `font-speed text-7xl font-extrabold tracking-tighter dynamic-theme ${textColor}`;
+            spectrumCard.className = `relative w-76 h-76 rounded-full zen-card border dynamic-theme ${borderColor}`;
+            spectrumGlow.className = `absolute inset-4 rounded-full blur-3xl pointer-events-none dynamic-theme ${glowColor}`;
+            spectrumBadge.className = `absolute bottom-6 z-10 px-3 py-1 rounded-full border text-[10px] font-bold tracking-wider uppercase dynamic-theme ${badgeClass}`;
+            spectrumBadge.textContent = badgeText;
+        }
+
+        // Multi-Beep Audio Feedback Loop based on Speed Range Rules
+        function startDynamicBeepLoop() {
+            stopDynamicBeepLoop();
+            audioBeepInterval = setInterval(() => {
+                if (!isTracking) return;
+                let mult = 3.6;
+                if (currentUnit === 'mph') mult = 2.23694;
+                else if (currentUnit === 'knot') mult = 1.94384;
+
+                let speed = rawSpeedMS * mult;
+                if (speed <= 0) return;
+
+                let beepCount = 1;
+                let pitch = 400;
+
+                if (speed > 0 && speed <= 5) { beepCount = 1; pitch = 400; }
+                else if (speed > 5 && speed <= 10) { beepCount = 2; pitch = 500; }
+                else if (speed > 10 && speed <= 15) { beepCount = 3; pitch = 600; }
+                else if (speed > 15 && speed <= 20) { beepCount = 4; pitch = 700; }
+                else if (speed > 20 && speed <= 30) { beepCount = 5; pitch = 850; }
+                else if (speed > 30 && speed <= 50) { beepCount = 6; pitch = 1000; }
+                else if (speed > 50 && speed <= 100) { beepCount = 8; pitch = 1200; }
+                else if (speed > 100) { beepCount = 12; pitch = 1500; } // Danger rapid beeps
+
+                // Fire sequence of beeps
+                let currentBeep = 0;
+                let innerInterval = setInterval(() => {
+                    if (currentBeep < beepCount) {
+                        playBeep(pitch, 0.05);
+                        currentBeep++;
+                    } else {
+                        clearInterval(innerInterval);
+                    }
+                }, 120);
+
+            }, 3000); // Trigger group of beeps every 3 seconds
+        }
+
+        function stopDynamicBeepLoop() {
+            if (audioBeepInterval) {
+                clearInterval(audioBeepInterval);
+                audioBeepInterval = null;
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            timerInterval = setInterval(() => {
+                tripSeconds++;
+                let mins = Math.floor(tripSeconds / 60);
+                let secs = tripSeconds % 60;
+                infoTime.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+    </script>
+</body>
+</html>
