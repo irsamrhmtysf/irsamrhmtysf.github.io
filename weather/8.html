@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise Fleet Telemetry & Speedometer</title>
+    <title>Speedi — Real-Time Fleet & Safety Speedometer</title>
     <!-- Google Material Symbols & Roboto Font -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
@@ -14,7 +14,7 @@
         /* Enterprise Header Bar */
         .header { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 480px; margin: 0 auto; }
         .brand-group { display: flex; flex-direction: column; }
-        .brand { font-size: 0.8rem; font-weight: 700; color: #38bdf8; letter-spacing: 1.5px; text-transform: uppercase; }
+        .brand { font-size: 0.95rem; font-weight: 900; color: #38bdf8; letter-spacing: 2px; text-transform: uppercase; }
         .sub-brand { font-size: 0.65rem; color: #64748b; font-weight: 500; }
         
         .toolbar { display: flex; gap: 8px; align-items: center; }
@@ -53,6 +53,7 @@
 
         .enterprise-btn { background: #1e293b; border: 1px solid #334155; color: #38bdf8; padding: 10px 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; width: 100%; transition: 0.2s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .enterprise-btn:active { background: #334155; }
+        .enterprise-btn.active { background: #0284c7; color: #fff; border-color: #38bdf8; }
 
         /* Footer Status Bar */
         .status-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 480px; margin: 15px auto 0; font-size: 0.75rem; color: #64748b; padding: 0 4px; }
@@ -66,20 +67,17 @@
     <!-- Header Toolbar with Material Icons -->
     <div class="header">
         <div class="brand-group">
-            <div class="brand">ENTERPRISE TELEMETRY</div>
-            <div id="fleetIdDisplay" class="sub-brand">UNIT: FL-001 (SECURE)</div>
+            <div class="brand">SPEEDI</div>
+            <div id="fleetIdDisplay" class="sub-brand">UNIT: FL-001 (REAL-TIME GPS)</div>
         </div>
         <div class="toolbar">
-            <button class="material-btn" id="simBtn" onclick="toggleSimulation()" title="Simulate Telemetry">
-                <span class="material-symbols-rounded">science</span>
-            </button>
-            <button class="material-btn" id="voiceBtn" onclick="toggleVoice()" title="AI Voice Assistant">
+            <button class="material-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice Safety Assistant">
                 <span class="material-symbols-rounded">volume_up</span>
             </button>
             <button class="material-btn" onclick="resetTrip()" title="Reset Session">
                 <span class="material-symbols-rounded">restart_alt</span>
             </button>
-            <button class="material-btn" id="drawerBtn" onclick="toggleDrawer()" title="Enterprise Console">
+            <button class="material-btn" id="drawerBtn" onclick="toggleDrawer()" title="Settings & Simulation">
                 <span class="material-symbols-rounded">settings</span>
             </button>
         </div>
@@ -93,10 +91,10 @@
         </div>
     </div>
 
-    <!-- Enterprise Console Drawer -->
+    <!-- Enterprise Console Drawer (Simulation moved here) -->
     <div class="drawer" id="infoDrawer">
         <div class="drawer-header">
-            <span>AUDIT & TELEMETRY CONSOLE</span>
+            <span>SETTINGS & SIMULATION</span>
             <span class="material-symbols-rounded" style="cursor: pointer; font-size: 20px;" onclick="toggleDrawer()">close</span>
         </div>
 
@@ -143,10 +141,9 @@
             </div>
         </div>
 
-        <div class="setting-row">
-            <span>Driver Fatigue Monitor (2h)</span>
-            <span id="fatigueStatus" style="font-weight: 700; color: #22c55e;">NORMAL</span>
-        </div>
+        <button class="enterprise-btn" id="simBtn" onclick="toggleSimulation()">
+            <span class="material-symbols-rounded" style="font-size: 18px;">science</span> Test Route Simulation (Off)
+        </button>
 
         <button class="enterprise-btn" onclick="exportAuditLogs()">
             <span class="material-symbols-rounded" style="font-size: 18px;">download</span> Export Audit Log (CSV)
@@ -157,7 +154,7 @@
     <div class="status-footer">
         <div class="gps-indicator">
             <span id="gpsDot" class="gps-dot"></span>
-            <span id="gpsText">Acquiring Secure Satellite Link...</span>
+            <span id="gpsText">Acquiring Real-Time GPS Satellite...</span>
         </div>
         <div id="logCountText">Violations: 0</div>
     </div>
@@ -182,7 +179,6 @@
         let isSimulating = false;
         let simInterval = null;
         let auditLogs = [];
-
         let speedBuffer = [];
 
         function toggleDrawer() {
@@ -210,45 +206,40 @@
             isVoiceEnabled = !isVoiceEnabled;
             let btn = document.getElementById('voiceBtn');
             btn.classList.toggle('active', isVoiceEnabled);
-            
-            // If turned off, immediately stop any active warning speech loop
             if (!isVoiceEnabled) {
                 stopOverLimitWarning();
             }
         }
 
-        // Speaks the exact number cleanly once
+        // Speaks the exact number cleanly in English
         function speakNumber(numericValue) {
             if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
             let roundedVal = Math.round(numericValue);
             let utterance = new SpeechSynthesisUtterance(roundedVal.toString());
+            utterance.lang = 'en-US';
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
         }
 
-        // Starts continuous loop warning when over limit
+        // Continuous over-limit warning loop: repeats until speed drops safely
         function startOverLimitWarning(currentNumericSpeed) {
             if (!isVoiceEnabled || isOverLimitWarningActive) return;
             isOverLimitWarningActive = true;
             
-            // Speak immediately on violation entry
             speakNumber(currentNumericSpeed);
 
-            // Repeat warning every 3.5 seconds continuously until speed drops
             warningInterval = setInterval(() => {
                 if (!isVoiceEnabled || !isOverLimitWarningActive) {
                     stopOverLimitWarning();
                     return;
                 }
-                // Fetch latest current numerical speed from the display
                 let currentVal = parseFloat(document.getElementById('speedDisplay').innerText) || 0;
                 speakNumber(currentVal);
             }, 3500);
         }
 
-        // Instantly stops warning when back to safe speed or muted
         function stopOverLimitWarning() {
             isOverLimitWarningActive = false;
             if (warningInterval) {
@@ -266,7 +257,7 @@
 
         function updateFleetId() {
             fleetUnitId = document.getElementById('unitIdInput').value || 'FL-001';
-            document.getElementById('fleetIdDisplay').innerText = `UNIT: ${fleetUnitId} (SECURE)`;
+            document.getElementById('fleetIdDisplay').innerText = `UNIT: ${fleetUnitId} (REAL-TIME GPS)`;
         }
 
         function resetTrip() {
@@ -322,6 +313,7 @@
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
+        // Kalman Smoothing Filter for Zero Jitter
         function getSmoothedSpeed(rawSpeedMs) {
             speedBuffer.push(rawSpeedMs);
             if (speedBuffer.length > 5) speedBuffer.shift();
@@ -369,14 +361,10 @@
 
             let currentNumericSpeed = currentUnit === 'kmh' ? smoothedSpeedMs * 3.6 : smoothedSpeedMs * 2.23694;
             
-            // Check Over-Limit State
             if (currentNumericSpeed > speedLimitVal) {
                 document.body.classList.add('over-speed');
-                
-                // Trigger continuous warning loop
                 startOverLimitWarning(currentNumericSpeed);
                 
-                // Log violation audit entry
                 auditLogs.push({
                     timestamp: new Date().toISOString(),
                     unit: fleetUnitId,
@@ -389,20 +377,19 @@
                 document.getElementById('logCountText').innerText = `Violations: ${auditLogs.length}`;
             } else {
                 document.body.classList.remove('over-speed');
-                // Instantly stop warning when safe
                 stopOverLimitWarning();
             }
 
             document.getElementById('accuracy').innerText = accuracy ? Math.round(accuracy) + ' m' : '-- m';
         }
 
-        // Geolocation Watcher
+        // REAL-TIME GPS WATCHER (Active by default)
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition(
                 (position) => {
                     if (isSimulating) return;
                     document.getElementById('gpsDot').classList.add('locked');
-                    document.getElementById('gpsText').innerText = 'Secure GPS Active';
+                    document.getElementById('gpsText').innerText = 'Real-Time GPS Active';
                     let speedMs = position.coords.speed;
                     if (speedMs === null || isNaN(speedMs)) speedMs = 0;
                     processTelemetry(speedMs, position.coords.latitude, position.coords.longitude, position.coords.accuracy);
@@ -410,7 +397,7 @@
                 (error) => {
                     if (!isSimulating) {
                         document.getElementById('gpsDot').classList.remove('locked');
-                        document.getElementById('gpsText').innerText = 'Signal Acquisition Failed';
+                        document.getElementById('gpsText').innerText = 'GPS Signal Weak';
                     }
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -419,23 +406,28 @@
             document.getElementById('gpsText').innerText = 'Geolocation Unavailable';
         }
 
+        // Simulation Mode (Inside Settings Drawer)
         function toggleSimulation() {
             isSimulating = !isSimulating;
-            document.getElementById('simBtn').classList.toggle('active', isSimulating);
+            let simBtn = document.getElementById('simBtn');
+            simBtn.classList.toggle('active', isSimulating);
+            
             if (isSimulating) {
+                simBtn.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">science</span> Test Route Simulation (On)`;
                 document.getElementById('gpsDot').classList.add('locked');
-                document.getElementById('gpsText').innerText = 'Telemetry Simulation Active';
+                document.getElementById('gpsText').innerText = 'Simulated Test Route';
                 let simStep = 0;
-                const simSpeedsMps = [0, 6, 15, 29, 34, 28, 12, 0];
+                const simSpeedsMps = [0, 8, 18, 30, 35, 28, 12, 0];
                 simInterval = setInterval(() => {
                     let speedMs = simSpeedsMps[simStep % simSpeedsMps.length] + (Math.random() * 0.8);
                     processTelemetry(speedMs, 3.12 + (simStep*0.001), 101.5 + (simStep*0.001), 3.0);
                     simStep++;
                 }, 1500);
             } else {
+                simBtn.innerHTML = `<span class="material-symbols-rounded" style="font-size: 18px;">science</span> Test Route Simulation (Off)`;
                 clearInterval(simInterval);
                 resetTrip();
-                document.getElementById('gpsText').innerText = 'Acquiring Secure Satellite Link...';
+                document.getElementById('gpsText').innerText = 'Acquiring Real-Time GPS Satellite...';
                 document.getElementById('gpsDot').classList.remove('locked');
             }
         }
@@ -452,7 +444,7 @@
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `fleet_audit_${fleetUnitId}_${Date.now()}.csv`);
+            link.setAttribute("download", `speedi_audit_${fleetUnitId}_${Date.now()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
