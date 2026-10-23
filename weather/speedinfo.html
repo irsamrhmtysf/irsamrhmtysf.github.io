@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro GPS Speedometer & Assistant</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #090d16; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; overflow-x: hidden; }
+        
+        /* Top Navigation & Icon Toolbar */
+        .header { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 480px; margin: 0 auto; }
+        .brand { font-size: 0.85rem; font-weight: 700; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; }
+        .toolbar { display: flex; gap: 8px; align-items: center; }
+        
+        /* Icon Buttons */
+        .icon-btn { background: #1e293b; border: 1px solid #334155; color: #f8fafc; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+        .icon-btn:active { background: #334155; transform: scale(0.95); }
+        .icon-btn.active { background: #3b82f6; border-color: #60a5fa; color: #fff; }
+
+        /* Main Speed Display (Hero Screen) */
+        .gauge-section { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: auto; text-align: center; }
+        .speed-box { position: relative; padding: 10px; transition: 0.3s; }
+        .speed-value { font-size: 7.5rem; font-weight: 900; line-height: 1; color: #ffffff; letter-spacing: -4px; font-variant-numeric: tabular-nums; }
+        .speed-unit { font-size: 1.5rem; font-weight: 700; color: #38bdf8; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        /* Speed Warning Pulse */
+        body.over-speed .speed-value { color: #ef4444; text-shadow: 0 0 30px rgba(239, 68, 68, 0.5); }
+        body.over-speed .speed-box { animation: pulseWarning 0.8s infinite alternate; }
+        @keyframes pulseWarning { from { transform: scale(1); } to { transform: scale(1.02); } }
+
+        /* Collapsible Settings / Stats Drawer (Default Hidden) */
+        .drawer { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; width: 100%; max-width: 480px; margin: 0 auto; display: none; flex-direction: column; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: slideUp 0.3s ease; }
+        .drawer.open { display: flex; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 700; color: #9ca3af; border-bottom: 1px solid #1f2937; padding-bottom: 8px; }
+        
+        /* Stats Grid Inside Drawer */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .stat-card { background: #0b0f19; border: 1px solid #1f2937; padding: 10px; border-radius: 10px; text-align: center; }
+        .stat-label { font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 3px; font-weight: 600; }
+        .stat-val { font-size: 1rem; font-weight: 700; color: #f3f4f6; font-variant-numeric: tabular-nums; }
+
+        /* Controls inside Drawer */
+        .setting-row { display: flex; justify-content: space-between; align-items: center; background: #0b0f19; border: 1px solid #1f2937; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; color: #9ca3af; }
+        .setting-row input[type="number"] { width: 65px; background: #1f2937; border: 1px solid #374151; color: #fff; padding: 6px; border-radius: 6px; text-align: center; font-weight: 700; font-size: 0.9rem; }
+
+        /* GPS Status Footer */
+        .status-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 480px; margin: 15px auto 0; font-size: 0.75rem; color: #6b7280; padding: 0 4px; }
+        .gps-indicator { display: flex; align-items: center; gap: 6px; }
+        .gps-dot { height: 8px; width: 8px; background-color: #ef4444; border-radius: 50%; display: inline-block; }
+        .gps-dot.locked { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+    </style>
+</head>
+<body>
+
+    <!-- Header & Icon Toolbar -->
+    <div class="header">
+        <div class="brand">GPS Speedometer</div>
+        <div class="toolbar">
+            <button class="icon-btn" id="simBtn" onclick="toggleSimulation()" title="Simulate GPS">🧪</button>
+            <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice Assistant">🔊</button>
+            <button class="icon-btn" onclick="resetTrip()" title="Reset Trip">🔄</button>
+            <button class="icon-btn" id="drawerBtn" onclick="toggleDrawer()" title="Settings & Stats">⚙️</button>
+        </div>
+    </div>
+
+    <!-- Main Hero Speed Display -->
+    <div class="gauge-section">
+        <div class="speed-box" id="speedBox">
+            <div id="speedDisplay" class="speed-value">0.0</div>
+            <div id="unitDisplay" class="speed-unit">KM/H</div>
+        </div>
+    </div>
+
+    <!-- Collapsible Settings & Telemetry Drawer (Default Hidden) -->
+    <div class="drawer" id="infoDrawer">
+        <div class="drawer-header">
+            <span>TRIP TELEMETRY & SETTINGS</span>
+            <span style="cursor: pointer;" onclick="toggleDrawer()">✕</span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Max Speed</div>
+                <div id="maxSpeed" class="stat-val">0.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Speed</div>
+                <div id="avgSpeed" class="stat-val">0.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Distance</div>
+                <div id="distance" class="stat-val">0.00 km</div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Trip Time</div>
+                <div id="tripTime" class="stat-val">00:00:00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Accuracy</div>
+                <div id="accuracy" class="stat-val">-- m</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Unit</div>
+                <div id="unitToggleCard" class="stat-val" style="cursor: pointer; color: #38bdf8;" onclick="toggleUnit()">KM/H ⇄</div>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <span>Speed Limit Alert</span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="number" id="speedLimitInput" value="100" min="10" max="300" onchange="updateLimit()">
+                <span id="limitUnitLabel" style="font-weight: 600; color: #f3f4f6;">KM/H</span>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <span>Screen Wake Lock</span>
+            <button class="icon-btn" id="wakeLockBtn" onclick="toggleWakeLock()" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Awake OFF</button>
+        </div>
+    </div>
+
+    <!-- GPS Status Footer -->
+    <div class="status-footer">
+        <div class="gps-indicator">
+            <span id="gpsDot" class="gps-dot"></span>
+            <span id="gpsText">Acquiring GPS Signal...</span>
+        </div>
+        <div id="coordsText">--</div>
+    </div>
+
+    <script>
+        let currentUnit = 'kmh'; // 'kmh' or 'mph'
+        let maxSpeedMs = 0;
+        let totalDistanceMeters = 0;
+        let movingTimeSeconds = 0;
+        let tripStartTime = null;
+        let timerInterval = null;
+        
+        let lastLat = null;
+        let lastLon = null;
+        
+        let speedLimitVal = 100;
+        let isVoiceEnabled = false;
+        let lastSpokenTime = 0;
+        let isSimulating = false;
+        let simInterval = null;
+        let wakeLock = null;
+
+        function toggleDrawer() {
+            const drawer = document.getElementById('infoDrawer');
+            drawer.classList.toggle('open');
+            document.getElementById('drawerBtn').classList.toggle('active');
+        }
+
+        function toggleUnit() {
+            currentUnit = currentUnit === 'kmh' ? 'mph' : 'kmh';
+            document.getElementById('unitDisplay').innerText = currentUnit.toUpperCase();
+            document.getElementById('unitToggleCard').innerText = currentUnit.toUpperCase() + ' ⇄';
+            document.getElementById('limitUnitLabel').innerText = currentUnit.toUpperCase();
+            
+            let input = document.getElementById('speedLimitInput');
+            if (currentUnit === 'mph' && speedLimitVal === 100) {
+                speedLimitVal = 60;
+                input.value = 60;
+            } else if (currentUnit === 'kmh' && speedLimitVal === 60) {
+                speedLimitVal = 100;
+                input.value = 100;
+            }
+        }
+
+        function toggleVoice() {
+            isVoiceEnabled = !isVoiceEnabled;
+            let btn = document.getElementById('voiceBtn');
+            btn.classList.toggle('active', isVoiceEnabled);
+            if (isVoiceEnabled && 'speechSynthesis' in window) {
+                speakText("Voice assistant activated.");
+            }
+        }
+
+        function speakText(text) {
+            if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+            // Prevent spamming speech announcements too frequently (at least 8 seconds apart)
+            let now = Date.now();
+            if (now - lastSpokenTime < 8000) return;
+            lastSpokenTime = now;
+
+            window.speechSynthesis.cancel(); // clear queue
+            let utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function updateLimit() {
+            speedLimitVal = parseFloat(document.getElementById('speedLimitInput').value) || 100;
+        }
+
+        function resetTrip() {
+            maxSpeedMs = 0;
+            totalDistanceMeters = 0;
+            movingTimeSeconds = 0;
+            tripStartTime = null;
+            lastLat = null;
+            lastLon = null;
+            
+            document.getElementById('maxSpeed').innerText = formatSpeed(0);
+            document.getElementById('avgSpeed').innerText = formatSpeed(0);
+            document.getElementById('distance').innerText = formatDistance(0);
+            document.getElementById('tripTime').innerText = "00:00:00";
+            document.getElementById('speedDisplay').innerText = "0.0";
+            document.body.classList.remove('over-speed');
+        }
+
+        function formatSpeed(speedInMs) {
+            if (isNaN(speedInMs) || speedInMs < 0.2) speedInMs = 0;
+            let speed = currentUnit === 'kmh' ? speedInMs * 3.6 : speedInMs * 2.23694;
+            return speed.toFixed(1);
+        }
+
+        function formatDistance(meters) {
+            if (currentUnit === 'mph') {
+                let miles = meters * 0.000621371;
+                return miles < 0.1 ? (meters * 3.28084).toFixed(0) + ' ft' : miles.toFixed(2) + ' mi';
+            } else {
+                let km = meters / 1000;
+                return km < 0.1 ? meters.toFixed(0) + ' m' : km.toFixed(2) + ' km';
+            }
+        }
+
+        function formatTime(totalSeconds) {
+            let hrs = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+            let mins = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+            let secs = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
+            return `${hrs}:${mins}:${secs}`;
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const p1 = lat1 * Math.PI/180;
+            const p2 = lat2 * Math.PI/180;
+            const dp = (lat2-lat1) * Math.PI/180;
+            const dl = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+
+        function processSpeedData(speedMs, lat, lon, accuracy) {
+            if (!tripStartTime && speedMs > 0.5) {
+                tripStartTime = Date.now();
+                if (!timerInterval) {
+                    timerInterval = setInterval(() => {
+                        if (tripStartTime) {
+                            movingTimeSeconds++;
+                            document.getElementById('tripTime').innerText = formatTime(movingTimeSeconds);
+                        }
+                    }, 1000);
+                }
+            }
+
+            if (speedMs > maxSpeedMs) {
+                maxSpeedMs = speedMs;
+                document.getElementById('maxSpeed').innerText = formatSpeed(maxSpeedMs);
+            }
+
+            if (lastLat !== null && lastLon !== null && lat !== null && lon !== null) {
+                let dist = calculateDistance(lastLat, lastLon, lat, lon);
+                if (dist > 1.2 && accuracy < 35) {
+                    totalDistanceMeters += dist;
+                    document.getElementById('distance').innerText = formatDistance(totalDistanceMeters);
+                }
+            }
+            if (lat !== null) lastLat = lat;
+            if (lon !== null) lastLon = lon;
+
+            if (movingTimeSeconds > 0 && totalDistanceMeters > 0) {
+                let avgMs = totalDistanceMeters / movingTimeSeconds;
+                document.getElementById('avgSpeed').innerText = formatSpeed(avgMs);
+            }
+
+            let currentDisplaySpeed = formatSpeed(speedMs);
+            document.getElementById('speedDisplay').innerText = currentDisplaySpeed;
+
+            let currentNumericSpeed = currentUnit === 'kmh' ? speedMs * 3.6 : speedMs * 2.23694;
+            if (currentNumericSpeed > speedLimitVal) {
+                document.body.classList.add('over-speed');
+                speakText(`Warning! Speed limit exceeded. Current speed ${Math.round(currentNumericSpeed)} ${currentUnit.toUpperCase()}`);
+            } else {
+                document.body.classList.remove('over-speed');
+            }
+
+            document.getElementById('accuracy').innerText = accuracy ? Math.round(accuracy) + ' m' : '-- m';
+        }
+
+        // Real GPS Watcher
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    if (isSimulating) return;
+                    document.getElementById('gpsDot').classList.add('locked');
+                    document.getElementById('gpsText').innerText = 'GPS Connected';
+                    document.getElementById('coordsText').innerText = `${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)}`;
+
+                    let speedMs = position.coords.speed;
+                    if (speedMs === null || isNaN(speedMs)) speedMs = 0;
+                    processSpeedData(speedMs, position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+                },
+                (error) => {
+                    if (!isSimulating) {
+                        document.getElementById('gpsDot').classList.remove('locked');
+                        document.getElementById('gpsText').innerText = 'GPS Error';
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            document.getElementById('gpsText').innerText = 'No GPS Support';
+        }
+
+        // Simulation Mode Toggle
+        function toggleSimulation() {
+            isSimulating = !isSimulating;
+            let simBtn = document.getElementById('simBtn');
+            simBtn.classList.toggle('active', isSimulating);
+            
+            if (isSimulating) {
+                document.getElementById('gpsDot').classList.add('locked');
+                document.getElementById('gpsText').innerText = 'Simulating Test';
+                document.getElementById('coordsText').innerText = 'SIMULATOR';
+                
+                let simStep = 0;
+                const simSpeedsMps = [0, 5, 12, 22, 32, 28, 15, 0];
+                simInterval = setInterval(() => {
+                    let speedMs = simSpeedsMps[simStep % simSpeedsMps.length] + (Math.random() * 1.2);
+                    processSpeedData(speedMs, 3.12 + (simStep*0.001), 101.5 + (simStep*0.001), 4.0);
+                    simStep++;
+                }, 1500);
+            } else {
+                clearInterval(simInterval);
+                resetTrip();
+                document.getElementById('gpsText').innerText = 'Acquiring GPS...';
+                document.getElementById('gpsDot').classList.remove('locked');
+            }
+        }
+
+        // Screen Wake Lock API
+        async function toggleWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    if (wakeLock === null) {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        document.getElementById('wakeLockBtn').classList.add('active');
+                        document.getElementById('wakeLockBtn').innerText = 'Awake ON';
+                    } else {
+                        await wakeLock.release();
+                        wakeLock = null;
+                        document.getElementById('wakeLockBtn').classList.remove('active');
+                        document.getElementById('wakeLockBtn').innerText = 'Awake OFF';
+                    }
+                } else {
+                    alert('Wake Lock not supported on this browser.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
