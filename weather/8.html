@@ -176,12 +176,13 @@
         let fleetUnitId = 'FL-001';
         
         let isVoiceEnabled = false;
-        let lastSpokenTime = 0;
+        let isOverLimitWarningActive = false;
+        let warningInterval = null;
+        
         let isSimulating = false;
         let simInterval = null;
         let auditLogs = [];
 
-        // Kalman / Weighted Smoothing Buffer
         let speedBuffer = [];
 
         function toggleDrawer() {
@@ -207,25 +208,56 @@
 
         function toggleVoice() {
             isVoiceEnabled = !isVoiceEnabled;
-            document.getElementById('voiceBtn').classList.toggle('active', isVoiceEnabled);
-            if (isVoiceEnabled && 'speechSynthesis' in window) {
-                speakNumberOnly(speedLimitVal); // test feedback
+            let btn = document.getElementById('voiceBtn');
+            btn.classList.toggle('active', isVoiceEnabled);
+            
+            // If turned off, immediately stop any active warning speech loop
+            if (!isVoiceEnabled) {
+                stopOverLimitWarning();
             }
         }
 
-        // Natural English Speech Assistant: Says ONLY the exact number cleanly
-        function speakNumberOnly(numericValue) {
+        // Speaks the exact number cleanly once
+        function speakNumber(numericValue) {
             if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
-            let now = Date.now();
-            if (now - lastSpokenTime < 6000) return; // rate limit interval
-            lastSpokenTime = now;
-
             window.speechSynthesis.cancel();
             let roundedVal = Math.round(numericValue);
             let utterance = new SpeechSynthesisUtterance(roundedVal.toString());
-            utterance.rate = 0.95; // professional calm cadence
+            utterance.rate = 1.0;
             utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
+        }
+
+        // Starts continuous loop warning when over limit
+        function startOverLimitWarning(currentNumericSpeed) {
+            if (!isVoiceEnabled || isOverLimitWarningActive) return;
+            isOverLimitWarningActive = true;
+            
+            // Speak immediately on violation entry
+            speakNumber(currentNumericSpeed);
+
+            // Repeat warning every 3.5 seconds continuously until speed drops
+            warningInterval = setInterval(() => {
+                if (!isVoiceEnabled || !isOverLimitWarningActive) {
+                    stopOverLimitWarning();
+                    return;
+                }
+                // Fetch latest current numerical speed from the display
+                let currentVal = parseFloat(document.getElementById('speedDisplay').innerText) || 0;
+                speakNumber(currentVal);
+            }, 3500);
+        }
+
+        // Instantly stops warning when back to safe speed or muted
+        function stopOverLimitWarning() {
+            isOverLimitWarningActive = false;
+            if (warningInterval) {
+                clearInterval(warningInterval);
+                warningInterval = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
         }
 
         function updateLimit() {
@@ -246,6 +278,8 @@
             lastLon = null;
             speedBuffer = [];
             auditLogs = [];
+            stopOverLimitWarning();
+            
             document.getElementById('maxSpeed').innerText = formatSpeed(0);
             document.getElementById('avgSpeed').innerText = formatSpeed(0);
             document.getElementById('distance').innerText = formatDistance(0);
@@ -288,10 +322,9 @@
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
-        // High-Precision Kalman Smoothing Filter
         function getSmoothedSpeed(rawSpeedMs) {
             speedBuffer.push(rawSpeedMs);
-            if (speedBuffer.length > 5) speedBuffer.shift(); // 5-sample moving average window
+            if (speedBuffer.length > 5) speedBuffer.shift();
             let sum = speedBuffer.reduce((a, b) => a + b, 0);
             return sum / speedBuffer.length;
         }
@@ -306,10 +339,6 @@
                         if (tripStartTime) {
                             movingTimeSeconds++;
                             document.getElementById('tripTime').innerText = formatTime(movingTimeSeconds);
-                            if (movingTimeSeconds === 7200) {
-                                document.getElementById('fatigueStatus').innerText = "FATIGUE WARNING";
-                                document.getElementById('fatigueStatus').style.color = "#ef4444";
-                            }
                         }
                     }, 1000);
                 }
@@ -340,11 +369,14 @@
 
             let currentNumericSpeed = currentUnit === 'kmh' ? smoothedSpeedMs * 3.6 : smoothedSpeedMs * 2.23694;
             
+            // Check Over-Limit State
             if (currentNumericSpeed > speedLimitVal) {
                 document.body.classList.add('over-speed');
-                // Speak ONLY the exact number cleanly in English
-                speakNumberOnly(currentNumericSpeed);
                 
+                // Trigger continuous warning loop
+                startOverLimitWarning(currentNumericSpeed);
+                
+                // Log violation audit entry
                 auditLogs.push({
                     timestamp: new Date().toISOString(),
                     unit: fleetUnitId,
@@ -357,6 +389,8 @@
                 document.getElementById('logCountText').innerText = `Violations: ${auditLogs.length}`;
             } else {
                 document.body.classList.remove('over-speed');
+                // Instantly stop warning when safe
+                stopOverLimitWarning();
             }
 
             document.getElementById('accuracy').innerText = accuracy ? Math.round(accuracy) + ' m' : '-- m';
@@ -392,7 +426,7 @@
                 document.getElementById('gpsDot').classList.add('locked');
                 document.getElementById('gpsText').innerText = 'Telemetry Simulation Active';
                 let simStep = 0;
-                const simSpeedsMps = [0, 6, 15, 28, 33, 27, 12, 0];
+                const simSpeedsMps = [0, 6, 15, 29, 34, 28, 12, 0];
                 simInterval = setInterval(() => {
                     let speedMs = simSpeedsMps[simStep % simSpeedsMps.length] + (Math.random() * 0.8);
                     processTelemetry(speedMs, 3.12 + (simStep*0.001), 101.5 + (simStep*0.001), 3.0);
