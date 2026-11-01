@@ -101,7 +101,7 @@
             </div>
 
             <div class="flex items-center space-x-3">
-                <span class="text-xs text-slate-400 font-mono hidden sm:inline">16 Apps Live</span>
+                <span class="text-xs text-slate-400 font-mono hidden sm:inline">20 Apps Live</span>
                 <a href="https://github.com/irsamrhmtysf" target="_blank" class="w-9 h-9 rounded-xl glass-card flex items-center justify-center text-slate-300 hover:text-white hover:border-emerald-500 transition">
                     <i class="fab fa-github text-sm"></i>
                 </a>
@@ -123,7 +123,7 @@
             <div class="glass-card rounded-xl px-4 py-2 flex items-center shadow-lg">
                 <i class="fas fa-search text-slate-400 text-sm mr-3"></i>
                 <input type="text" id="app-search" placeholder="Search apps..." class="w-full bg-transparent border-none text-white placeholder-slate-500 focus:outline-none text-sm">
-                <span id="match-count" class="text-xs text-slate-500 font-mono pl-2">16</span>
+                <span id="match-count" class="text-xs text-slate-500 font-mono pl-2">20</span>
             </div>
         </div>
 
@@ -134,7 +134,7 @@
                 <button onclick="filterApps('ai')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">AI</button>
                 <button onclick="filterApps('news')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">News</button>
                 <button onclick="filterApps('utility')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">Tools</button>
-                <button onclick="filterApps('edu')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">Education</button>
+                <button onclick="filterApps('edu')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">Edu</button>
                 <button onclick="filterApps('games')" class="filter-btn px-4 py-2 rounded-xl glass-card text-slate-300 hover:text-white transition">Games</button>
             </div>
         </div>
@@ -143,8 +143,71 @@
     <!-- Compact Apps List/Grid -->
     <main class="relative z-10 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full flex-grow">
         <div id="apps-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5">
+
+            <!-- AlQuran (Tematik) -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="AlQuran by Tematik">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-newspaper text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">AlQuran (Tematik)</h3>
+                        <p class="text-xs text-slate-400 truncate">AlQuran by Tematik </p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('AlQuran (Tematik)', 'https://irsamrhmtysf.github.io/alquran/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/alquran/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
             
-            <!-- 1. Batam News Info -->
+            <!-- NGAJI -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="speech to text">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-newspaper text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">AyatTrans</h3>
+                        <p class="text-xs text-slate-400 truncate">Ayat Translation</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('AyatTrans', 'https://irsamrhmtysf.github.io/alquran/ngaji/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/alquran/ngaji/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+           
+            <!-- KKA -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="Koding Kecerdasan Artificial">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-newspaper text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">KKA</h3>
+                        <p class="text-xs text-slate-400 truncate">Koding Kecerdasan Artificials</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('KKA', ' https://irsamrhmtysf.github.io/education/kka/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/education/kka/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Batam News Info -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="news" data-name="batam news info regional portal local community">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
@@ -165,7 +228,7 @@
                 </div>
             </div>
 
-            <!-- 2. Voi.id -->
+            <!-- Voi.id -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="news" data-name="voi id news portal information current events">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
@@ -186,7 +249,7 @@
                 </div>
             </div>
 
-            <!-- 3. Era.id -->
+            <!-- Era.id -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="news" data-name="era id news portal media independent">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
@@ -207,8 +270,8 @@
                 </div>
             </div>
 
-            <!-- 4. Heliocentric -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="heliocentric science simulation astronomical planetary orbit">
+            <!-- Heliocentric -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="heliocentric science simulation astronomical planetary orbit">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-sun text-sm"></i>
@@ -228,7 +291,7 @@
                 </div>
             </div>
 
-            <!-- 5. Explorer -->
+            <!-- Explorer -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="explorer discovery spatial navigational tool">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
@@ -249,15 +312,15 @@
                 </div>
             </div>
 
-            <!-- 6. AI Assistant -->
+            <!-- AI Assistant -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="ai assistant intelligence chatbot tool">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-brain text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">AI Assistant</h3>
-                        <p class="text-xs text-slate-400 truncate">Intelligent web assistant tool</p>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">AI *</h3>
+                        <p class="text-xs text-slate-400 truncate">Intelligent assistant tool</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
@@ -270,14 +333,14 @@
                 </div>
             </div>
 
-            <!-- 7. Image Processor -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="image processor imgproc photo editor canvas">
+            <!-- ImProc -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="image processor imgproc photo editor canvas">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-image text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Image Processor</h3>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">imgproc</h3>
                         <p class="text-xs text-slate-400 truncate">Browser-based photo editing & filters</p>
                     </div>
                 </div>
@@ -291,8 +354,8 @@
                 </div>
             </div>
 
-            <!-- 8. Vou -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="vou your voice understood translator speech">
+            <!-- Vou -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="vou your voice understood translator speech">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-microphone-lines text-sm"></i>
@@ -312,19 +375,19 @@
                 </div>
             </div>
 
-            <!-- 9. Weather App -->
+            <!-- Weather -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="weather app climate forecast meteorological">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-cloud-sun text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Weather App</h3>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Weather</h3>
                         <p class="text-xs text-slate-400 truncate">Real-time climate & forecasts</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
-                    <button onclick="openPreview('Weather App', 'https://irsamrhmtysf.github.io/weather')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                    <button onclick="openPreview('Weather', 'https://irsamrhmtysf.github.io/weather')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
                         <i class="fas fa-eye text-xs"></i>
                     </button>
                     <a href="https://irsamrhmtysf.github.io/weather" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
@@ -333,15 +396,15 @@
                 </div>
             </div>
 
-            <!-- 10. Edu Hub -->
+            <!-- Learn AI -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="edu hub education learning platform">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-graduation-cap text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Edu Hub</h3>
-                        <p class="text-xs text-slate-400 truncate">Interactive education platform</p>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Learn* AI</h3>
+                        <p class="text-xs text-slate-400 truncate">Interactive AI Education platform</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
@@ -354,14 +417,14 @@
                 </div>
             </div>
 
-            <!-- 11. PAUD Games -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="games" data-name="paud games kids children learning interactive">
+            <!-- PAUD -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="paud games kids children learning interactive">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-shapes text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">PAUD</h3>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">P.A.U.D</h3>
                         <p class="text-xs text-slate-400 truncate">Kids interactive learning games</p>
                     </div>
                 </div>
@@ -375,15 +438,15 @@
                 </div>
             </div>
 
-            <!-- 12. Ular Tangga Game -->
+            <!--  Ular Tangga -->
             <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="games" data-name="ular tangga snake ladder board game">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-dice text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Ular Tangga</h3>
-                        <p class="text-xs text-slate-400 truncate">Classic snakes & ladders board game</p>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Ular Tangga </h3>
+                        <p class="text-xs text-slate-400 truncate">The game of life</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
@@ -396,14 +459,14 @@
                 </div>
             </div>
 
-            <!-- 13. AI CCTV -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="ai ctv camera security vision detection">
+            <!-- CCTV* -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="utility" data-name="ai ctv camera security vision detection">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-video text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">AI CCTV</h3>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">CCTV*</h3>
                         <p class="text-xs text-slate-400 truncate">Smart video surveillance & detection</p>
                     </div>
                 </div>
@@ -417,14 +480,14 @@
                 </div>
             </div>
 
-            <!-- 14. Speech AI -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="speech ai audio recognition voice demo">
+            <!-- Speech -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="speech ai audio recognition voice demo">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-microphone text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Speech AI</h3>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Speech</h3>
                         <p class="text-xs text-slate-400 truncate">Audio recognition & voice demo</p>
                     </div>
                 </div>
@@ -438,14 +501,14 @@
                 </div>
             </div>
 
-            <!-- 15. Vision AI -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="vision ai image computer object detection demo">
+            <!-- Vision -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="vision ai image computer object detection demo">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600 to-blue-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-eye text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Vision AI</h3>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Vision</h3>
                         <p class="text-xs text-slate-400 truncate">Computer vision & object recognition</p>
                     </div>
                 </div>
@@ -459,14 +522,14 @@
                 </div>
             </div>
 
-            <!-- 16. Chatbot AI -->
-            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="ai" data-name="chatbot ai conversational agent demo">
+            <!-- Chatbot -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="chatbot ai conversational agent demo">
                 <div class="flex items-center space-x-3.5 overflow-hidden">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
                         <i class="fas fa-comments text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">Chatbot AI</h3>
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">ChatBot</h3>
                         <p class="text-xs text-slate-400 truncate">Conversational AI agent demo</p>
                     </div>
                 </div>
@@ -479,7 +542,29 @@
                     </a>
                 </div>
             </div>
+            
+            <!-- OnlineShop -->
+            <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between group" data-category="edu" data-name="chatbot ai conversational agent demo">
+                <div class="flex items-center space-x-3.5 overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-800 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+                        <i class="fas fa-comments text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white truncate group-hover:text-emerald-400 transition">OnlineShop</h3>
+                        <p class="text-xs text-slate-400 truncate">online shopping</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 flex-shrink-0 pl-3">
+                    <button onclick="openPreview('OnlineShop', 'https://irsamrhmtysf.github.io/onlineshop/')" class="w-8 h-8 rounded-lg glass-card hover:bg-slate-800 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition" title="Quick Preview">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                    <a href="https://irsamrhmtysf.github.io/onlineshop/" target="_blank" class="w-8 h-8 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 flex items-center justify-center transition" title="Open App">
+                        <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
 
+            
         </div>
     </main>
 
